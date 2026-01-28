@@ -1,0 +1,33 @@
+# Source files
+src/
+agents/
+tsconfig*.json
+tsup.config.ts
+
+# Development files
+.vscode/
+*.code-workspace
+.tool-versions
+.prettierrc
+.prettierignore
+.markdownlint.json
+.markdownlintignore
+eslint.config.mjs
+.git-commit-template.txt
+
+# Build artifacts (keep dist/ for published package)
+*.tsbuildinfo
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+coverage/
+
+# Git
+.git/
+.gitignore
+
+# Misc
+.DS_Store
+node_modules/
+no_commit/

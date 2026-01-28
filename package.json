@@ -1,0 +1,107 @@
+{
+  "name": "@genui-a3/core",
+  "version": "0.1.0",
+  "description": "Core package for the A3 agentic backend framework",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "dev": "tsup --watch",
+    "example:build": "cd example && npm run build",
+    "example:dev": "cd example && npm run dev",
+    "example:setup": "cd example && npm i",
+    "example:start": "cd example && npm run start",
+    "lint": "run-p lint:project lint:markdown lint:example",
+    "lint:example": "eslint './example/**/*.{ts,tsx}' --max-warnings=0 --cache --cache-location .eslintcache",
+    "lint:markdown": "markdownlint-cli2 '**/*.md' '!**/no_commit/**' '!**/node_modules/**'",
+    "lint:project": "eslint './**/*.{ts,tsx}' --ignore-pattern 'example/**' --max-warnings=0 --cache --cache-location .eslintcache",
+    "prepublishOnly": "npm run clean && npm run build",
+    "test": "run-p test:unit",
+    "test:coverage": "run-p test:unit:coverage",
+    "test:integration": "jest --config jest.integration.config.ts",
+    "test:integration:watch": "npm run test:integration -- --watch",
+    "test:unit": "jest __tests__/unit",
+    "test:unit:coverage": "npm run test:unit -- --coverage",
+    "test:unit:watch": "npm run test:unit -- --watch",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [
+    "agentic",
+    "ai",
+    "aaa",
+    "a3",
+    "framework",
+    "genui",
+    "backend"
+  ],
+  "author": "GenUI <https://genui.com>",
+  "contributors": [
+    "Alejandro Panza",
+    "Stanley Jovel",
+    "Tom Jones",
+    "Steven Asher",
+    "Jon Ryser"
+  ],
+  "license": "ISC",
+  "homepage": "https://genui.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/generalui/a3.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "dependencies": {
+    "@ably/chat": "1.1.1",
+    "@aws-sdk/client-bedrock-runtime": "3.975.0",
+    "@aws-sdk/client-cloudformation": "3.975.0",
+    "@datadog/browser-logs": "6.25.4",
+    "chrono-node": "2.9.0",
+    "date-fns": "4.1.0",
+    "loglevel": "1.9.2",
+    "winston": "3.19.0",
+    "zod": "4.3.6",
+    "zod-to-json-schema": "3.25.1"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "10.2.0",
+    "@testing-library/jest-dom": "6.9.1",
+    "@types/jest": "30.0.0",
+    "@types/node": "20.19.0",
+    "eslint": "9.39.2",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.4",
+    "jest": "30.2.0",
+    "jest-environment-jsdom": "30.2.0",
+    "jest-mock-extended": "4.0.0",
+    "markdownlint-cli2": "0.20.0",
+    "npm-run-all": "4.1.5",
+    "prettier": "3.7.4",
+    "ts-jest": "29.4.6",
+    "ts-node": "10.9.2",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.50.0"
+  },
+  "overrides": {
+    "glob": "13.0.0",
+    "jsdom": "27.4.0"
+  }
+}

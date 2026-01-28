@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@agents": ["./agents"],
+      "@agents/*": ["./agents/*"],
+      "@constants": ["./src/constants"],
+      "@constants/*": ["./src/constants/*"],
+      "@core": ["./src/core"],
+      "@core/*": ["./src/core/*"],
+      "@prompts": ["./src/prompts"],
+      "@prompts/*": ["./src/prompts/*"],
+      "@providers": ["./src/providers"],
+      "@providers/*": ["./src/providers/*"],
+      "@skills": ["./src/skills"],
+      "@skills/*": ["./src/skills/*"],
+      "@utils": ["./src/utils"],
+      "@utils/*": ["./src/utils/*"],
+      "types": ["./src/types"],
+      "types/*": ["./src/types/*"]
+    }
+  }
+}

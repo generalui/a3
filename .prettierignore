@@ -1,0 +1,10 @@
+node_modules
+.build
+dist
+coverage
+**/*.css
+**/*.html
+**/*.md
+**/*.yml
+**/*.yaml
+**/*.code-workspace

@@ -1,0 +1,5 @@
+**/no_commit/**
+**/node_modules/**
+src/agents/**
+**/SPECS.md
+**/.terraform/**
