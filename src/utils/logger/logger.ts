@@ -53,7 +53,7 @@ async function getTraceIdFromToken(): Promise<string | undefined> {
   // Server-side: get from token payload
   if (!isClient) {
     try {
-      const { getAsyncLocalStore } = await import('@utils/asyncLocalStore')
+      const { getAsyncLocalStore } = await import('@utils/asyncLocalStore') // TODO: Remove once traceId is removed from logger
       const asyncStorage = getAsyncLocalStore()
       const existingTraceId = asyncStorage.traceId as string | undefined
 

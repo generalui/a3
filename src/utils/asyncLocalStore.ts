@@ -1,3 +1,4 @@
+// TODO: Remove once traceId is removed from logger
 import { AsyncLocalStorage } from 'node:async_hooks'
 
 type RequestStore = Record<string, unknown>

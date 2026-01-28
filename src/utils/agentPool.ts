@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { Agent, AgentId, AGENT_DESCRIPTIONS } from 'types'
-import { TokenType } from 'types/token'
 import { log } from '@utils/logger'
 
 /**
@@ -76,20 +75,30 @@ export function getAgentPoolIds(agent: Agent): AgentId[] {
     let enumValues: readonly (string | null)[] = []
 
     // The schema might be a ZodNullable containing a ZodEnum, or directly a ZodEnum
+    // Note: We use 'any' here because Zod v4 changed the type constraint for ZodEnum
+    // from tuple-based to record-based, causing type mismatch errors with strict casting
+    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
     if ('innerType' in redirectSchema._def) {
       // It's a nullable enum
-      const innerSchema = redirectSchema._def.innerType as z.ZodEnum<[string, ...string[]]>
-      enumValues = innerSchema._def.values
+      const innerSchema = redirectSchema._def.innerType as any
+      if (innerSchema?._def?.values) {
+        const values = innerSchema._def.values
+        enumValues = Array.isArray(values) ? values : Object.values(values)
+      }
     } else {
       // It's a direct enum
-      const directEnum = redirectSchema as z.ZodEnum<[string, ...string[]]>
-      enumValues = directEnum._def.values
+      const directEnum = redirectSchema as any
+      if (directEnum?._def?.values) {
+        const values = directEnum._def.values
+        enumValues = Array.isArray(values) ? values : Object.values(values)
+      }
     }
+    /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 
     // Add non-null values to our agent pool
     const allowedRedirects = enumValues
       .filter((value): value is string => value !== null)
-      .map((value) => value as AgentId)
+      .map((value) => value as unknown as AgentId)
 
     // Add these to our agent pool
     agentIds.push(...allowedRedirects)
@@ -99,23 +108,4 @@ export function getAgentPoolIds(agent: Agent): AgentId[] {
   }
 
   return agentIds
-}
-
-export function getMainAgentForSkill(skill: TokenType): AgentId {
-  if (!Object.values(TokenType).includes(skill)) {
-    throw new Error(`Invalid skill: ${skill}`)
-  }
-
-  const skillToAgentMap: Partial<Record<TokenType, AgentId>> = {
-    [TokenType.LAB_RESULTS]: AgentId.LAB_RESULTS,
-    [TokenType.DISCHARGE]: AgentId.DISCHARGE,
-    [TokenType.PRESCRIPTION_POC]: AgentId.DISCHARGE,
-  } as const
-
-  const agentId = skillToAgentMap[skill]
-  if (!agentId) {
-    throw new Error(`No agent mapping found for skill: ${skill}`)
-  }
-
-  return agentId
 }

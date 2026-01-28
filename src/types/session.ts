@@ -8,10 +8,6 @@ export interface ChatContext {
 
 export interface SessionData {
   sessionId: string
-  practiceId: string
-  patientId: string
-  clinicId: string
-  visitId: string
   messages: Conversation
   conversationHistory?: Conversation // Stores previous messages when re-authenticating
   activeAgentId: AgentIdOrEmpty
