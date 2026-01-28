@@ -1,12 +1,12 @@
-import { agents as agentsOriginal } from '../../agents'
+import { AgentRegistry } from '@core/AgentRegistry'
 import { initialGeneralData } from '@core/schemas'
-import { ChatState, AgentIdOrEmpty, FlowInput } from 'types'
+import { ChatState, AgentId, FlowInput } from 'types'
 import { MessageMetadata } from 'types/chat'
 import { Events } from 'types/events'
 import { logEvent } from '@utils/eventLogger'
 import { log } from '@utils/logger'
 
-const agents = [...agentsOriginal]
+const getAgents = () => AgentRegistry.getInstance().getAll()
 
 const conversationData: ChatState = { ...initialGeneralData, goalAchieved: false }
 
@@ -17,17 +17,18 @@ export const manageFlow = async ({
   responseMessage: string
   messageMetadata?: MessageMetadata
   newChatState: ChatState
-  activeAgentId: AgentIdOrEmpty
-  nextAgentId: AgentIdOrEmpty
+  activeAgentId: AgentId | null
+  nextAgentId: AgentId | null
 }> => {
   const { activeAgentId } = sessionData
+  const agents = getAgents()
   const activeAgent = agents.find((agent) => agent.id === activeAgentId)
   if (activeAgent === undefined) {
     return {
       responseMessage: 'No active agent',
       newChatState: conversationData,
-      activeAgentId: '',
-      nextAgentId: '',
+      activeAgentId: null,
+      nextAgentId: null,
     }
   }
   log.log('activeAgent:', activeAgent.id)
