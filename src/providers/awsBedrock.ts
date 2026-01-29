@@ -1,6 +1,6 @@
 import { BedrockRuntimeClient, ConverseCommand, ToolInputSchema } from '@aws-sdk/client-bedrock-runtime'
 import { ZodType } from 'zod'
-import { Agent, Conversation, MessageSender } from 'types'
+import { Agent, BaseState, Conversation, MessageSender } from 'types'
 import { Events } from 'types/events'
 import { logEvent } from '@utils/eventLogger'
 import { mergeSequentialMessages } from '@utils/messageMerger'
@@ -72,21 +72,21 @@ export async function sendWithModel({
   return JSON.stringify(result)
 }
 
-type SendChatRequestParams = {
-  agent: Agent
+type SendChatRequestParams<TState extends BaseState> = {
+  agent: Agent<TState>
   systemPrompt: string
   basePrompt: string
   conversation: Conversation
   responseFormat: ZodType
 }
 
-export const sendChatRequest = async ({
+export const sendChatRequest = async <TState extends BaseState>({
   agent,
   systemPrompt,
   basePrompt,
   conversation,
   responseFormat,
-}: SendChatRequestParams) => {
+}: SendChatRequestParams<TState>) => {
   systemPrompt = systemPrompt + basePrompt
 
   // Convert the Zod schema to JSON schema for the AWS Bedrock runtime

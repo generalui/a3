@@ -1,47 +1,56 @@
 import { basePrompt } from '../../agents/basePrompt'
-import { BaseResponse } from '@core/schemas'
+import { BaseResponse, createFullOutputSchema } from '@core/schemas'
 import { sendChatRequest } from '@providers/awsBedrock'
-import { ChatState, GenerateAgentResponseSpecification, FlowInput } from 'types'
+import { BaseState, GenerateAgentResponseSpecification, FlowInput } from 'types'
 import { log } from '@utils/logger'
 
-export const getAgentResponse = async ({ agent, sessionData, lastAgentUnsentMessage }: FlowInput) => {
+export const getAgentResponse = async <TState extends BaseState>({
+  agent,
+  sessionData,
+  lastAgentUnsentMessage,
+}: FlowInput<TState>) => {
   const systemPrompt = await agent.promptGenerator({
     agent,
     sessionData,
     lastAgentUnsentMessage,
   })
   log.log('agent id:', agent.id)
-  const responseFormat =
-    typeof agent.responseFormat === 'function' ? agent.responseFormat(sessionData) : agent.responseFormat
+
+  // Get the consumer's output schema
+  const outputSchema = typeof agent.outputSchema === 'function' ? agent.outputSchema(sessionData) : agent.outputSchema
+
+  // Merge with base fields to create the full output schema
+  // If transitionsTo is provided, redirectToAgent will be constrained to those values
+  const fullOutputSchema = createFullOutputSchema(outputSchema, agent.transitionsTo)
 
   const response = await sendChatRequest({
     agent,
     systemPrompt,
     basePrompt: basePrompt(agent, sessionData),
     conversation: sessionData.messages,
-    responseFormat,
+    responseFormat: fullOutputSchema,
   })
-  return responseFormat.parse(JSON.parse(response)) as BaseResponse
+  return fullOutputSchema.parse(JSON.parse(response)) as BaseResponse
 }
 
-export const simpleAgentResponse: GenerateAgentResponseSpecification = async ({
+export const simpleAgentResponse = async <TState extends BaseState>({
   agent,
   sessionData,
   lastAgentUnsentMessage,
-}) => {
+}: FlowInput<TState>): Promise<Awaited<ReturnType<GenerateAgentResponseSpecification<TState>>>> => {
   const res = await getAgentResponse({
     agent,
     sessionData,
     lastAgentUnsentMessage,
   })
 
-  const newData = agent.fitDataInGeneralFormat(res.conversationPayload, sessionData.chatState)
+  const newData = agent.fitDataInGeneralFormat(res.conversationPayload, sessionData.state)
 
   const nextAgentId = res.redirectToAgent
     ? res.redirectToAgent
-    : agent.nextAgentSelector?.(res.conversationPayload as ChatState, res.goalAchieved) || ''
+    : agent.nextAgentSelector?.(res.conversationPayload as TState, res.goalAchieved) || ''
   return {
-    newChatState: newData,
+    newState: newData,
     chatbotMessage: res.chatbotMessage,
     goalAchieved: res.goalAchieved,
     nextAgentId,

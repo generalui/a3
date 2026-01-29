@@ -1,44 +1,42 @@
 import { AgentRegistry } from '@core/AgentRegistry'
-import { initialGeneralData } from '@core/schemas'
-import { ChatState, AgentId, FlowInput } from 'types'
+import { BaseState, AgentId, FlowInput } from 'types'
 import { MessageMetadata } from 'types/chat'
 import { Events } from 'types/events'
 import { logEvent } from '@utils/eventLogger'
 import { log } from '@utils/logger'
 
-const getAgents = () => AgentRegistry.getInstance().getAll()
-
-const conversationData: ChatState = { ...initialGeneralData, goalAchieved: false }
-
-export const manageFlow = async ({
+export const manageFlow = async <TState extends BaseState>({
   sessionData,
   lastAgentUnsentMessage,
-}: FlowInput): Promise<{
+}: FlowInput<TState>): Promise<{
   responseMessage: string
   messageMetadata?: MessageMetadata
-  newChatState: ChatState
+  newState: TState
   activeAgentId: AgentId | null
   nextAgentId: AgentId | null
+  goalAchieved: boolean
 }> => {
   const { activeAgentId } = sessionData
-  const agents = getAgents()
-  const activeAgent = agents.find((agent) => agent.id === activeAgentId)
+  const agents = AgentRegistry.getInstance<TState>().getAll()
+  const activeAgent = agents.find((a) => a.id === activeAgentId)
   if (activeAgent === undefined) {
     return {
       responseMessage: 'No active agent',
-      newChatState: conversationData,
+      newState: sessionData.state,
       activeAgentId: null,
       nextAgentId: null,
+      goalAchieved: false,
     }
   }
   log.log('activeAgent:', activeAgent.id)
-  const { newChatState, chatbotMessage, nextAgentId, messageMetadata } = await activeAgent.generateAgentResponse({
-    agent: activeAgent,
-    sessionData,
-    lastAgentUnsentMessage,
-  })
+  const { newState, chatbotMessage, nextAgentId, messageMetadata, goalAchieved } =
+    await activeAgent.generateAgentResponse({
+      agent: activeAgent,
+      sessionData,
+      lastAgentUnsentMessage,
+    })
 
-  const nextAgent = agents.find((agent) => agent.id === nextAgentId)
+  const nextAgent = agents.find((a) => a.id === nextAgentId)
 
   const nextAgentDifferentFromActiveAgent = nextAgent?.id !== activeAgent.id && nextAgent !== undefined
   if (nextAgentDifferentFromActiveAgent) {
@@ -52,7 +50,7 @@ export const manageFlow = async ({
       sessionData: {
         ...sessionData,
         activeAgentId: nextAgent.id,
-        chatState: newChatState,
+        state: newState,
       },
       lastAgentUnsentMessage: chatbotMessage,
     })
@@ -60,8 +58,9 @@ export const manageFlow = async ({
   return {
     responseMessage: chatbotMessage,
     messageMetadata,
-    newChatState,
+    newState,
     activeAgentId: activeAgent.id,
     nextAgentId,
+    goalAchieved,
   }
 }

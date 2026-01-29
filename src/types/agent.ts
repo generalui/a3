@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { Conversation, MessageMetadata } from 'types/chat'
 import { SessionData } from 'types/session'
-import { ChatState } from 'types/state'
+import { BaseState } from 'types/state'
 
 /**
  * Agent IDs are string-based to support dynamic registration.
@@ -9,14 +9,16 @@ import { ChatState } from 'types/state'
  */
 export type AgentId = string
 
-export interface FlowInput {
-  agent: Agent
-  sessionData: SessionData
+export interface FlowInput<TState extends BaseState = BaseState> {
+  agent: Agent<TState>
+  sessionData: SessionData<TState>
   lastAgentUnsentMessage?: string
 }
 
-export type GenerateAgentResponseSpecification = (input: FlowInput) => Promise<{
-  newChatState: ChatState
+export type GenerateAgentResponseSpecification<TState extends BaseState = BaseState> = (
+  input: FlowInput<TState>,
+) => Promise<{
+  newState: TState
   chatbotMessage: string
   messageMetadata?: MessageMetadata
   goalAchieved: boolean
@@ -24,24 +26,28 @@ export type GenerateAgentResponseSpecification = (input: FlowInput) => Promise<{
   redirectToAgent?: AgentId | null
 }>
 
-export type Agent = {
+/**
+ * Output schema for an agent.
+ * Base fields (chatbotMessage, goalAchieved, redirectToAgent) are added automatically.
+ */
+export type AgentOutputSchema<TState extends BaseState = BaseState> =
+  | z.ZodObject<{ [key: string]: z.ZodTypeAny }>
+  | ((sessionData: SessionData<TState>) => z.ZodObject<{ [key: string]: z.ZodTypeAny }>)
+
+export type Agent<TState extends BaseState = BaseState> = {
   id: AgentId
   /** Description of the agent's purpose, used for agent pool discovery */
   description: string
   modelId?: string // LLM Provider Model ID
   name: string
-  promptGenerator: (params: FlowInput) => Promise<string>
-  responseFormat:
-    | z.ZodObject<{
-        [key: string]: z.ZodTypeAny
-      }>
-    | ((sessionData: SessionData) => z.ZodObject<{
-        [key: string]: z.ZodTypeAny
-      }>)
-  generateAgentResponse: GenerateAgentResponseSpecification
+  promptGenerator: (params: FlowInput<TState>) => Promise<string>
+  outputSchema: AgentOutputSchema<TState>
+  generateAgentResponse: GenerateAgentResponseSpecification<TState>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fitDataInGeneralFormat: (data: any, chatState: ChatState) => ChatState
-  nextAgentSelector?: (chatState: ChatState, agentGoalAchieved: boolean) => AgentId
+  fitDataInGeneralFormat: (data: any, state: TState) => TState
+  nextAgentSelector?: (state: TState, agentGoalAchieved: boolean) => AgentId
+  /** Agent IDs this agent can transition to. Used to constrain redirectToAgent in the schema. */
+  transitionsTo?: AgentId[]
 
   /*
     Strategy to filter conversation history before sending to agent.
