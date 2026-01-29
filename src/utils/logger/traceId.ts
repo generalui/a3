@@ -1,3 +1,4 @@
+// TODO: Remove once traceId is removed from logger
 import { getUUID } from '@utils/uuid'
 import { getCurrentTraceId } from './logger'
 

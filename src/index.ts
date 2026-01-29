@@ -14,10 +14,7 @@ export * from './constants'
 
 // Utils exports
 export * from './utils/agentPool'
-export * from './utils/dateParsing'
-export * from './utils/filterHistory'
 export * from './utils/messageMerger'
 
 // Prompts exports
 export * from './prompts/antiHallucination'
-export * from './prompts/identity'

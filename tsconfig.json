@@ -1,7 +1,9 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["esnext"],
+    "lib": [
+      "esnext"
+    ],
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -9,8 +11,19 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["src/**/*.ts", "__tests__/**/*.ts", "jest.*.ts"],
-  "exclude": ["node_modules", "no_commit", "dist"]
+  "include": [
+    "src/**/*.ts",
+    "agents/**/*.ts",
+    "__tests__/**/*.ts",
+    "jest.*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "no_commit",
+    "dist"
+  ]
 }
