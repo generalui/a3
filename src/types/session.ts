@@ -1,6 +1,6 @@
 import { Conversation } from 'types/chat'
 import { AgentId } from 'types/agent'
-import { ChatState } from 'types/payloads'
+import { ChatState } from 'types/state'
 
 export interface ChatContext {
   [key: string]: unknown

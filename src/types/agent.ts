@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { Conversation, MessageMetadata } from 'types/chat'
 import { SessionData } from 'types/session'
-import { ChatState } from 'types/payloads'
+import { ChatState } from 'types/state'
 
 /**
  * Agent IDs are string-based to support dynamic registration.

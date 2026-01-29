@@ -1,4 +1,3 @@
-import { Message } from '@ably/chat'
 import { Widget } from 'types/widget'
 
 export enum ComponentNames {
@@ -21,7 +20,8 @@ export type AgUIEvent = {
   data?: Record<string, unknown>
 }
 
-export type CareAgentMessage = Partial<Message> & {
+export type Message = {
+  text: string
   metadata?: MessageMetadata
   agUIEvents?: AgUIEvent[]
   isStreaming?: boolean
@@ -35,7 +35,7 @@ export enum MessageSender {
   USER = 'user',
 }
 
-export type Conversation = CareAgentMessage[]
+export type Conversation = Message[]
 
 export type ToolResult<T> = {
   content: T
