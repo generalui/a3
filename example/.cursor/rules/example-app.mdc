@@ -1,0 +1,9 @@
+---
+description: Example app rules (pointer to single source)
+globs: "**"
+alwaysApply: true
+---
+
+# Example App
+
+When working in this directory, follow the rules in **CLAUDE.md** in this directory (same content as `.cursorrules` via symlink). Do not duplicate rule content here; CLAUDE.md is the single source of truth for Claude Code and Cursor.

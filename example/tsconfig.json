@@ -13,13 +13,27 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
+    "baseUrl": ".",
     "plugins": [
       {
         "name": "next"
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@atoms": ["./app/components/atoms"],
+      "@atoms/*": ["./app/components/atoms/*"],
+      "@components": ["./app/components"],
+      "@components/*": ["./app/components/*"],
+      "@constants": ["./app/constants"],
+      "@constants/*": ["./app/constants/*"],
+      "@molecules": ["./app/components/molecules"],
+      "@molecules/*": ["./app/components/molecules/*"],
+      "@organisms": ["./app/components/organisms"],
+      "@organisms/*": ["./app/components/organisms/*"],
+      "types": ["./app/types"],
+      "types/*": ["./app/types/*"],
+      "@utils": ["./app/utils"],
+      "@utils/*": ["./app/utils/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],

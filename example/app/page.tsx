@@ -1,15 +1,16 @@
 'use client'
 
+import { Chat } from '@organisms/Chat'
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-center font-mono text-sm">
-        <h1 className="text-4xl font-bold mb-8 text-center">A3 Core Framework Example</h1>
-        <p className="text-center text-lg mb-4">
-          This is a Next.js example application demonstrating the @genui-a3/core package.
-        </p>
-        <div className="mt-8 p-4 border rounded-lg">
-          <p className="text-sm text-gray-600">Install the core package and register your agents to get started.</p>
+    <main className="flex min-h-screen flex-col">
+      <header className="shrink-0 border-b border-gray-200 bg-white px-6 py-4">
+        <h1 className="text-xl font-semibold text-gray-900">A3 Example</h1>
+      </header>
+      <div className="flex flex-1 min-h-0 p-6">
+        <div className="w-full max-w-2xl mx-auto h-[600px]">
+          <Chat />
         </div>
       </div>
     </main>
