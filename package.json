@@ -17,10 +17,14 @@
     "dist",
     "README.md"
   ],
+  "workspaces": [
+    "example"
+  ],
   "scripts": {
     "build": "tsup",
     "clean": "rm -rf dist",
-    "dev": "tsup --watch",
+    "dev": "run-p dev:core example:dev",
+    "dev:core": "tsup --watch",
     "example:build": "cd example && npm run build",
     "example:dev": "cd example && npm run dev",
     "example:setup": "cd example && npm i",
@@ -69,7 +73,6 @@
     "node": ">=20.19.0"
   },
   "dependencies": {
-    "@ably/chat": "1.1.1",
     "@aws-sdk/client-bedrock-runtime": "3.975.0",
     "@aws-sdk/client-cloudformation": "3.975.0",
     "@datadog/browser-logs": "6.25.4",
@@ -77,8 +80,7 @@
     "date-fns": "4.1.0",
     "loglevel": "1.9.2",
     "winston": "3.19.0",
-    "zod": "4.3.6",
-    "zod-to-json-schema": "3.25.1"
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@faker-js/faker": "10.2.0",

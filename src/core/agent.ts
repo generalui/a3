@@ -1,7 +1,7 @@
 import { basePrompt } from '../../agents/basePrompt'
 import { BaseResponse } from '@core/schemas'
 import { sendChatRequest } from '@providers/awsBedrock'
-import { AgentIdOrEmpty, ChatState, GenerateAgentResponseSpecification, FlowInput } from 'types'
+import { ChatState, GenerateAgentResponseSpecification, FlowInput } from 'types'
 import { log } from '@utils/logger'
 
 export const getAgentResponse = async ({ agent, sessionData, lastAgentUnsentMessage }: FlowInput) => {
@@ -44,6 +44,6 @@ export const simpleAgentResponse: GenerateAgentResponseSpecification = async ({
     newChatState: newData,
     chatbotMessage: res.chatbotMessage,
     goalAchieved: res.goalAchieved,
-    nextAgentId: nextAgentId as AgentIdOrEmpty,
+    nextAgentId,
   }
 }

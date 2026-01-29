@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { Agent, AgentId, AGENT_DESCRIPTIONS } from 'types'
+import { Agent, AgentId } from 'types'
+import { AgentRegistry } from '@core/AgentRegistry'
 import { log } from '@utils/logger'
 
 /**
@@ -39,11 +40,12 @@ export function generateAgentPool(agents: Agent[], agentIds: AgentId[]): string 
  * @throws Error if the agent ID is invalid or has no description
  */
 export function generateAgentPoolItem(agentId: AgentId): string {
-  if (!AGENT_DESCRIPTIONS[agentId]) {
+  const agent = AgentRegistry.getInstance().get(agentId)
+  if (!agent?.description) {
     throw new Error(`Invalid agent ID: ${agentId}. No description found.`)
   }
 
-  return `- '${agentId}': ${AGENT_DESCRIPTIONS[agentId]}`
+  return `- '${agentId}': ${agent.description}`
 }
 
 /**
