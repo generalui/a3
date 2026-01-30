@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import {
-  AgentRegistry,
-  Agent,
-  manageFlow,
-  simpleAgentResponse,
-  MessageSender,
-  BaseState,
-  SessionData,
-} from '@genui-a3/core'
+import { AgentRegistry, Agent, ChatSession, MemorySessionStore, simpleAgentResponse, BaseState } from '@genui-a3/core'
 
 /**
  * Consumer defines their GLOBAL state extending BaseState.
@@ -53,6 +45,9 @@ const greetingAgent: Agent<State> = {
 const registry = AgentRegistry.getInstance<State>()
 registry.register(greetingAgent)
 
+// Shared store instance (in production, use Redis/DynamoDB)
+const store = new MemorySessionStore<State>()
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as { message?: string; sessionId?: string }
@@ -62,26 +57,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
     }
 
-    // Build session data with typed State
-    const sessionData: SessionData<State> = {
+    // Create session and send message
+    const session = new ChatSession<State>({
       sessionId,
-      messages: [{ text: message, metadata: { source: MessageSender.USER } }],
-      activeAgentId: 'greeting',
-      state: { userName: undefined },
-      chatContext: {},
-    }
-
-    // Run the agent flow
-    const result = await manageFlow({
-      agent: greetingAgent,
-      sessionData,
+      store,
+      initialAgentId: 'greeting',
+      initialState: { userName: undefined },
     })
+
+    const result = await session.send(message)
 
     return NextResponse.json({
       response: result.responseMessage,
       activeAgentId: result.activeAgentId,
       nextAgentId: result.nextAgentId,
-      state: result.newState, // result.newState is typed as State
+      state: result.state,
       goalAchieved: result.goalAchieved,
     })
   } catch (error) {
