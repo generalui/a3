@@ -3,6 +3,8 @@ export * from './core/agent'
 export * from './core/AgentRegistry'
 export * from './core/chatFlow'
 export * from './core/schemas'
+export * from './core/chatSession'
+export * from './stores'
 
 // Provider exports
 export * from './providers/awsBedrock'
