@@ -1,16 +1,16 @@
 import { Conversation } from 'types/chat'
 import { AgentId } from 'types/agent'
-import { ChatState } from 'types/state'
+import { BaseState } from 'types/state'
 
 export interface ChatContext {
   [key: string]: unknown
 }
 
-export interface SessionData {
+export interface SessionData<TState extends BaseState = BaseState> {
   sessionId: string
   messages: Conversation
   conversationHistory?: Conversation // Stores previous messages when re-authenticating
   activeAgentId: AgentId | null
-  chatState: ChatState // Contains state variables agents use to make decisions
+  state: TState // Contains state variables agents use to make decisions
   chatContext: ChatContext // Contains context variables regarding the current needed data.
 }

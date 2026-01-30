@@ -1,8 +1,18 @@
 /**
- * ChatState represents the conversation state that agents use to make decisions.
- * Consumers can extend this with additional properties via the index signature.
+ * BaseState defines the minimum required fields for state.
+ * Consumers extend this interface with their own properties.
+ *
+ * Note: State is GLOBAL across all agents in a session. All agents
+ * share the same state object, enabling cross-agent data flow.
+ *
+ * @example
+ * ```typescript
+ * interface State extends BaseState {
+ *   userName?: string
+ *   isAuthenticated: boolean
+ * }
+ * ```
  */
-export type ChatState = {
-  // Allow any additional properties for flexibility
-  [key: string]: unknown
+export interface BaseState {
+  [key: string]: unknown // Allow extension
 }

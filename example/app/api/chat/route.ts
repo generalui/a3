@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { AgentRegistry, Agent, manageFlow, simpleAgentResponse, MessageSender } from '@genui-a3/core'
+import {
+  AgentRegistry,
+  Agent,
+  manageFlow,
+  simpleAgentResponse,
+  MessageSender,
+  BaseState,
+  SessionData,
+} from '@genui-a3/core'
+
+/**
+ * Consumer defines their GLOBAL state extending BaseState.
+ * This state is shared across ALL agents in the session.
+ */
+interface State extends BaseState {
+  userName?: string
+}
 
 /**
  * Sample greeting agent that demonstrates the AgentRegistry pattern.
@@ -9,7 +25,7 @@ const greetingPayload = z.object({
   userName: z.string().optional(),
 })
 
-const greetingAgent: Agent = {
+const greetingAgent: Agent<State> = {
   id: 'greeting',
   description: 'Greets the user and collects their name',
   name: 'Greeting Agent',
@@ -19,24 +35,22 @@ const greetingAgent: Agent = {
     If you don't know their name yet, ask for it politely.
     Once you have their name, greet them by name and set goalAchieved to true.
   `,
-  responseFormat: z.object({
-    chatbotMessage: z.string().describe('Your response to the user'),
-    goalAchieved: z.boolean().describe('True if you have successfully greeted the user by name'),
-    redirectToAgent: z.string().nullable().describe('Next agent to hand off to, or null'),
-    conversationPayload: greetingPayload,
-  }),
+  outputSchema: greetingPayload,
   generateAgentResponse: simpleAgentResponse,
-  nextAgentSelector: (_chatState, agentGoalAchieved) => {
+  nextAgentSelector: (state, agentGoalAchieved) => {
     if (agentGoalAchieved) {
       return 'end'
     }
     return 'greeting'
   },
-  fitDataInGeneralFormat: (data: z.infer<typeof greetingPayload>) => ({ ...data }),
+  fitDataInGeneralFormat: (data: z.infer<typeof greetingPayload>, state) => ({
+    ...state,
+    ...data,
+  }),
 }
 
 // Register the agent on module load
-const registry = AgentRegistry.getInstance()
+const registry = AgentRegistry.getInstance<State>()
 registry.register(greetingAgent)
 
 export async function POST(request: NextRequest) {
@@ -48,12 +62,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
     }
 
-    // Build session data
-    const sessionData = {
+    // Build session data with typed State
+    const sessionData: SessionData<State> = {
       sessionId,
       messages: [{ text: message, metadata: { source: MessageSender.USER } }],
       activeAgentId: 'greeting',
-      chatState: { goalAchieved: false },
+      state: { userName: undefined },
       chatContext: {},
     }
 
@@ -67,7 +81,8 @@ export async function POST(request: NextRequest) {
       response: result.responseMessage,
       activeAgentId: result.activeAgentId,
       nextAgentId: result.nextAgentId,
-      chatState: result.newChatState,
+      state: result.newState, // result.newState is typed as State
+      goalAchieved: result.goalAchieved,
     })
   } catch (error) {
     console.error('Chat error:', error)

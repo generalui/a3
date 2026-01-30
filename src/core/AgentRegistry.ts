@@ -1,4 +1,4 @@
-import { Agent, AgentId } from 'types'
+import { Agent, AgentId, BaseState } from 'types'
 
 /**
  * AgentRegistry - A centralized singleton registry for managing agents.
@@ -6,31 +6,42 @@ import { Agent, AgentId } from 'types'
  * This allows consumers of the library to dynamically register their own agents
  * at runtime, enabling modular and extensible agent architectures.
  *
+ * The registry is generic over TState - all agents share the same state type.
+ *
  * @example
  * ```typescript
  * import { AgentRegistry } from '@genui-a3/core'
  *
+ * interface State extends BaseState {
+ *   userName?: string
+ * }
+ *
+ * // Get a typed registry instance
+ * const registry = AgentRegistry.getInstance<State>()
+ *
  * // Register a single agent
- * AgentRegistry.getInstance().register(myAgent)
+ * registry.register(myAgent)
  *
- * // Register multiple agents
- * AgentRegistry.getInstance().register([agent1, agent2])
+ * // Register multiple agents at once
+ * registry.register([agent1, agent2, agent3])
  *
- * // Retrieve an agent
- * const agent = AgentRegistry.getInstance().get('my-agent-id')
+ * const agent = registry.get('my-agent-id')
  * ```
  */
-export class AgentRegistry {
-  private static instance: AgentRegistry | null = null
-  private agents: Map<AgentId, Agent> = new Map()
+export class AgentRegistry<TState extends BaseState> {
+  // Use 'any' for static storage to allow different TState instantiations
+  // The type safety is enforced through getInstance<TState>()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private static instance: AgentRegistry<any> | null = null
+  private agents: Map<AgentId, Agent<TState>> = new Map()
 
   private constructor() {}
 
-  static getInstance(): AgentRegistry {
+  static getInstance<TState extends BaseState>(): AgentRegistry<TState> {
     if (!AgentRegistry.instance) {
-      AgentRegistry.instance = new AgentRegistry()
+      AgentRegistry.instance = new AgentRegistry<TState>()
     }
-    return AgentRegistry.instance
+    return AgentRegistry.instance as AgentRegistry<TState>
   }
 
   /**
@@ -46,7 +57,7 @@ export class AgentRegistry {
    * @param agents - A single agent or array of agents to register
    * @throws Error if any agent ID is already registered
    */
-  register(agents: Agent | Agent[]): void {
+  register(agents: Agent<TState> | Agent<TState>[]): void {
     const agentList = Array.isArray(agents) ? agents : [agents]
 
     // Validate all agents first before registering any
@@ -68,7 +79,7 @@ export class AgentRegistry {
    * @param id - The agent ID to look up
    * @returns The agent if found, undefined otherwise
    */
-  get(id: AgentId): Agent | undefined {
+  get(id: AgentId): Agent<TState> | undefined {
     return this.agents.get(id)
   }
 
@@ -77,7 +88,7 @@ export class AgentRegistry {
    *
    * @returns Array of all registered agents
    */
-  getAll(): Agent[] {
+  getAll(): Agent<TState>[] {
     return Array.from(this.agents.values())
   }
 

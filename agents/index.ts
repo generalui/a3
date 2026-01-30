@@ -1,3 +1,3 @@
-import { Agent } from 'types'
+import { Agent, BaseState } from 'types'
 
-export const agents: Agent[] = []
+export const agents: Agent<BaseState>[] = []
