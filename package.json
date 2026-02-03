@@ -73,6 +73,7 @@
     "node": ">=20.19.0"
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock-agentcore": "^3.981.0",
     "@aws-sdk/client-bedrock-runtime": "3.975.0",
     "@aws-sdk/client-cloudformation": "3.975.0",
     "@datadog/browser-logs": "6.25.4",
