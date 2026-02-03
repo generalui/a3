@@ -52,7 +52,9 @@ Temporary Items
 
 # production
 /build
-/dist
+dist
+/vendor
+npm_modules
 
 # misc
 *.pem
@@ -630,6 +632,7 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+.venv
 
 # Cake - Uncomment if you are using it
 # tools/**

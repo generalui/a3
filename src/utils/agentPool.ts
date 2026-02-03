@@ -14,7 +14,7 @@ import { AgentRegistry } from '@core/AgentRegistry'
  * // Create a formatted string with consent and basic patient info agents
  * const agentsList = generateAgentPool([AgentId.CONSENT, AgentId.BASIC_PATIENT_INFO]);
  * // Result will be:
- * // - 'consent': Collects the user's consent to be assisted by the CareAgent agent
+ * // - 'consent': Collects the user's consent to be assisted by the agent
  * // - 'basicPatientInfo': Collects basic patient information (e.g., user name, user DOB, reason for visit)
  * ```
  */

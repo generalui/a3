@@ -18,6 +18,8 @@ export default tseslint.config(
       '*/next-env.d.ts',
       'example/node_modules/*',
       'example/.next/*',
+      'example_agent_core/dist/*',
+      'example_agent_core/node_modules/*',
     ],
   },
   eslint.configs.recommended,
@@ -30,17 +32,25 @@ export default tseslint.config(
       },
     },
   },
-  // Example app JS files - disable type checking (config files not in tsconfig)
   {
     files: ['example/**/*.{js,jsx,mjs}'],
     ...tseslint.configs.disableTypeChecked,
   },
+  // Example Agent Core config
+  {
+    files: ['example_agent_core/**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        project: './example_agent_core/tsconfig.json',
+      },
+    },
+  },
   // Main app config
   ...tseslint.configs.recommendedTypeChecked,
-  // Next.js / React rules (manually configured to avoid FlatCompat circular structure issues)
+  // React rules (manually configured to avoid FlatCompat circular structure issues)
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    ignores: ['example/**'],
+    ignores: ['example/**', 'example_agent_core/**'],
     plugins: {},
     languageOptions: {
       parserOptions: {
@@ -64,7 +74,7 @@ export default tseslint.config(
   },
   {
     files: ['**/*.{ts,tsx}'],
-    ignores: ['example/**'],
+    ignores: ['example/**', 'example_agent_core/**'],
     linterOptions: {
       reportUnusedDisableDirectives: 'error',
     },

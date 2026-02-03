@@ -97,7 +97,8 @@ export const sendChatRequest = async <TState extends BaseState>({
   const prependedConversation = [{ text: 'Hi', metadata: { source: MessageSender.USER } }, ...filteredConversation]
   const mergedMessages = mergeSequentialMessages(prependedConversation)
 
-  const models = [{ arn: 'us.amazon.nova-2-lite-v1:0', name: 'Nova Lite 2' }]
+  // const models = [{ arn: 'us.amazon.nova-2-lite-v1:0', name: 'Nova Lite 2' }]
+  const models = [{ arn: 'us.anthropic.claude-haiku-4-5-20251001-v1:0', name: 'Claude Haiku 4.5' }]
 
   // Try each model in order until one succeeds
   const errors: Array<{ model: string; error: Error }> = []
