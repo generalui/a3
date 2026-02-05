@@ -111,6 +111,21 @@ export class ChatSession<TState extends BaseState = BaseState> {
   }
 
   /**
+   * Gets or initializes session if it doesn't exist.
+   */
+  async getOrCreateSessionData(): Promise<SessionData<TState>> {
+    const existing = await this.store.load(this.sessionId)
+
+    if (existing) {
+      return existing
+    }
+
+    const newSession = this.createInitialSession()
+    await this.store.save(this.sessionId, newSession)
+    return newSession
+  }
+
+  /**
    * Get current session data without sending a message.
    */
   async getSessionData(): Promise<SessionData<TState> | null> {
