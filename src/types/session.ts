@@ -1,4 +1,4 @@
-import { Conversation, MessageMetadata } from 'types/chat'
+import { Conversation, Message, MessageMetadata } from 'types/chat'
 import { AgentId } from 'types/agent'
 import { BaseState } from 'types/state'
 import { SessionStore } from 'types/storage'
@@ -47,4 +47,6 @@ export interface ChatSessionConfig<TState extends BaseState = BaseState> {
 
   /** Initial chat context (used when creating new sessions) */
   initialChatContext?: Record<string, unknown>
+
+  initialMessages?: Message[]
 }

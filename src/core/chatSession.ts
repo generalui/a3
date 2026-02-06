@@ -33,6 +33,7 @@ export class ChatSession<TState extends BaseState = BaseState> {
   private readonly initialAgentId: AgentId
   private readonly initialState: TState
   private readonly initialChatContext: Record<string, unknown>
+  private readonly initialMessages?: Message[]
 
   constructor(config: ChatSessionConfig<TState>) {
     this.sessionId = config.sessionId
@@ -40,6 +41,7 @@ export class ChatSession<TState extends BaseState = BaseState> {
     this.initialAgentId = config.initialAgentId
     this.initialState = config.initialState ?? ({} as TState)
     this.initialChatContext = config.initialChatContext ?? {}
+    this.initialMessages = config.initialMessages
   }
 
   /**
@@ -132,6 +134,17 @@ export class ChatSession<TState extends BaseState = BaseState> {
     return this.store.load(this.sessionId)
   }
 
+  async upsertSessionData(updates: Partial<SessionData<TState>>): Promise<void> {
+    let sessionData = await this.store.load(this.sessionId)
+
+    if (!sessionData) {
+      sessionData = this.createInitialSession()
+    }
+
+    Object.assign(sessionData, updates)
+    await this.store.save(this.sessionId, sessionData)
+  }
+
   /**
    * Get conversation history.
    */
@@ -152,7 +165,7 @@ export class ChatSession<TState extends BaseState = BaseState> {
   private createInitialSession(): SessionData<TState> {
     return {
       sessionId: this.sessionId,
-      messages: [],
+      messages: this.initialMessages ?? [],
       activeAgentId: this.initialAgentId,
       state: this.initialState,
       chatContext: this.initialChatContext,

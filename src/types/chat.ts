@@ -1,9 +1,5 @@
 import { Widget } from 'types/widget'
 
-export enum ComponentNames {
-  Component1 = 'component1',
-}
-
 export enum ToolName {
   Tool1 = 'tool1',
 }
@@ -16,7 +12,7 @@ export type MessageMetadata = {
 }
 
 export type AgUIEvent = {
-  component: ComponentNames
+  component: string
   data?: Record<string, unknown>
 }
 
