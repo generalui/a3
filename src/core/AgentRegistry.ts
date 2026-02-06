@@ -1,4 +1,4 @@
-import { Agent, AgentId, BaseState } from 'types'
+import { Agent, AgentId, BaseState, BaseChatContext } from 'types'
 
 /**
  * AgentRegistry - A centralized singleton registry for managing agents.
@@ -28,20 +28,23 @@ import { Agent, AgentId, BaseState } from 'types'
  * const agent = registry.get('my-agent-id')
  * ```
  */
-export class AgentRegistry<TState extends BaseState> {
+export class AgentRegistry<TState extends BaseState = BaseState, TContext extends BaseChatContext = BaseChatContext> {
   // Use 'any' for static storage to allow different TState instantiations
   // The type safety is enforced through getInstance<TState>()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private static instance: AgentRegistry<any> | null = null
-  private agents: Map<AgentId, Agent<TState>> = new Map()
+  private static instance: AgentRegistry<any, any> | null = null
+  private agents: Map<AgentId, Agent<TState, TContext>> = new Map()
 
   private constructor() {}
 
-  static getInstance<TState extends BaseState>(): AgentRegistry<TState> {
+  static getInstance<
+    TState extends BaseState = BaseState,
+    TContext extends BaseChatContext = BaseChatContext,
+  >(): AgentRegistry<TState, TContext> {
     if (!AgentRegistry.instance) {
-      AgentRegistry.instance = new AgentRegistry<TState>()
+      AgentRegistry.instance = new AgentRegistry<TState, TContext>()
     }
-    return AgentRegistry.instance as AgentRegistry<TState>
+    return AgentRegistry.instance as AgentRegistry<TState, TContext>
   }
 
   /**
@@ -57,7 +60,7 @@ export class AgentRegistry<TState extends BaseState> {
    * @param agents - A single agent or array of agents to register
    * @throws Error if any agent ID is already registered
    */
-  register(agents: Agent<TState> | Agent<TState>[]): void {
+  register(agents: Agent<TState, TContext> | Agent<TState, TContext>[]): void {
     const agentList = Array.isArray(agents) ? agents : [agents]
 
     // Validate all agents first before registering any
@@ -79,7 +82,7 @@ export class AgentRegistry<TState extends BaseState> {
    * @param id - The agent ID to look up
    * @returns The agent if found, undefined otherwise
    */
-  get(id: AgentId): Agent<TState> | undefined {
+  get(id: AgentId): Agent<TState, TContext> | undefined {
     return this.agents.get(id)
   }
 
@@ -88,7 +91,7 @@ export class AgentRegistry<TState extends BaseState> {
    *
    * @returns Array of all registered agents
    */
-  getAll(): Agent<TState>[] {
+  getAll(): Agent<TState, TContext>[] {
     return Array.from(this.agents.values())
   }
 

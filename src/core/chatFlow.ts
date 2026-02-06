@@ -1,14 +1,14 @@
 import { AgentRegistry } from '@core/AgentRegistry'
-import { BaseState, AgentId, FlowInput } from 'types'
+import { BaseState, BaseChatContext, AgentId, FlowInput } from 'types'
 import { MessageMetadata } from 'types/chat'
 import { Events } from 'types/events'
 import { logEvent } from '@utils/eventLogger'
 import { log } from '@utils/logger'
 
-export const manageFlow = async <TState extends BaseState>({
+export const manageFlow = async <TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>({
   sessionData,
   lastAgentUnsentMessage,
-}: FlowInput<TState>): Promise<{
+}: FlowInput<TState, TContext>): Promise<{
   responseMessage: string
   messageMetadata?: MessageMetadata
   newState: TState
@@ -17,7 +17,7 @@ export const manageFlow = async <TState extends BaseState>({
   goalAchieved: boolean
 }> => {
   const { activeAgentId } = sessionData
-  const agents = AgentRegistry.getInstance<TState>().getAll()
+  const agents = AgentRegistry.getInstance<TState, TContext>().getAll()
   const activeAgent = agents.find((a) => a.id === activeAgentId)
   if (activeAgent === undefined) {
     return {

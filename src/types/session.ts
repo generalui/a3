@@ -1,19 +1,33 @@
 import { Conversation, Message, MessageMetadata } from 'types/chat'
 import { AgentId } from 'types/agent'
-import { BaseState } from 'types/state'
 import { SessionStore } from 'types/storage'
 
-export interface ChatContext {
+/**
+ * BaseState defines the minimum required fields for state.
+ * Consumers extend this interface with their own properties.
+ *
+ * Note: State is GLOBAL across all agents in a session. All agents
+ * share the same state object, enabling cross-agent data flow.
+ */
+export interface BaseState {
+  [key: string]: unknown // Allow extension
+}
+
+/**
+ * BaseChatContext defines the minimum required fields for chat context.
+ * Consumers extend this interface with their own properties
+ */
+export interface BaseChatContext {
   [key: string]: unknown
 }
 
-export interface SessionData<TState extends BaseState = BaseState> {
+export interface SessionData<TState extends BaseState = BaseState, TContext extends BaseChatContext = BaseChatContext> {
   sessionId: string
   messages: Conversation
   conversationHistory?: Conversation // Stores previous messages when re-authenticating
   activeAgentId: AgentId | null
   state: TState // Contains state variables agents use to make decisions
-  chatContext: ChatContext // Contains context variables regarding the current needed data.
+  chatContext: TContext // Contains context variables regarding the current needed data.
 }
 
 /**
@@ -32,12 +46,15 @@ export interface ChatResponse<TState extends BaseState = BaseState> {
 /**
  * Configuration for creating a ChatSession
  */
-export interface ChatSessionConfig<TState extends BaseState = BaseState> {
+export interface ChatSessionConfig<
+  TState extends BaseState = BaseState,
+  TContext extends BaseChatContext = BaseChatContext,
+> {
   /** Unique session identifier */
   sessionId: string
 
   /** Storage adapter for session persistence */
-  store?: SessionStore<TState>
+  store?: SessionStore<TState, TContext>
 
   /** Initial agent to start the conversation */
   initialAgentId: AgentId
@@ -46,7 +63,7 @@ export interface ChatSessionConfig<TState extends BaseState = BaseState> {
   initialState?: TState
 
   /** Initial chat context (used when creating new sessions) */
-  initialChatContext?: Record<string, unknown>
+  initialChatContext?: TContext
 
   initialMessages?: Message[]
 }

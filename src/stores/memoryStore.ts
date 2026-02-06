@@ -1,4 +1,4 @@
-import { SessionStore, SessionData, BaseState } from 'types'
+import { SessionStore, SessionData, BaseState, BaseChatContext } from 'types'
 
 /**
  * In-memory session store for development and testing.
@@ -6,7 +6,7 @@ import { SessionStore, SessionData, BaseState } from 'types'
  *
  * @example
  * ```typescript
- * const store = new MemorySessionStore<MyState>()
+ * const store = new MemorySessionStore<MyState, MyContext>()
  * const session = new ChatSession({
  *   sessionId: 'test-123',
  *   store,
@@ -14,14 +14,17 @@ import { SessionStore, SessionData, BaseState } from 'types'
  * })
  * ```
  */
-export class MemorySessionStore<TState extends BaseState = BaseState> implements SessionStore<TState> {
-  private sessions = new Map<string, SessionData<TState>>()
+export class MemorySessionStore<
+  TState extends BaseState = BaseState,
+  TContext extends BaseChatContext = BaseChatContext,
+> implements SessionStore<TState, TContext> {
+  private sessions = new Map<string, SessionData<TState, TContext>>()
 
-  load(sessionId: string): Promise<SessionData<TState> | null> {
+  load(sessionId: string): Promise<SessionData<TState, TContext> | null> {
     return Promise.resolve(this.sessions.get(sessionId) ?? null)
   }
 
-  save(sessionId: string, data: SessionData<TState>): Promise<void> {
+  save(sessionId: string, data: SessionData<TState, TContext>): Promise<void> {
     this.sessions.set(sessionId, data)
     return Promise.resolve()
   }

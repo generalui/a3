@@ -1,14 +1,14 @@
 import { basePrompt } from '../../agents/basePrompt'
 import { BaseResponse, createFullOutputSchema } from '@core/schemas'
 import { sendChatRequest } from '@providers/awsBedrock'
-import { BaseState, GenerateAgentResponseSpecification, FlowInput } from 'types'
+import { BaseState, BaseChatContext, GenerateAgentResponseSpecification, FlowInput } from 'types'
 import { log } from '@utils/logger'
 
-export const getAgentResponse = async <TState extends BaseState>({
+export const getAgentResponse = async <TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>({
   agent,
   sessionData,
   lastAgentUnsentMessage,
-}: FlowInput<TState>) => {
+}: FlowInput<TState, TContext>) => {
   const systemPrompt = await agent.promptGenerator({
     agent,
     sessionData,
@@ -33,11 +33,14 @@ export const getAgentResponse = async <TState extends BaseState>({
   return fullOutputSchema.parse(JSON.parse(response)) as BaseResponse
 }
 
-export const simpleAgentResponse = async <TState extends BaseState>({
+export const simpleAgentResponse = async <
+  TState extends BaseState,
+  TContext extends BaseChatContext = BaseChatContext,
+>({
   agent,
   sessionData,
   lastAgentUnsentMessage,
-}: FlowInput<TState>): Promise<Awaited<ReturnType<GenerateAgentResponseSpecification<TState>>>> => {
+}: FlowInput<TState, TContext>): Promise<Awaited<ReturnType<GenerateAgentResponseSpecification<TState, TContext>>>> => {
   const res = await getAgentResponse({
     agent,
     sessionData,

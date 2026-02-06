@@ -1,9 +1,12 @@
-import { Agent, BaseState } from 'types'
+import { Agent, BaseState, BaseChatContext } from 'types'
 import { SessionData } from 'types/session'
 import { generateAgentPool, getAgentPoolIds } from '@utils/agentPool'
 import { agents } from './index'
 
-export function basePrompt<TState extends BaseState>(agent: Agent<TState>, _sessionData: SessionData<TState>) {
+export function basePrompt<TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>(
+  agent: Agent<TState, TContext>,
+  _sessionData: SessionData<TState, TContext>,
+) {
   return `
 Current time: ${new Date().toLocaleString()}
 

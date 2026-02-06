@@ -4,6 +4,7 @@ import {
   SessionStore,
   SessionData,
   BaseState,
+  BaseChatContext,
   AgentId,
   Message,
   MessageSender,
@@ -27,20 +28,20 @@ import { MemorySessionStore } from '@stores/memoryStore'
  * console.log(result.responseMessage)
  * ```
  */
-export class ChatSession<TState extends BaseState = BaseState> {
+export class ChatSession<TState extends BaseState = BaseState, TContext extends BaseChatContext = BaseChatContext> {
   private readonly sessionId: string
-  private readonly store: SessionStore<TState>
+  private readonly store: SessionStore<TState, TContext>
   private readonly initialAgentId: AgentId
   private readonly initialState: TState
-  private readonly initialChatContext: Record<string, unknown>
+  private readonly initialChatContext: TContext
   private readonly initialMessages?: Message[]
 
-  constructor(config: ChatSessionConfig<TState>) {
+  constructor(config: ChatSessionConfig<TState, TContext>) {
     this.sessionId = config.sessionId
-    this.store = config.store ?? new MemorySessionStore<TState>()
+    this.store = config.store ?? (new MemorySessionStore<TState, TContext>() as SessionStore<TState, TContext>)
     this.initialAgentId = config.initialAgentId
     this.initialState = config.initialState ?? ({} as TState)
-    this.initialChatContext = config.initialChatContext ?? {}
+    this.initialChatContext = config.initialChatContext ?? ({} as TContext)
     this.initialMessages = config.initialMessages
   }
 
@@ -71,7 +72,7 @@ export class ChatSession<TState extends BaseState = BaseState> {
     sessionData.messages.push(userMessage)
 
     // 3. Get active agent and run flow
-    const registry = AgentRegistry.getInstance<TState>()
+    const registry = AgentRegistry.getInstance<TState, TContext>()
     const activeAgentId = sessionData.activeAgentId ?? this.initialAgentId
     const agent = registry.get(activeAgentId)
 
@@ -115,7 +116,7 @@ export class ChatSession<TState extends BaseState = BaseState> {
   /**
    * Gets or initializes session if it doesn't exist.
    */
-  async getOrCreateSessionData(): Promise<SessionData<TState>> {
+  async getOrCreateSessionData(): Promise<SessionData<TState, TContext>> {
     const existing = await this.store.load(this.sessionId)
 
     if (existing) {
@@ -130,11 +131,11 @@ export class ChatSession<TState extends BaseState = BaseState> {
   /**
    * Get current session data without sending a message.
    */
-  async getSessionData(): Promise<SessionData<TState> | null> {
+  async getSessionData(): Promise<SessionData<TState, TContext> | null> {
     return this.store.load(this.sessionId)
   }
 
-  async upsertSessionData(updates: Partial<SessionData<TState>>): Promise<void> {
+  async upsertSessionData(updates: Partial<SessionData<TState, TContext>>): Promise<void> {
     let sessionData = await this.store.load(this.sessionId)
 
     if (!sessionData) {
@@ -162,7 +163,7 @@ export class ChatSession<TState extends BaseState = BaseState> {
     }
   }
 
-  private createInitialSession(): SessionData<TState> {
+  private createInitialSession(): SessionData<TState, TContext> {
     return {
       sessionId: this.sessionId,
       messages: this.initialMessages ?? [],

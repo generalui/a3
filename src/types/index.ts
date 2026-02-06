@@ -1,6 +1,5 @@
 export * from './agent'
 export * from './chat'
 export * from './session'
-export * from './state'
 export * from './storage'
 export * from './widget'

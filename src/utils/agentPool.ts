@@ -1,4 +1,4 @@
-import { Agent, AgentId, BaseState } from 'types'
+import { Agent, AgentId, BaseState, BaseChatContext } from 'types'
 import { AgentRegistry } from '@core/AgentRegistry'
 
 /**
@@ -18,7 +18,10 @@ import { AgentRegistry } from '@core/AgentRegistry'
  * // - 'basicPatientInfo': Collects basic patient information (e.g., user name, user DOB, reason for visit)
  * ```
  */
-export function generateAgentPool(agents: Agent<BaseState>[], agentIds: AgentId[]): string {
+export function generateAgentPool<TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>(
+  agents: Agent<TState, TContext>[],
+  agentIds: AgentId[],
+): string {
   // Filter the agents array to include only those with IDs in the agentIds array
   const filteredAgents = agents.filter((agent) => agentIds.includes(agent.id))
 
@@ -53,6 +56,8 @@ export function generateAgentPoolItem(agentId: AgentId): string {
  * @param agent - The agent to get the pool IDs for
  * @returns An array of AgentId values
  */
-export function getAgentPoolIds<TState extends BaseState>(agent: Agent<TState>): AgentId[] {
+export function getAgentPoolIds<TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>(
+  agent: Agent<TState, TContext>,
+): AgentId[] {
   return [agent.id, ...(agent.transitionsTo ?? [])]
 }
