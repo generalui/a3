@@ -51,7 +51,7 @@ export const simpleAgentResponse = async <
 
   const nextAgentId = res.redirectToAgent
     ? res.redirectToAgent
-    : agent.nextAgentSelector?.(res.conversationPayload as TState, res.goalAchieved) || ''
+    : agent.nextAgentSelector?.(newData, res.goalAchieved) || ''
   return {
     newState: newData,
     chatbotMessage: res.chatbotMessage,
