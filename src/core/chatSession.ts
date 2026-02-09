@@ -25,7 +25,6 @@ import { MemorySessionStore } from '@stores/memoryStore'
  * })
  *
  * const result = await session.send('Hello!')
- * console.log(result.responseMessage)
  * ```
  */
 export class ChatSession<TState extends BaseState = BaseState, TContext extends BaseChatContext = BaseChatContext> {
@@ -110,6 +109,7 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
       state: result.newState,
       goalAchieved: result.goalAchieved,
       sessionId: this.sessionId,
+      widgets: result.widgets,
     }
   }
 

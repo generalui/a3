@@ -10,11 +10,12 @@ export const manageFlow = async <TState extends BaseState, TContext extends Base
   lastAgentUnsentMessage,
 }: FlowInput<TState, TContext>): Promise<{
   responseMessage: string
-  messageMetadata?: MessageMetadata
   newState: TState
   activeAgentId: AgentId | null
   nextAgentId: AgentId | null
   goalAchieved: boolean
+  messageMetadata?: MessageMetadata
+  widgets?: object
 }> => {
   const { activeAgentId } = sessionData
   const agents = AgentRegistry.getInstance<TState, TContext>().getAll()
@@ -29,12 +30,11 @@ export const manageFlow = async <TState extends BaseState, TContext extends Base
     }
   }
   log.log('activeAgent:', activeAgent.id)
-  const { newState, chatbotMessage, nextAgentId, messageMetadata, goalAchieved } =
-    await activeAgent.generateAgentResponse({
-      agent: activeAgent,
-      sessionData,
-      lastAgentUnsentMessage,
-    })
+  const { newState, chatbotMessage, nextAgentId, goalAchieved, ...rest } = await activeAgent.generateAgentResponse({
+    agent: activeAgent,
+    sessionData,
+    lastAgentUnsentMessage,
+  })
 
   const nextAgent = agents.find((a) => a.id === nextAgentId)
 
@@ -57,10 +57,10 @@ export const manageFlow = async <TState extends BaseState, TContext extends Base
   }
   return {
     responseMessage: chatbotMessage,
-    messageMetadata,
     newState,
     activeAgentId: activeAgent.id,
     nextAgentId,
     goalAchieved,
+    ...rest,
   }
 }

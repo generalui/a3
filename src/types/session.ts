@@ -41,6 +41,7 @@ export interface ChatResponse<TState extends BaseState = BaseState> {
   state: TState
   goalAchieved: boolean
   sessionId: string
+  widgets?: object
 }
 
 /**

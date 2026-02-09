@@ -1,5 +1,6 @@
 import { basePrompt } from '../../agents/basePrompt'
-import { BaseResponse, createFullOutputSchema } from '@core/schemas'
+import { widgetPrompt } from '../../agents/widgetPrompt'
+import { createFullOutputSchema } from '@core/schemas'
 import { sendChatRequest } from '@providers/awsBedrock'
 import { BaseState, BaseChatContext, GenerateAgentResponseSpecification, FlowInput } from 'types'
 import { log } from '@utils/logger'
@@ -9,11 +10,12 @@ export const getAgentResponse = async <TState extends BaseState, TContext extend
   sessionData,
   lastAgentUnsentMessage,
 }: FlowInput<TState, TContext>) => {
-  const systemPrompt = await agent.promptGenerator({
+  const dynamicPrompt = await agent.promptGenerator({
     agent,
     sessionData,
     lastAgentUnsentMessage,
   })
+  const systemPrompt = `${dynamicPrompt}\n${widgetPrompt(agent)}`
   log.log('agent id:', agent.id)
 
   // Get the consumer's output schema
@@ -21,7 +23,7 @@ export const getAgentResponse = async <TState extends BaseState, TContext extend
 
   // Merge with base fields to create the full output schema
   // If transitionsTo is provided, redirectToAgent will be constrained to those values
-  const fullOutputSchema = createFullOutputSchema(outputSchema, agent.transitionsTo)
+  const fullOutputSchema = createFullOutputSchema(outputSchema, agent.transitionsTo, agent.widgets)
 
   const response = await sendChatRequest({
     agent,
@@ -30,7 +32,7 @@ export const getAgentResponse = async <TState extends BaseState, TContext extend
     conversation: sessionData.messages,
     responseFormat: fullOutputSchema,
   })
-  return fullOutputSchema.parse(JSON.parse(response)) as BaseResponse
+  return fullOutputSchema.parse(JSON.parse(response))
 }
 
 export const simpleAgentResponse = async <
@@ -52,10 +54,12 @@ export const simpleAgentResponse = async <
   const nextAgentId = res.redirectToAgent
     ? res.redirectToAgent
     : agent.nextAgentSelector?.(newData, res.goalAchieved) || ''
+
   return {
     newState: newData,
     chatbotMessage: res.chatbotMessage,
     goalAchieved: res.goalAchieved,
     nextAgentId,
+    widgets: res.widgets,
   }
 }

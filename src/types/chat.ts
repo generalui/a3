@@ -24,6 +24,7 @@ export type Message = {
   isError?: boolean
   executingTools?: ToolName[]
   messageId?: string
+  widgets?: object
 }
 
 export enum MessageSender {

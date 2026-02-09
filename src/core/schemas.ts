@@ -6,6 +6,7 @@ const baseResponseSchema = z.object({
   goalAchieved: z.boolean().describe('True if the agent has achieved its goal'),
   redirectToAgent: z.string().nullable(),
   conversationPayload: z.any(),
+  widgets: z.object(),
 })
 
 export type BaseResponse = z.infer<typeof baseResponseSchema>
@@ -17,6 +18,7 @@ export type BaseResponse = z.infer<typeof baseResponseSchema>
 export function createFullOutputSchema<T extends z.ZodObject<{ [key: string]: z.ZodTypeAny }>>(
   outputSchema: T,
   transitionsTo?: AgentId[],
+  widgets?: Record<string, z.ZodObject>,
 ) {
   // Create redirectToAgent field - either enum (if transitionsTo provided) or string
   const redirectToAgentField =
@@ -27,8 +29,22 @@ export function createFullOutputSchema<T extends z.ZodObject<{ [key: string]: z.
           .describe(`Next agent to hand off to (${transitionsTo.join(', ')}), or null`)
       : z.string().nullable().describe('Next agent to hand off to, or null')
 
+  // Create widgets field - dynamically provided schemas for each widget
+  const widgetsField = widgets
+    ? z.object(
+        Object.entries(widgets).reduce(
+          (acc, [key, schema]) => ({
+            ...acc,
+            [key]: schema.optional(),
+          }),
+          {},
+        ),
+      )
+    : z.undefined()
+
   return baseResponseSchema.extend({
     redirectToAgent: redirectToAgentField,
     conversationPayload: outputSchema,
+    widgets: widgetsField,
   })
 }

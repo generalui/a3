@@ -24,6 +24,7 @@ export type GenerateAgentResponseSpecification<
   goalAchieved: boolean
   nextAgentId: AgentId | null
   redirectToAgent?: AgentId | null
+  widgets?: object
 }>
 
 /**
@@ -57,4 +58,7 @@ export type Agent<TState extends BaseState = BaseState, TContext extends BaseCha
     Agent specific filters can be implemented here.
   */
   filterHistoryStrategy?: (messages: Conversation) => Conversation
+  /** Zod schemas defining the usage of widgets available to the agent */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  widgets?: Record<string, z.ZodObject<any>>
 }
