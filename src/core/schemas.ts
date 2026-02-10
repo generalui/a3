@@ -6,7 +6,7 @@ const baseResponseSchema = z.object({
   goalAchieved: z.boolean().describe('True if the agent has achieved its goal'),
   redirectToAgent: z.string().nullable(),
   conversationPayload: z.any(),
-  widgets: z.object(),
+  widgets: z.object({}).optional(),
 })
 
 export type BaseResponse = z.infer<typeof baseResponseSchema>
@@ -40,7 +40,7 @@ export function createFullOutputSchema<T extends z.ZodObject<{ [key: string]: z.
           {},
         ),
       )
-    : z.undefined()
+    : z.object({}).optional()
 
   return baseResponseSchema.extend({
     redirectToAgent: redirectToAgentField,
