@@ -92,6 +92,7 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
         timestamp: Date.now(),
         ...result.messageMetadata,
       },
+      widgets: result.widgets,
     }
     sessionData.messages.push(assistantMessage)
 
