@@ -60,6 +60,7 @@ export const simpleAgentResponse = async <
     chatbotMessage: res.chatbotMessage,
     goalAchieved: res.goalAchieved,
     nextAgentId,
-    widgets: res.widgets,
+    widgets:
+      res.widgets && typeof res.widgets === 'object' && Object.keys(res.widgets).length > 0 ? res.widgets : undefined,
   }
 }

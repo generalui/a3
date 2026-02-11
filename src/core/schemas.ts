@@ -1,12 +1,14 @@
 import { z } from 'zod'
 import { AgentId } from 'types'
 
+const falsy = z.union([z.object({}), z.literal(''), z.null()])
+
 const baseResponseSchema = z.object({
   chatbotMessage: z.string().describe('Your response to the user'),
   goalAchieved: z.boolean().describe('True if the agent has achieved its goal'),
   redirectToAgent: z.string().nullable(),
   conversationPayload: z.any(),
-  widgets: z.object({}).optional(),
+  widgets: falsy.optional(),
 })
 
 export type BaseResponse = z.infer<typeof baseResponseSchema>
@@ -30,17 +32,19 @@ export function createFullOutputSchema<T extends z.ZodObject<{ [key: string]: z.
       : z.string().nullable().describe('Next agent to hand off to, or null')
 
   // Create widgets field - dynamically provided schemas for each widget
-  const widgetsField = widgets
-    ? z.object(
-        Object.entries(widgets).reduce(
-          (acc, [key, schema]) => ({
-            ...acc,
-            [key]: schema.optional(),
-          }),
-          {},
-        ),
-      )
-    : z.object({}).optional()
+  const widgetsField = (
+    widgets
+      ? z.object(
+          Object.entries(widgets).reduce(
+            (acc, [key, schema]) => ({
+              ...acc,
+              [key]: schema.optional(),
+            }),
+            {},
+          ),
+        )
+      : falsy
+  ).optional()
 
   return baseResponseSchema.extend({
     redirectToAgent: redirectToAgentField,
