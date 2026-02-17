@@ -99,6 +99,13 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
     // 5. Update session state and save
     sessionData.state = result.newState
     sessionData.activeAgentId = result.nextAgentId ?? result.activeAgentId
+
+    // Re-fetch chatContext to ensure consistency after changes made by manageFlow
+    const latestSessionData = await this.store.load(this.sessionId)
+    if (latestSessionData?.chatContext) {
+      sessionData.chatContext = latestSessionData.chatContext
+    }
+
     await this.store.save(this.sessionId, sessionData)
 
     // 6. Return response
