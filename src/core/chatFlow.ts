@@ -8,7 +8,8 @@ import { log } from '@utils/logger'
 export const manageFlow = async <TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>({
   sessionData,
   lastAgentUnsentMessage,
-}: FlowInput<TState, TContext>): Promise<{
+  _depth = 0,
+}: FlowInput<TState, TContext> & { _depth?: number }): Promise<{
   responseMessage: string
   newState: TState
   activeAgentId: AgentId | null
@@ -17,6 +18,7 @@ export const manageFlow = async <TState extends BaseState, TContext extends Base
   messageMetadata?: MessageMetadata
   widgets?: object
 }> => {
+  const MAX_AUTO_TRANSITIONS = 10
   const { activeAgentId } = sessionData
   const agents = AgentRegistry.getInstance<TState, TContext>().getAll()
   const activeAgent = agents.find((a) => a.id === activeAgentId)
@@ -36,10 +38,37 @@ export const manageFlow = async <TState extends BaseState, TContext extends Base
     lastAgentUnsentMessage,
   })
 
+  // console.log(
+  //   '📢[chatFlow.ts:40]',
+  //   JSON.stringify(
+  //     { messages: sessionData.messages, newState, chatbotMessage, nextAgentId, goalAchieved, ...rest },
+  //     null,
+  //     2,
+  //   ),
+  // )
+
   const nextAgent = agents.find((a) => a.id === nextAgentId)
 
   const nextAgentDifferentFromActiveAgent = nextAgent?.id !== activeAgent.id && nextAgent !== undefined
   if (nextAgentDifferentFromActiveAgent) {
+    if (_depth >= MAX_AUTO_TRANSITIONS) {
+      log.warn(
+        `manageFlow: Max auto-transitions (${MAX_AUTO_TRANSITIONS}) reached. Stopping to prevent infinite loop.`,
+        {
+          activeAgent: activeAgent.id,
+          nextAgent: nextAgent.id,
+          depth: _depth,
+        },
+      )
+      return {
+        responseMessage: chatbotMessage,
+        newState,
+        activeAgentId: activeAgent.id,
+        nextAgentId: nextAgent.id,
+        goalAchieved,
+        ...rest,
+      }
+    }
     log.debug(`manageFlow: Logging ${Events.AgentChanged} event`, {
       activeAgent: activeAgent.id,
       nextAgent: nextAgent.id,
@@ -53,6 +82,7 @@ export const manageFlow = async <TState extends BaseState, TContext extends Base
         state: newState,
       },
       lastAgentUnsentMessage: chatbotMessage,
+      _depth: _depth + 1,
     })
   }
   return {
