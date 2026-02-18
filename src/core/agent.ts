@@ -15,7 +15,10 @@ export const getAgentResponse = async <TState extends BaseState, TContext extend
     sessionData,
     lastAgentUnsentMessage,
   })
-  const systemPrompt = `${dynamicPrompt}\n${widgetPrompt(agent)}`
+  // Resolve widgets (supports both static record and function form)
+  const resolvedWidgets = typeof agent.widgets === 'function' ? agent.widgets(sessionData) : agent.widgets
+
+  const systemPrompt = `${dynamicPrompt}\n${widgetPrompt({ ...agent, widgets: resolvedWidgets })}`
   log.log('agent id:', agent.id)
 
   // Get the consumer's output schema
@@ -23,7 +26,7 @@ export const getAgentResponse = async <TState extends BaseState, TContext extend
 
   // Merge with base fields to create the full output schema
   // If transitionsTo is provided, redirectToAgent will be constrained to those values
-  const fullOutputSchema = createFullOutputSchema(outputSchema, agent.transitionsTo, agent.widgets)
+  const fullOutputSchema = createFullOutputSchema(outputSchema, agent.transitionsTo, resolvedWidgets)
 
   const response = await sendChatRequest({
     agent,

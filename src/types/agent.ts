@@ -59,6 +59,8 @@ export type Agent<TState extends BaseState = BaseState, TContext extends BaseCha
   */
   filterHistoryStrategy?: (messages: Conversation) => Conversation
   /** Zod schemas defining the usage of widgets available to the agent */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  widgets?: Record<string, z.ZodObject<any>>
+  widgets?: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    | Record<string, z.ZodObject<any>>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    | ((sessionData: SessionData<TState, TContext>) => Record<string, z.ZodObject<any>>)
 }
