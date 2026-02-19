@@ -41,7 +41,15 @@ export const manageFlow = async <TState extends BaseState, TContext extends Base
   // console.log(
   //   '📢[chatFlow.ts:40]',
   //   JSON.stringify(
-  //     { messages: sessionData.messages, newState, chatbotMessage, nextAgentId, goalAchieved, ...rest },
+  //     {
+  //       activeAgent: activeAgentId,
+  //       messages: sessionData.messages,
+  //       newState,
+  //       chatbotMessage,
+  //       nextAgentId,
+  //       goalAchieved,
+  //       ...rest,
+  //     },
   //     null,
   //     2,
   //   ),
