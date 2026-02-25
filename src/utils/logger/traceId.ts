@@ -1,6 +1,6 @@
 // TODO: Remove once traceId is removed from logger
 import { getUUID } from '@utils/uuid'
-import { getCurrentTraceId } from './logger'
+// import { getCurrentTraceId } from './logger'
 
 /**
  * Generates a fallback traceId when no trace context is available.
@@ -29,10 +29,10 @@ export function getFallbackTraceId(sessionId: string | undefined): string {
  * @param sessionId - The session ID to use for fallback traceId generation
  * @returns A traceId from current context, or a fallback traceId
  */
-export async function getTraceIdWithFallback(sessionId: string | undefined): Promise<string> {
-  const traceId = await getCurrentTraceId()
-  if (traceId) {
-    return traceId
-  }
-  return getFallbackTraceId(sessionId)
-}
+// export async function getTraceIdWithFallback(sessionId: string | undefined): Promise<string> {
+//   const traceId = await getCurrentTraceId()
+//   if (traceId) {
+//     return traceId
+//   }
+//   return getFallbackTraceId(sessionId)
+// }

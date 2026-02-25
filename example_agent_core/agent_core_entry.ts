@@ -14,7 +14,7 @@ const store = new AgentCoreMemoryStore<State>({
 
 const app = new BedrockAgentCoreApp({
   invocationHandler: {
-    process: async (payload, context) => {
+    process: async (payload) => {
       const { prompt = 'hello' } = payload as {
         prompt?: string
       }

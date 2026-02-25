@@ -20,10 +20,11 @@ const MessageListContainer = styled(Box)`
 
 export function ChatMessageList({ messages }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const lastMessage = messages[messages.length - 1]
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length])
+  }, [messages.length, lastMessage?.body])
 
   return (
     <MessageListContainer>

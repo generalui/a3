@@ -30,9 +30,9 @@
     "example:setup": "cd example && npm i",
     "example:start": "cd example && npm run start",
     "lint": "run-p lint:project lint:markdown lint:example",
-    "lint:example": "eslint './example/**/*.{ts,tsx}' --max-warnings=0 --cache --cache-location .eslintcache",
-    "lint:markdown": "markdownlint-cli2 '**/*.md' '!**/no_commit/**' '!**/node_modules/**'",
-    "lint:project": "eslint './**/*.{ts,tsx}' --ignore-pattern 'example/**' --max-warnings=0 --cache --cache-location .eslintcache",
+    "lint:example": "eslint './example/**/*.{ts,tsx}' './example_agent_core/**/*.{ts,tsx}' --max-warnings=0 --cache --cache-location .eslintcache",
+    "lint:markdown": "markdownlint-cli2 '**/*.md'",
+    "lint:project": "eslint './**/*.{ts,tsx}' --ignore-pattern 'example/**' --ignore-pattern 'example_agent_core/**' --max-warnings=0 --cache --cache-location .eslintcache",
     "prepublishOnly": "npm run clean && npm run build",
     "test": "run-p test:unit",
     "test:coverage": "run-p test:unit:coverage",
@@ -54,17 +54,27 @@
   ],
   "author": "GenUI <https://genui.com>",
   "contributors": [
-    "Alejandro Panza",
-    "Stanley Jovel",
-    "Tom Jones",
-    "Steven Asher",
-    "Jon Ryser"
+    {
+      "name": "Alejandro Panza"
+    },
+    {
+      "name": "Stanley Jovel"
+    },
+    {
+      "name": "Tom Jones"
+    },
+    {
+      "name": "Steven Asher"
+    },
+    {
+      "name": "Jon Ryser"
+    }
   ],
   "license": "ISC",
   "homepage": "https://genui.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/generalui/a3.git"
+    "url": "git+https://github.com/generalui/a3.git"
   },
   "publishConfig": {
     "access": "public"
@@ -106,5 +116,12 @@
   "overrides": {
     "glob": "13.0.0",
     "jsdom": "27.4.0"
+  },
+  "directories": {
+    "doc": "docs",
+    "example": "example"
+  },
+  "bugs": {
+    "url": "https://github.com/generalui/a3/issues"
   }
 }

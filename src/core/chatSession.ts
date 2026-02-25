@@ -1,15 +1,17 @@
-import { manageFlow } from './chatFlow'
+import { manageFlow, manageFlowStream } from './chatFlow'
 import { AgentRegistry } from './AgentRegistry'
 import {
   SessionStore,
   SessionData,
   BaseState,
   BaseChatContext,
+  Agent,
   AgentId,
   Message,
   MessageSender,
   ChatResponse,
   ChatSessionConfig,
+  StreamEvent,
 } from 'types'
 import { MemorySessionStore } from '@stores/memoryStore'
 
@@ -56,21 +58,53 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
    * 6. Return response
    */
   async send(message: string): Promise<ChatResponse<TState>> {
-    // 1. Load or create session
+    const context = await this.beforeProcessMessage(message)
+    const result = await this.processMessage(context)
+    return await this.afterProcessMessage(context.sessionData, result)
+  }
+
+  /**
+   * Send a message and stream the response as an async generator of StreamEvents.
+   *
+   * Text deltas are yielded immediately for real-time rendering.
+   * Session state is persisted after the stream is fully consumed.
+   */
+  async *sendStream(message: string): AsyncGenerator<StreamEvent<TState>> {
+    const context = await this.beforeProcessMessage(message)
+
+    let completedResponse: ChatResponse<TState> | null = null
+
+    for await (const event of this.processMessageStream(context)) {
+      if (event.type === 'RunFinished') {
+        completedResponse = event.response
+      }
+      yield event
+    }
+
+    if (completedResponse) {
+      await this.afterProcessMessage(context.sessionData, completedResponse)
+    }
+  }
+
+  /**
+   * Prepares the session data for sending a message.
+   * Loads or creates the session, appends the user message, and returns the active agent.
+   */
+  private async beforeProcessMessage(message: string) {
     let sessionData = await this.store.load(this.sessionId)
 
     if (!sessionData) {
       sessionData = this.createInitialSession()
     }
 
-    // 2. Append user message
+    // Append user message
     const userMessage: Message = {
       text: message,
       metadata: { source: MessageSender.USER, timestamp: Date.now() },
     }
     sessionData.messages.push(userMessage)
 
-    // 3. Get active agent and run flow
+    // Get active agent
     const registry = AgentRegistry.getInstance<TState, TContext>()
     const activeAgentId = sessionData.activeAgentId ?? this.initialAgentId
     const agent = registry.get(activeAgentId)
@@ -79,12 +113,38 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
       throw new Error(`Agent not found: ${activeAgentId}`)
     }
 
-    const result = await manageFlow({
-      agent,
-      sessionData,
-    })
+    return { sessionData, agent }
+  }
 
-    // 4. Append assistant response
+  /**
+   * Executes the agent flow to generate a completely buffered response.
+   */
+  private async processMessage(context: {
+    sessionData: SessionData<TState, TContext>
+    agent: Agent<TState, TContext>
+  }) {
+    return await manageFlow(context)
+  }
+
+  /**
+   * Streams the agent flow execution event by event.
+   */
+  private async *processMessageStream(context: {
+    sessionData: SessionData<TState, TContext>
+    agent: Agent<TState, TContext>
+  }): AsyncGenerator<StreamEvent<TState>> {
+    yield* manageFlowStream<TState, TContext>(context)
+  }
+
+  /**
+   * Finalizes the response by appending the assistant message, updating state,
+   * refreshing chat context, and persisting the session.
+   */
+  private async afterProcessMessage(
+    sessionData: SessionData<TState, TContext>,
+    result: ChatResponse<TState>,
+  ): Promise<ChatResponse<TState>> {
+    // Append assistant response
     const assistantMessage: Message = {
       text: result.responseMessage,
       metadata: {
@@ -96,29 +156,20 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
     }
     sessionData.messages.push(assistantMessage)
 
-    // 5. Update session state and save
-    sessionData.state = result.newState
-    sessionData.activeAgentId = result.nextAgentId ?? result.activeAgentId
+    // Update session state
+    sessionData.state = result.state
+    sessionData.activeAgentId = result.nextAgentId ?? result.activeAgentId ?? sessionData.activeAgentId
 
-    // Re-fetch chatContext to ensure consistency after changes made by manageFlow
+    // Re-fetch chatContext to ensure consistency
     const latestSessionData = await this.store.load(this.sessionId)
-    if (latestSessionData?.chatContext) {
+    if (latestSessionData && latestSessionData.chatContext) {
+      // eslint-disable-next-line require-atomic-updates
       sessionData.chatContext = latestSessionData.chatContext
     }
 
     await this.store.save(this.sessionId, sessionData)
 
-    // 6. Return response
-    return {
-      responseMessage: result.responseMessage,
-      messageMetadata: result.messageMetadata,
-      activeAgentId: result.activeAgentId,
-      nextAgentId: result.nextAgentId,
-      state: result.newState,
-      goalAchieved: result.goalAchieved,
-      sessionId: this.sessionId,
-      widgets: result.widgets,
-    }
+    return result
   }
 
   /**

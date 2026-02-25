@@ -1,107 +1,55 @@
-# @genui-a3/core
+# GenUI A3
 
-[![npm version](https://img.shields.io/npm/v/@genui-a3/core)](https://www.npmjs.com/package/@genui-a3/core)
-[![license](https://img.shields.io/npm/l/@genui-a3/core)](https://github.com/generalui/a3/blob/main/LICENSE)
-
-**A TypeScript framework for building multi-agent chat applications.**
+**An open-source TypeScript framework for building multi-agent chat applications.**
 
 Define focused agents.
 Register them.
 Let A3 route conversations dynamically.
-No graphs.
-No state machines.
 
-## Feature Highlights
+## Who is this for?
 
-- **Multi-agent orchestration** -- agents route to each other dynamically based on conversation context
-- **Shared state** -- a single state object flows across all agents in a session
-- **Structured output** -- Zod schemas validate every LLM response at runtime
-- **Streaming** -- real-time token streaming via `sendStream` with AG-UI-compatible event types
-- **Pluggable session stores** -- swap in-memory, AWS AgentCore, Redis, or your own store
-- **Pluggable providers** -- ships with AWS Bedrock; designed for additional providers
-- **TypeScript-native** -- full type safety from agent definitions to response handling
-- **Dual ESM/CJS** -- works in any Node.js environment
+- **Engineering teams** building conversational AI products that need multiple specialized agents working together
+- **Product leaders** evaluating agent orchestration frameworks for TypeScript/Node.js stacks
+- **Developers** who want to go from zero to a working multi-agent system in minutes, not weeks
 
-## Table of Contents
+## Why GenUI A3?
 
-- [Quick Start](#quick-start)
-- [Architecture at a Glance](#architecture-at-a-glance)
-- [Core Concepts](#core-concepts)
-  - [Agent](#agent)
-  - [AgentRegistry](#agentregistry)
-  - [ChatSession](#chatsession)
-  - [State](#state)
-  - [Output Schemas](#output-schemas)
-  - [Routing](#routing)
-  - [Session Stores](#session-stores)
-  - [Providers](#providers)
-  - [Streaming](#streaming)
-- [Multi-Agent Example](#multi-agent-example)
-- [API Reference](#api-reference)
-- [Comparison](#comparison)
-- [Roadmap](#roadmap)
-- [Requirements](#requirements)
-- [Contributing](#contributing)
-- [License](#license)
+### The problem
 
-## Quick Start
+Building agent-based chat applications is harder than it should be.
+Most teams face the same challenges:
 
-### Install
+- Coordinating multiple specialized agents in a single conversation
+- Managing shared state as users move between agents
+- Getting structured, validated responses from LLMs
+- Swapping LLM providers without rewriting business logic
+- Persisting conversation sessions across requests
 
-```bash
-npm install @genui-a3/core
-```
+Existing frameworks solve pieces of this, this is an alternative approach without the complexity of writing graph definitions or managing complex state machines
 
-### Define an agent
+### How A3 solves it
 
-```typescript
-import { z } from 'zod'
-import { Agent, simpleAgentResponse, BaseState } from '@genui-a3/core'
+A3 approach: **define agents, register them, and let the framework handle routing.**
 
-interface State extends BaseState {
-  userName?: string
-}
+Each agent is a focused unit with a clear responsibility.
+Agents decide when to hand off to another agent based on conversation context.
+The framework manages the flow, state, and session persistence automatically.
 
-export const greetingAgent: Agent<State> = {
-  id: 'greeting',
-  name: 'Greeting Agent',
-  description: 'Greets the user and collects their name',
-  promptGenerator: async () => `
-    You are a friendly greeting agent. Your goal is to greet the user
-    and learn their name. Once you have their name, set goalAchieved to true.
-  `,
-  outputSchema: z.object({
-    userName: z.string().optional(),
-  }),
-  generateAgentResponse: simpleAgentResponse,
-  fitDataInGeneralFormat: (data, state) => ({ ...state, ...data }),
-  nextAgentSelector: (_state, goalAchieved) =>
-    goalAchieved ? 'end' : 'greeting',
-}
-```
+There are no graphs to define.
+No state machines to maintain.
 
-### Register and run
+### How A3 compares
 
-```typescript
-import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
+| Capability | GenUI A3 | LangGraph | CrewAI | AutoGen |
+|---|---|---|---|---|
+| **Setup complexity** | Minimal | Moderate | Moderate | High |
+| **Routing model** | Dynamic (agent-driven) | Static graph | Role-based | Conversation-based |
+| **State management** | Shared global state | Graph state | Shared memory | Message passing |
+| **TypeScript-native** | Yes | Python-first | Python-only | Python-first |
+| **Structured output** | Zod schemas | Custom parsers | Pydantic | Custom parsers |
+| **Session persistence** | Pluggable stores | Custom | Custom | Custom |
 
-const registry = AgentRegistry.getInstance<State>()
-registry.register(greetingAgent)
-
-const session = new ChatSession<State>({
-  sessionId: 'demo',
-  store: new MemorySessionStore(),
-  initialAgentId: 'greeting',
-  initialState: { userName: undefined },
-})
-
-const response = await session.send('Hi there!')
-console.log(response.responseMessage)
-// => "Hello! I'd love to get to know you. What's your name?"
-```
-
-That's it.
-One agent, one session, one function call.
+A3 optimizes for **simplicity and speed-to-value**.
 
 ## Architecture at a Glance
 
@@ -390,7 +338,7 @@ interface SessionStore<TState extends BaseState> {
 | `MemorySessionStore` | Development and testing (sessions lost on restart) |
 | `AgentCoreMemoryStore` | AWS Bedrock AgentCore integration for persistent storage |
 
-Custom stores are straightforward to implement for Redis, DynamoDB, PostgreSQL, or any other backend.
+**Custom stores** are straightforward to implement for Redis, DynamoDB, PostgreSQL, or any other backend.
 
 ### Providers
 
@@ -409,161 +357,36 @@ The Bedrock provider:
 - Merges sequential same-sender messages for API compatibility
 - Applies agent-specific history filtering before sending
 
-### Streaming
+## [Quick Start](./quick-start.md)
 
-A3 supports real-time token streaming via `sendStream`.
-Instead of waiting for a complete response, your application receives events as they happen.
+Install, define a simple agent, register it, and send a message -- all in ~20 lines of code.
 
-```typescript
-for await (const event of session.sendStream('Hello!')) {
-  switch (event.type) {
-    case 'TextMessageContent':
-      process.stdout.write(event.delta) // real-time token output
-      break
-    case 'AgentTransition':
-      console.log(`${event.fromAgentId} → ${event.toAgentId}`)
-      break
-    case 'RunFinished':
-      console.log('Final state:', event.response.state)
-      break
-    case 'RunError':
-      console.error('Error:', event.error)
-      break
-  }
-}
-```
-
-**StreamEvent types:**
-
-| Event Type | Key Fields | Description |
-|---|---|---|
-| `RunStarted` | `runId`, `threadId` | Stream has begun |
-| `TextMessageStart` | `messageId` | A new text message is starting |
-| `TextMessageContent` | `delta`, `agentId` | A text chunk from the active agent |
-| `TextMessageEnd` | `messageId` | Text message complete |
-| `ToolCallStart` | `toolCallId`, `toolCallName` | Tool/function call initiated |
-| `ToolCallArgs` | `toolCallId`, `delta` | Tool argument chunk |
-| `ToolCallEnd` | `toolCallId` | Tool call complete |
-| `ToolCallResult` | `data`, `agentId` | Tool execution result with extracted data |
-| `AgentTransition` | `fromAgentId`, `toAgentId` | Agent handoff occurred |
-| `RunFinished` | `response` | Stream complete with final `ChatResponse` |
-| `RunError` | `error`, `agentId` | Error during stream |
-
-## Multi-Agent Example
+## [Multi-Agent Example](./multi-agent-example.md)
 
 Three agents routing between each other, demonstrating state flowing across agent boundaries and automatic agent chaining.
 
-### Define the agents
+## Roadmap
 
-```typescript
-import { z } from 'zod'
-import { Agent, simpleAgentResponse, BaseState } from '@genui-a3/core'
+### Streaming Responses -- Coming Soon
 
-interface AppState extends BaseState {
-  userName?: string
-  isAuthenticated: boolean
-  issueCategory?: string
-}
+Real-time token streaming via the AG-UI protocol.
+Instead of waiting for a complete response, your frontend receives tokens as they're generated.
 
-// Agent 1: Greeting -- collects the user's name, then routes to auth
-const greetingAgent: Agent<AppState> = {
-  id: 'greeting',
-  name: 'Greeting Agent',
-  description: 'Greets the user and collects their name',
-  promptGenerator: async () => `
-    Greet the user warmly. Ask for their name.
-    Once you have it, set goalAchieved to true.
-  `,
-  outputSchema: z.object({ userName: z.string().optional() }),
-  generateAgentResponse: simpleAgentResponse,
-  fitDataInGeneralFormat: (data, state) => ({ ...state, ...data }),
-  nextAgentSelector: (_state, goalAchieved) =>
-    goalAchieved ? 'auth' : 'greeting',
-  transitionsTo: ['auth'],
-}
+### Simplified Agent API -- Coming Soon
 
-// Agent 2: Auth -- verifies identity, then routes to support
-const authAgent: Agent<AppState> = {
-  id: 'auth',
-  name: 'Auth Agent',
-  description: 'Verifies user identity',
-  promptGenerator: async ({ sessionData }) => `
-    The user's name is ${sessionData.state.userName}.
-    Ask them to confirm their email to verify identity.
-    Set goalAchieved to true once verified.
-  `,
-  outputSchema: z.object({ isAuthenticated: z.boolean() }),
-  generateAgentResponse: simpleAgentResponse,
-  fitDataInGeneralFormat: (data, state) => ({ ...state, ...data }),
-  nextAgentSelector: (_state, goalAchieved) =>
-    goalAchieved ? 'support' : 'auth',
-  transitionsTo: ['support'],
-}
+Reduce agent definitions to just the essentials.
+Many of the current required properties will get sensible defaults, bringing the minimum agent definition down to 1-2 required parameters.
 
-// Agent 3: Support -- handles the user's issue
-const supportAgent: Agent<AppState> = {
-  id: 'support',
-  name: 'Support Agent',
-  description: 'Helps resolve user issues',
-  promptGenerator: async ({ sessionData }) => `
-    The user ${sessionData.state.userName} is authenticated.
-    Help them with their issue. Categorize it.
-    Set goalAchieved when resolved.
-  `,
-  outputSchema: z.object({
-    issueCategory: z.string().optional(),
-  }),
-  generateAgentResponse: simpleAgentResponse,
-  fitDataInGeneralFormat: (data, state) => ({ ...state, ...data }),
-  nextAgentSelector: (_state, goalAchieved) =>
-    goalAchieved ? 'end' : 'support',
-}
-```
+### Provider Abstraction -- Coming Soon
 
-### Wire them up
+First-class support for multiple LLM providers:
+OpenAI, Anthropic, AWS Bedrock, and custom providers.
+Switch between providers without changing agent code.
 
-```typescript
-import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
+### AG-UI Protocol -- Coming Soon
 
-const registry = AgentRegistry.getInstance<AppState>()
-registry.register([greetingAgent, authAgent, supportAgent])
-
-const session = new ChatSession<AppState>({
-  sessionId: 'user-456',
-  store: new MemorySessionStore(),
-  initialAgentId: 'greeting',
-  initialState: { isAuthenticated: false },
-})
-```
-
-### Conversation flow
-
-```typescript
-// Turn 1: User greets, greeting agent responds
-await session.send('Hello!')
-// => Greeting agent asks for name
-
-// Turn 2: User provides name, greeting agent completes and chains to auth
-await session.send("I'm Alex")
-// => Auth agent asks for email verification
-// (greeting → auth happened automatically in one request)
-
-// Turn 3: User verifies, auth completes and chains to support
-await session.send('alex@example.com')
-// => Support agent asks how it can help
-// State now: { userName: 'Alex', isAuthenticated: true }
-
-// Turn 4: Support agent handles the issue
-await session.send('I need help with my billing')
-// => Support agent resolves the issue
-// State: { userName: 'Alex', isAuthenticated: true, issueCategory: 'billing' }
-```
-
-Notice that:
-
-- **State persists across agents**: `userName` set by the greeting agent is available to auth and support
-- **Agent chaining is automatic**: when greeting completes, auth starts in the same request
-- **Each agent has its own prompt and schema**: they extract different data but share the same state
+Full compliance with the [ag-ui.com](https://ag-ui.com) protocol for standardized agent-to-frontend event streaming.
+Connect any AG-UI compatible frontend to your A3 agents.
 
 ## API Reference
 
@@ -576,7 +399,6 @@ Notice that:
 | `simpleAgentResponse` | Function | Default response generator for agents |
 | `getAgentResponse` | Function | Low-level agent response pipeline (prompt, schema, LLM call, validation) |
 | `manageFlow` | Function | Recursive chat flow orchestration with automatic agent chaining |
-| `manageFlowStream` | Function | Streaming variant of `manageFlow` yielding `StreamEvent`s |
 | `createFullOutputSchema` | Function | Merges agent schema with base response fields |
 | `sendChatRequest` | Function | Sends structured requests to the LLM provider |
 | `MemorySessionStore` | Class | In-memory session store for development and testing |
@@ -587,10 +409,7 @@ Notice that:
 | Method | Returns | Description |
 |---|---|---|
 | `send(message)` | `Promise<ChatResponse<TState>>` | Send a user message and get the agent's response |
-| `sendStream(message)` | `AsyncGenerator<StreamEvent<TState>>` | Send a message and stream the response as events |
 | `getSessionData()` | `Promise<SessionData<TState> \| null>` | Load current session state without sending a message |
-| `getOrCreateSessionData()` | `Promise<SessionData<TState>>` | Load session or create with initial values if none exists |
-| `upsertSessionData(updates)` | `Promise<void>` | Merge partial updates into the current session |
 | `getHistory()` | `Promise<Message[]>` | Retrieve conversation history |
 | `clear()` | `Promise<void>` | Delete the session from the store |
 
@@ -599,74 +418,8 @@ Notice that:
 | Method | Returns | Description |
 |---|---|---|
 | `getInstance()` | `AgentRegistry<TState>` | Get the singleton instance |
-| `resetInstance()` | `void` | Reset the singleton (for testing) |
 | `register(agents)` | `void` | Register one or more agents (throws on duplicate ID) |
 | `unregister(id)` | `boolean` | Remove an agent by ID |
 | `get(id)` | `Agent<TState> \| undefined` | Look up an agent by ID |
 | `getAll()` | `Agent<TState>[]` | Get all registered agents |
 | `has(id)` | `boolean` | Check if an agent is registered |
-| `getDescriptions()` | `Record<string, string>` | Map of agent IDs to their descriptions |
-| `clear()` | `void` | Remove all registered agents (for testing) |
-| `count` | `number` | Number of registered agents (getter) |
-
-### ChatResponse Fields
-
-| Field | Type | Description |
-|---|---|---|
-| `responseMessage` | `string` | The agent's text response to the user |
-| `activeAgentId` | `string \| null` | The agent that generated this response |
-| `nextAgentId` | `string \| null` | The agent that will handle the next message |
-| `state` | `TState` | Updated session state after this turn |
-| `goalAchieved` | `boolean` | Whether the agent considers its goal complete |
-| `sessionId` | `string` | Session identifier |
-| `widgets` | `object \| undefined` | Optional widget data for rich UI rendering |
-
-## Comparison
-
-| Capability | GenUI A3 | LangGraph | CrewAI | AutoGen |
-|---|---|---|---|---|
-| **Setup complexity** | Minimal | Moderate | Moderate | High |
-| **Routing model** | Dynamic (agent-driven) | Static graph | Role-based | Conversation-based |
-| **State management** | Shared global state | Graph state | Shared memory | Message passing |
-| **TypeScript-native** | Yes | Python-first | Python-only | Python-first |
-| **Structured output** | Zod schemas | Custom parsers | Pydantic | Custom parsers |
-| **Session persistence** | Pluggable stores | Custom | Custom | Custom |
-
-## Roadmap
-
-- **Simplified Agent API** -- reduce agent definitions to just the essentials with sensible defaults
-- **Provider Abstraction** -- first-class support for OpenAI, Anthropic, and custom providers alongside Bedrock
-- **AG-UI Protocol** -- full compliance with the [ag-ui.com](https://ag-ui.com) protocol for standardized agent-to-frontend event streaming
-
-## Requirements
-
-- Node.js 20.19.0+
-- TypeScript 5.9+
-- `zod` 4.x (included as a dependency)
-- A configured LLM provider (AWS Bedrock provider included)
-
-## Contributing
-
-```bash
-# Install dependencies
-npm install
-
-# Build
-npm run build
-
-# Run unit tests
-npm run test:unit
-
-# Run integration tests
-npm run test:integration
-
-# Lint
-npm run lint
-
-# Watch mode (build + example)
-npm run dev
-```
-
-## License
-
-ISC

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { Conversation, MessageMetadata } from 'types/chat'
 import { SessionData, BaseChatContext, BaseState } from 'types/session'
+import { StreamEvent } from 'types/stream'
 
 /**
  * Agent IDs are string-based to support dynamic registration.
@@ -14,10 +15,7 @@ export interface FlowInput<TState extends BaseState = BaseState, TContext extend
   lastAgentUnsentMessage?: string
 }
 
-export type GenerateAgentResponseSpecification<
-  TState extends BaseState = BaseState,
-  TContext extends BaseChatContext = BaseChatContext,
-> = (input: FlowInput<TState, TContext>) => Promise<{
+export type AgentResponseResult<TState extends BaseState = BaseState> = {
   newState: TState
   chatbotMessage: string
   messageMetadata?: MessageMetadata
@@ -25,7 +23,17 @@ export type GenerateAgentResponseSpecification<
   nextAgentId: AgentId | null
   redirectToAgent?: AgentId | null
   widgets?: object
-}>
+}
+
+export type GenerateAgentResponseSpecification<
+  TState extends BaseState = BaseState,
+  TContext extends BaseChatContext = BaseChatContext,
+> = (input: FlowInput<TState, TContext>) => Promise<AgentResponseResult<TState>>
+
+export type GenerateAgentResponseStreamSpecification<
+  TState extends BaseState = BaseState,
+  TContext extends BaseChatContext = BaseChatContext,
+> = (input: FlowInput<TState, TContext>) => AsyncGenerator<StreamEvent<TState>, AgentResponseResult<TState>>
 
 /**
  * Output schema for an agent.
@@ -47,6 +55,8 @@ export type Agent<TState extends BaseState = BaseState, TContext extends BaseCha
   promptGenerator: (params: FlowInput<TState, TContext>) => Promise<string>
   outputSchema: AgentOutputSchema<TState, TContext>
   generateAgentResponse: GenerateAgentResponseSpecification<TState, TContext>
+  /** Optional streaming response generator. Falls back to simpleAgentResponseStream. */
+  generateAgentResponseStream?: GenerateAgentResponseStreamSpecification<TState, TContext>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fitDataInGeneralFormat: (data: any, state: TState) => TState
   nextAgentSelector?: (state: TState, agentGoalAchieved: boolean) => AgentId

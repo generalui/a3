@@ -1,4 +1,4 @@
-import { DatadogBrowserLogger } from './datadogBrowserLogger'
+// import { DatadogBrowserLogger } from './datadogBrowserLogger'
 import { LoggerFacade } from './loggerFacade'
 
 // Lazy load Winston to avoid bundling it in client code
@@ -48,7 +48,7 @@ export class CoreLogger {
       })
     } else {
       // Client side - use Datadog
-      this.logger = DatadogBrowserLogger.getInstance()
+      // this.logger = DatadogBrowserLogger.getInstance()
     }
   }
 

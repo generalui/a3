@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
 import { greetingAgent, State } from '../../agents/greeting'
+import { ageAgent } from '../../agents/age'
 
 // Register the agent on module load
 const registry = AgentRegistry.getInstance<State>()
-registry.register(greetingAgent)
+registry.register([greetingAgent, ageAgent])
 
 // Shared store instance (in production, use Redis/DynamoDB)
 const store = new MemorySessionStore<State>()

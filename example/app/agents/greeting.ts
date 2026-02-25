@@ -7,6 +7,7 @@ import { Agent, simpleAgentResponse, BaseState } from '@genui-a3/core'
  */
 export interface State extends BaseState {
   userName?: string
+  userAge?: string
 }
 
 /**
@@ -30,7 +31,7 @@ export const greetingAgent: Agent<State> = {
   generateAgentResponse: simpleAgentResponse,
   nextAgentSelector: (state, agentGoalAchieved) => {
     if (agentGoalAchieved) {
-      return 'end'
+      return 'age'
     }
     return 'greeting'
   },
