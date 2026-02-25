@@ -1,0 +1,203 @@
+name: Code Quality
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+jobs:
+  quality:
+    name: Lint and test
+    # The linting and testing pipeline should never take more than 15 minutes.
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    environment:
+      name: main
+    steps:
+      - name: Get Info
+        id: job-info
+        uses: generalui/github-workflow-accelerators/.github/actions/job-info@1.0.1-job-info
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Get changed Code Quality workflow
+        id: changed-code-quality
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            .github/workflows/code-quality.yml
+
+      - name: Get changed markdown files
+        id: changed-markdown
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            .markdownlint.json
+            .markdownlintignore
+            **/*.md
+          files_ignore: |
+            **/SPECS.md
+
+      - name: Get changed JavaScript project files
+        id: changed-js-project
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            .eslint.config.mjs
+            .prettierignore
+            .prettierrc
+            next.config.ts
+            package-lock.json
+            postcss.config.mjs
+            tsconfig.json
+            vitest.config.ts
+            vitest.shims.d.ts
+            src/**
+          files_ignore: |
+            **/*.md
+
+      - name: Should lint Documentation
+        id: lint-docs
+        run: |
+          run=false
+          if [ "${{ steps.changed-markdown.outputs.any_modified }}" == 'true' ] || [ "${{ steps.changed-code-quality.outputs.any_modified }}" == 'true' ] || [ "${{ github.event.action }}" == 'workflow_dispatch' ]; then
+            run=true
+          fi
+          echo "run=${run}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Should run unit tests
+        id: check-js
+        run: |
+          run=false
+          if [ "${{ steps.changed-js-project.outputs.any_modified }}" == 'true' ] || [ "${{ steps.changed-code-quality.outputs.any_modified }}" == 'true' ] || [ "${{ github.event.action }}" == 'workflow_dispatch' ]; then
+            run=true
+          fi
+          echo "run=${run}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Lint all Documentation
+        if: steps.lint-docs.outputs.run == 'true'
+        uses: DavidAnson/markdownlint-cli2-action@v22
+        with:
+          globs: |
+            **/*.md
+            !src/agents/**
+            !**/SPECS.md
+            !**/.terraform/**
+
+      - name: Setup Node JS
+        if: steps.check-js.outputs.run == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .tool-versions
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        if: steps.check-js.outputs.run == 'true'
+        run: npm ci
+        shell: bash
+
+      - name: Lint project
+        if: steps.check-js.outputs.run == 'true'
+        run: npm run lint:project
+        shell: bash
+
+      - name: Run unit tests
+        if: steps.check-js.outputs.run == 'true'
+        id: run-unit-tests
+        run: npm run test:coverage
+        continue-on-error: true
+        shell: bash
+
+      # Run this even if unit tests fail
+      - name: Get the coverage file.
+        if: steps.check-js.outputs.run == 'true'
+        run: |
+          branch=${{ steps.job-info.outputs.pr_branch }}
+          coverage_branch=${branch//[\":<>|*?\\\/]/-}
+          coverage_dir=coverage-${coverage_branch}
+          mkdir -p ${coverage_dir} && sudo cp -r coverage ${coverage_dir}
+
+          echo "coverage_branch=${coverage_branch}" >> $GITHUB_OUTPUT
+          echo "coverage_dir=${coverage_dir}" >> $GITHUB_OUTPUT
+
+          echo "::group::Coverage Data"
+          echo 'branch: '${coverage_branch}
+          echo 'dir: '${coverage_dir}
+          echo "::endgroup::"
+        shell: bash
+        id: coverage
+
+      - name: Upload the Coverage as an artifact
+        if: steps.check-js.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.coverage.outputs.coverage_branch }}-test-coverage
+          path: ${{ steps.coverage.outputs.coverage_dir }}
+          retention-days: 30
+
+      - name: Check if unit tests failed
+        if: steps.check-js.outputs.run == 'true'
+        run: |
+          if [ "${{ steps.run-unit-tests.outcome }}" == "failure" ]; then
+            echo "Unit tests failed."
+            exit 1
+          fi
+        shell: bash
+
+      # - name: E2E Smoke Tests
+      #   if: steps.check-js.outputs.run == 'true'
+      #   id: e2e-smoke
+      #   run: |
+      #     # See https://github.com/microsoft/playwright/issues/34251#issuecomment-2580591770
+      #     sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      #     ./scripts/start.sh
+      #     yarn electron:build
+      #     yarn e2e:install
+      #     yarn e2e:ci
+      #   shell: bash
+      #   continue-on-error: true
+
+      # - name: Get the E2E report.
+      #   if: steps.check-js.outputs.run == 'true'
+      #   run: |
+      #     # Stop the frontend instance
+      #     ./scripts/stop.sh
+
+      #     branch=${{ steps.job-info.outputs.pr_branch }}
+      #     coverage_branch=${branch//[\":<>|*?\\\/]/-}
+      #     coverage_dir=e2e-${coverage_branch}
+      #     mkdir -p ${coverage_dir} && sudo cp -r coverage/e2e_reports ${coverage_dir}
+      #     cp scripts/logs/frontend.log ${coverage_dir}
+
+      #     echo "coverage_branch=${coverage_branch}" >> $GITHUB_OUTPUT
+      #     echo "coverage_dir=${coverage_dir}" >> $GITHUB_OUTPUT
+
+      #     echo "::group::Coverage Data"
+      #     echo 'branch: '${coverage_branch}
+      #     echo 'dir: '${coverage_dir}
+      #     echo "::endgroup::"
+      #   shell: bash
+      #   id: e2e-report
+
+      # - name: Upload the E2E report as an artifact
+      #   if: steps.check-js.outputs.run == 'true'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: ${{ steps.e2e-report.outputs.coverage_branch }}-e2e-report
+      #     path: ${{ steps.e2e-report.outputs.coverage_dir }}
+      #     retention-days: 30
+
+      # - name: Check E2E failure
+      #   if: steps.e2e-smoke.outputs.tests_passed == 'false'
+      #   run: exit 1
+      #   shell: bash
+
+      - name: Default Job Success
+        if: steps.lint-docs.outputs.run == 'false' && steps.check-js.outputs.run == 'false'
+        run: exit 0
