@@ -1,104 +1,194 @@
 import { AgentRegistry } from '@core/AgentRegistry'
-import { BaseState, BaseChatContext, AgentId, FlowInput } from 'types'
-import { MessageMetadata } from 'types/chat'
+import { simpleAgentResponseStream } from '@core/agent'
+import {
+  Agent,
+  AgentResponseResult,
+  BaseState,
+  BaseChatContext,
+  FlowInput,
+  StreamEvent,
+  ChatResponse,
+  SessionData,
+} from 'types'
 import { Events } from 'types/events'
 import { logEvent } from '@utils/eventLogger'
 import { log } from '@utils/logger'
+
+const MAX_AUTO_TRANSITIONS = 10
+
+type TransitionDecision<TState extends BaseState, TContext extends BaseChatContext> =
+  | { action: 'respond'; response: ChatResponse<TState> }
+  | {
+      action: 'transition'
+      nextAgent: Agent<TState, TContext>
+      updatedSessionData: SessionData<TState, TContext>
+      chatbotMessage: string
+      newDepth: number
+    }
+
+function resolveTransition<TState extends BaseState, TContext extends BaseChatContext>({
+  agents,
+  activeAgent,
+  agentResult,
+  sessionData,
+  _depth,
+}: {
+  agents: Agent<TState, TContext>[]
+  activeAgent: Agent<TState, TContext>
+  agentResult: AgentResponseResult<TState>
+  sessionData: SessionData<TState, TContext>
+  _depth: number
+}): TransitionDecision<TState, TContext> {
+  const { newState, chatbotMessage, goalAchieved, nextAgentId, widgets, ...rest } = agentResult
+  const nextAgent = agents.find((a) => a.id === nextAgentId)
+  const shouldTransition = nextAgent?.id !== activeAgent.id && nextAgent !== undefined
+
+  if (shouldTransition) {
+    if (_depth >= MAX_AUTO_TRANSITIONS) {
+      log.warn(`Max auto-transitions (${MAX_AUTO_TRANSITIONS}) reached. Stopping to prevent infinite loop.`, {
+        activeAgent: activeAgent.id,
+        nextAgent: nextAgent.id,
+        depth: _depth,
+      })
+      return {
+        action: 'respond',
+        response: {
+          responseMessage: chatbotMessage,
+          state: newState,
+          activeAgentId: activeAgent.id,
+          nextAgentId: nextAgent.id,
+          goalAchieved,
+          sessionId: sessionData.sessionId,
+          widgets,
+          ...rest,
+        } as ChatResponse<TState>,
+      }
+    }
+
+    log.debug(`Logging ${Events.AgentChanged} event`, {
+      activeAgent: activeAgent.id,
+      nextAgent: nextAgent.id,
+    })
+    void logEvent(Events.AgentChanged, { activeAgent: activeAgent.id, nextAgent: nextAgent.id })
+
+    return {
+      action: 'transition',
+      nextAgent,
+      updatedSessionData: {
+        ...sessionData,
+        activeAgentId: nextAgent.id,
+        state: newState,
+      },
+      chatbotMessage,
+      newDepth: _depth + 1,
+    }
+  }
+
+  return {
+    action: 'respond',
+    response: {
+      responseMessage: chatbotMessage,
+      state: newState,
+      activeAgentId: activeAgent.id,
+      nextAgentId,
+      goalAchieved,
+      sessionId: sessionData.sessionId,
+      widgets,
+      ...rest,
+    } as ChatResponse<TState>,
+  }
+}
 
 export const manageFlow = async <TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>({
   sessionData,
   lastAgentUnsentMessage,
   _depth = 0,
-}: FlowInput<TState, TContext> & { _depth?: number }): Promise<{
-  responseMessage: string
-  newState: TState
-  activeAgentId: AgentId | null
-  nextAgentId: AgentId | null
-  goalAchieved: boolean
-  messageMetadata?: MessageMetadata
-  widgets?: object
-}> => {
-  const MAX_AUTO_TRANSITIONS = 10
+}: FlowInput<TState, TContext> & { _depth?: number }): Promise<ChatResponse<TState>> => {
   const { activeAgentId } = sessionData
   const agents = AgentRegistry.getInstance<TState, TContext>().getAll()
   const activeAgent = agents.find((a) => a.id === activeAgentId)
+
   if (activeAgent === undefined) {
     return {
       responseMessage: 'No active agent',
-      newState: sessionData.state,
+      state: sessionData.state,
       activeAgentId: null,
       nextAgentId: null,
       goalAchieved: false,
+      sessionId: sessionData.sessionId,
     }
   }
+
   log.log('activeAgent:', activeAgent.id)
-  const { newState, chatbotMessage, nextAgentId, goalAchieved, ...rest } = await activeAgent.generateAgentResponse({
+  const agentResult = await activeAgent.generateAgentResponse({
     agent: activeAgent,
     sessionData,
     lastAgentUnsentMessage,
   })
 
-  // console.log(
-  //   '📢[chatFlow.ts:40]',
-  //   JSON.stringify(
-  //     {
-  //       activeAgent: activeAgentId,
-  //       messages: sessionData.messages,
-  //       newState,
-  //       chatbotMessage,
-  //       nextAgentId,
-  //       goalAchieved,
-  //       ...rest,
-  //     },
-  //     null,
-  //     2,
-  //   ),
-  // )
+  const decision = resolveTransition({ agents, activeAgent, agentResult, sessionData, _depth })
 
-  const nextAgent = agents.find((a) => a.id === nextAgentId)
-
-  const nextAgentDifferentFromActiveAgent = nextAgent?.id !== activeAgent.id && nextAgent !== undefined
-  if (nextAgentDifferentFromActiveAgent) {
-    if (_depth >= MAX_AUTO_TRANSITIONS) {
-      log.warn(
-        `manageFlow: Max auto-transitions (${MAX_AUTO_TRANSITIONS}) reached. Stopping to prevent infinite loop.`,
-        {
-          activeAgent: activeAgent.id,
-          nextAgent: nextAgent.id,
-          depth: _depth,
-        },
-      )
-      return {
-        responseMessage: chatbotMessage,
-        newState,
-        activeAgentId: activeAgent.id,
-        nextAgentId: nextAgent.id,
-        goalAchieved,
-        ...rest,
-      }
-    }
-    log.debug(`manageFlow: Logging ${Events.AgentChanged} event`, {
-      activeAgent: activeAgent.id,
-      nextAgent: nextAgent.id,
-    })
-    void logEvent(Events.AgentChanged, { activeAgent: activeAgent.id, nextAgent: nextAgent.id })
+  if (decision.action === 'transition') {
     return manageFlow({
-      agent: nextAgent,
-      sessionData: {
-        ...sessionData,
-        activeAgentId: nextAgent.id,
-        state: newState,
-      },
-      lastAgentUnsentMessage: chatbotMessage,
-      _depth: _depth + 1,
+      agent: decision.nextAgent,
+      sessionData: decision.updatedSessionData,
+      lastAgentUnsentMessage: decision.chatbotMessage,
+      _depth: decision.newDepth,
     })
   }
-  return {
-    responseMessage: chatbotMessage,
-    newState,
-    activeAgentId: activeAgent.id,
-    nextAgentId,
-    goalAchieved,
-    ...rest,
+
+  return decision.response
+}
+
+export async function* manageFlowStream<TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>({
+  sessionData,
+  lastAgentUnsentMessage,
+  _depth = 0,
+}: FlowInput<TState, TContext> & { _depth?: number }): AsyncGenerator<StreamEvent<TState>> {
+  const { activeAgentId } = sessionData
+  const agents = AgentRegistry.getInstance<TState, TContext>().getAll()
+  const activeAgent = agents.find((a) => a.id === activeAgentId)
+
+  if (activeAgent === undefined) {
+    yield {
+      type: 'RunFinished',
+      response: {
+        responseMessage: 'No active agent',
+        state: sessionData.state,
+        activeAgentId: null,
+        nextAgentId: null,
+        goalAchieved: false,
+        sessionId: sessionData.sessionId,
+      },
+    } as StreamEvent<TState>
+    return
   }
+
+  log.log('activeAgent (stream):', activeAgent.id)
+
+  const streamFn = activeAgent.generateAgentResponseStream ?? simpleAgentResponseStream
+  const agentResult = yield* streamFn({
+    agent: activeAgent,
+    sessionData,
+    lastAgentUnsentMessage,
+  })
+
+  const decision = resolveTransition({ agents, activeAgent, agentResult, sessionData, _depth })
+
+  if (decision.action === 'transition') {
+    yield {
+      type: 'AgentTransition',
+      fromAgentId: activeAgent.id,
+      toAgentId: decision.nextAgent.id,
+    } as StreamEvent<TState>
+    yield* manageFlowStream({
+      agent: decision.nextAgent,
+      sessionData: decision.updatedSessionData,
+      lastAgentUnsentMessage: decision.chatbotMessage,
+      _depth: decision.newDepth,
+    })
+    return
+  }
+
+  yield { type: 'RunFinished', response: decision.response } as StreamEvent<TState>
 }

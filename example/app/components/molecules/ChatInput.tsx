@@ -3,24 +3,25 @@
 import { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import { TextField, Button, Box } from '@mui/material'
+import type { Theme } from '@mui/material/styles'
 import SendIcon from '@mui/icons-material/Send'
 
 type Props = {
-  onSubmit: (text: string) => void
+  onSubmit: (text: string) => void | Promise<void>
   disabled?: boolean
   placeholder?: string
 }
 
 const InputContainer = styled(Box)`
-  border-top: 1px solid ${({ theme }) => theme.palette.divider};
-  background-color: ${({ theme }) => theme.palette.background.paper};
-  padding: ${({ theme }) => theme.spacing(2)};
+  border-top: 1px solid ${({ theme }) => (theme as Theme).palette.divider};
+  background-color: ${({ theme }) => (theme as Theme).palette.background.paper};
+  padding: ${({ theme }) => (theme as Theme).spacing(2)};
   flex-shrink: 0;
 `
 
 const InputForm = styled.form`
   display: flex;
-  gap: ${({ theme }) => theme.spacing(1.5)};
+  gap: ${({ theme }) => (theme as Theme).spacing(1.5)};
 `
 
 export function ChatInput({ onSubmit, disabled, placeholder = 'Type a message...' }: Props) {
@@ -31,7 +32,7 @@ export function ChatInput({ onSubmit, disabled, placeholder = 'Type a message...
       e.preventDefault()
       const trimmed = value.trim()
       if (!trimmed || disabled) return
-      onSubmit(trimmed)
+      void onSubmit(trimmed)
       setValue('')
     },
     [value, disabled, onSubmit],

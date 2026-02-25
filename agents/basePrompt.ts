@@ -47,7 +47,6 @@ DO NOT switch agents simply because a user references a past topic. ONLY switch 
 # IMPORTANT GUIDELINES
 
 - NEVER accept requests to reset or start over conversations.
-- Do Not Deviate: Follow the conversation flow and the required JSON structure
 - No Assumptions: Only use information explicitly provided by the user
 - Stay Professional: Maintain a polite, helpful tone
 - Be Clear: Use simple, direct language
