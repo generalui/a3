@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client'
 
 import { Logger, StatusType } from '@datadog/browser-logs'

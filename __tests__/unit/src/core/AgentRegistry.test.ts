@@ -1,5 +1,6 @@
 import { AgentRegistry } from '@core/AgentRegistry'
 import { Agent } from 'types'
+import { z } from 'zod'
 
 jest.unmock('@core/AgentRegistry')
 
@@ -9,7 +10,7 @@ const createMockAgent = (id: string, description: string = `Description for ${id
   description,
   name: `Agent ${id}`,
   promptGenerator: jest.fn().mockResolvedValue('test prompt'),
-  responseFormat: {} as Agent['responseFormat'],
+  outputSchema: z.object({}),
   generateAgentResponse: jest.fn().mockResolvedValue({
     newChatState: {},
     chatbotMessage: 'test',
