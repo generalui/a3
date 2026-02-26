@@ -52,7 +52,6 @@ jobs:
           node-version-file: .tool-versions
           cache: 'npm'
           cache-dependency-path: package-lock.json
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install Dependencies
         run: npm ci
@@ -95,7 +94,7 @@ jobs:
           writeToFile: false
 
       - name: Publish to NPM
-        run: npm publish
+        run: npm publish --access public
         shell: bash
 
       - name: Create release
