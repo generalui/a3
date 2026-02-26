@@ -35,8 +35,4 @@ export const greetingAgent: Agent<State> = {
     }
     return 'greeting'
   },
-  fitDataInGeneralFormat: (data: z.infer<typeof greetingPayload>, state) => ({
-    ...state,
-    ...data,
-  }),
 }

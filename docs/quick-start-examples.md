@@ -28,7 +28,7 @@ export const greetingAgent: Agent<State> = {
     userName: z.string().optional(),
   }),
   generateAgentResponse: simpleAgentResponse,
-  fitDataInGeneralFormat: (data, state) => ({ ...state, ...data }),
+  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'end' : 'greeting',
 }
@@ -84,7 +84,7 @@ const greetingAgent: Agent<AppState> = {
   `,
   outputSchema: z.object({ userName: z.string().optional() }),
   generateAgentResponse: simpleAgentResponse,
-  fitDataInGeneralFormat: (data, state) => ({ ...state, ...data }),
+  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'auth' : 'greeting',
   transitionsTo: ['auth'],
@@ -102,7 +102,7 @@ const authAgent: Agent<AppState> = {
   `,
   outputSchema: z.object({ isAuthenticated: z.boolean() }),
   generateAgentResponse: simpleAgentResponse,
-  fitDataInGeneralFormat: (data, state) => ({ ...state, ...data }),
+  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'support' : 'auth',
   transitionsTo: ['support'],
@@ -122,7 +122,7 @@ const supportAgent: Agent<AppState> = {
     issueCategory: z.string().optional(),
   }),
   generateAgentResponse: simpleAgentResponse,
-  fitDataInGeneralFormat: (data, state) => ({ ...state, ...data }),
+  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'end' : 'support',
 }

@@ -17,7 +17,7 @@ const createMockAgent = (id: string, description: string = `Description for ${id
     goalAchieved: false,
     nextAgentId: '',
   }),
-  fitDataInGeneralFormat: jest.fn().mockReturnValue({}),
+  setState: jest.fn().mockReturnValue({}),
 })
 
 describe('AgentRegistry', () => {

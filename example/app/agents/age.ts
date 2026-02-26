@@ -27,8 +27,4 @@ export const ageAgent: Agent<State> = {
     }
     return 'age'
   },
-  fitDataInGeneralFormat: (data: z.infer<typeof agePayload>, state) => ({
-    ...state,
-    ...data,
-  }),
 }

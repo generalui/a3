@@ -171,7 +171,7 @@ const greetingAgent: Agent<MyState> = {
   generateAgentResponse: simpleAgentResponse,
 
   // State mapper: merge extracted data into global state
-  fitDataInGeneralFormat: (data, state) => ({
+  setState: (data, state) => ({
     ...state,
     ...data,
   }),
@@ -193,7 +193,7 @@ const greetingAgent: Agent<MyState> = {
 | `promptGenerator` | Yes | Async function returning the system prompt for this agent |
 | `outputSchema` | Yes | Zod schema defining structured data to extract from LLM responses |
 | `generateAgentResponse` | Yes | Function that orchestrates the full response cycle |
-| `fitDataInGeneralFormat` | Yes | Maps extracted LLM data into the shared state object |
+| `setState` | Yes | Maps extracted LLM data into the shared state object |
 | `nextAgentSelector` | No | Determines the next agent based on state and goal status |
 | `transitionsTo` | No | Array of agent IDs this agent is allowed to redirect to |
 | `filterHistoryStrategy` | No | Custom function to filter conversation history before sending to the LLM |
@@ -261,7 +261,7 @@ interface AppState extends BaseState {
 }
 ```
 
-Each agent's `fitDataInGeneralFormat` merges its extracted data into this shared state.
+Each agent's `setState` merges its extracted data into this shared state.
 When agents switch, the full state carries over.
 
 ### Output Schemas

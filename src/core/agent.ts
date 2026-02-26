@@ -70,7 +70,9 @@ export const processAgentResponseData = <TState extends BaseState, TContext exte
   sessionData: SessionData<TState, TContext>,
   data: Record<string, unknown>,
 ) => {
-  const newState = agent.fitDataInGeneralFormat(data.conversationPayload, sessionData.state)
+  const newState = agent.setState
+    ? agent.setState(data.conversationPayload, sessionData.state)
+    : ({ ...sessionData.state, ...(data.conversationPayload as Record<string, unknown>) } as TState)
   const chatbotMessage = (data.chatbotMessage as string) || ''
   const goalAchieved = (data.goalAchieved as boolean) || false
   const redirectToAgent = data.redirectToAgent as string | null | undefined

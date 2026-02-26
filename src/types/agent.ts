@@ -58,7 +58,7 @@ export type Agent<TState extends BaseState = BaseState, TContext extends BaseCha
   /** Optional streaming response generator. Falls back to simpleAgentResponseStream. */
   generateAgentResponseStream?: GenerateAgentResponseStreamSpecification<TState, TContext>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fitDataInGeneralFormat: (data: any, state: TState) => TState
+  setState?: (data: any, state: TState) => TState
   nextAgentSelector?: (state: TState, agentGoalAchieved: boolean) => AgentId
   /** Agent IDs this agent can transition to. Used to constrain redirectToAgent in the schema. */
   transitionsTo?: AgentId[]
