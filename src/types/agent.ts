@@ -52,7 +52,7 @@ export type Agent<TState extends BaseState = BaseState, TContext extends BaseCha
   description: string
   modelId?: string // LLM Provider Model ID
   name: string
-  promptGenerator: (params: FlowInput<TState, TContext>) => Promise<string>
+  prompt: string | ((params: FlowInput<TState, TContext>) => Promise<string>)
   outputSchema: AgentOutputSchema<TState, TContext>
   generateAgentResponse: GenerateAgentResponseSpecification<TState, TContext>
   /** Optional streaming response generator. Falls back to simpleAgentResponseStream. */

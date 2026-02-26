@@ -66,7 +66,7 @@ export const greetingAgent: Agent<State> = {
   id: 'greeting',
   name: 'Greeting Agent',
   description: 'Greets the user and collects their name',
-  promptGenerator: async () => `
+  prompt: async () => `
     You are a friendly greeting agent. Your goal is to greet the user
     and learn their name. Once you have their name, set goalAchieved to true.
   `,
@@ -146,7 +146,7 @@ One agent, one session, one function call.
 ┌──────────────────────────────────────────────────────────────┐
 │                      Active Agent                            │
 │                                                              │
-│  • Builds system prompt (promptGenerator)                    │
+│  • Builds system prompt (prompt)                    │
 │  • Defines output schema (Zod)                               │
 │  • Determines next agent (nextAgentSelector)                 │
 │                                                              │
@@ -208,7 +208,7 @@ const greetingAgent: Agent<MyState> = {
   description: 'Greets the user and collects their name',
 
   // Prompt: instructions for the LLM
-  promptGenerator: async () => `
+  prompt: async () => `
     You are a friendly greeting agent.
     Ask the user for their name, then greet them.
     Set goalAchieved to true once you know their name.
@@ -242,7 +242,7 @@ const greetingAgent: Agent<MyState> = {
 | `id` | Yes | Unique identifier for the agent |
 | `name` | Yes | Human-readable display name |
 | `description` | Yes | What this agent does (used in agent pool prompts) |
-| `promptGenerator` | Yes | Async function returning the system prompt for this agent |
+| `prompt` | Yes | System prompt string, or async function returning the system prompt |
 | `outputSchema` | Yes | Zod schema defining structured data to extract from LLM responses |
 | `generateAgentResponse` | Yes | Function that orchestrates the full response cycle |
 | `setState` | Yes | Maps extracted LLM data into the shared state object |
@@ -470,7 +470,7 @@ const greetingAgent: Agent<AppState> = {
   id: 'greeting',
   name: 'Greeting Agent',
   description: 'Greets the user and collects their name',
-  promptGenerator: async () => `
+  prompt: async () => `
     Greet the user warmly. Ask for their name.
     Once you have it, set goalAchieved to true.
   `,
@@ -487,7 +487,7 @@ const authAgent: Agent<AppState> = {
   id: 'auth',
   name: 'Auth Agent',
   description: 'Verifies user identity',
-  promptGenerator: async ({ sessionData }) => `
+  prompt: async ({ sessionData }) => `
     The user's name is ${sessionData.state.userName}.
     Ask them to confirm their email to verify identity.
     Set goalAchieved to true once verified.
@@ -505,7 +505,7 @@ const supportAgent: Agent<AppState> = {
   id: 'support',
   name: 'Support Agent',
   description: 'Helps resolve user issues',
-  promptGenerator: async ({ sessionData }) => `
+  prompt: async ({ sessionData }) => `
     The user ${sessionData.state.userName} is authenticated.
     Help them with their issue. Categorize it.
     Set goalAchieved when resolved.

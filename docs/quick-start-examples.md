@@ -20,7 +20,7 @@ export const greetingAgent: Agent<State> = {
   id: 'greeting',
   name: 'Greeting Agent',
   description: 'Greets the user and collects their name',
-  promptGenerator: async () => `
+  prompt: async () => `
     You are a friendly greeting agent. Your goal is to greet the user
     and learn their name. Once you have their name, set goalAchieved to true.
   `,
@@ -78,7 +78,7 @@ const greetingAgent: Agent<AppState> = {
   id: 'greeting',
   name: 'Greeting Agent',
   description: 'Greets the user and collects their name',
-  promptGenerator: async () => `
+  prompt: async () => `
     Greet the user warmly. Ask for their name.
     Once you have it, set goalAchieved to true.
   `,
@@ -95,7 +95,7 @@ const authAgent: Agent<AppState> = {
   id: 'auth',
   name: 'Auth Agent',
   description: 'Verifies user identity',
-  promptGenerator: async ({ sessionData }) => `
+  prompt: async ({ sessionData }) => `
     The user's name is ${sessionData.state.userName}.
     Ask them to confirm their email to verify identity.
     Set goalAchieved to true once verified.
@@ -113,7 +113,7 @@ const supportAgent: Agent<AppState> = {
   id: 'support',
   name: 'Support Agent',
   description: 'Helps resolve user issues',
-  promptGenerator: async ({ sessionData }) => `
+  prompt: async ({ sessionData }) => `
     The user ${sessionData.state.userName} is authenticated.
     Help them with their issue. Categorize it.
     Set goalAchieved when resolved.

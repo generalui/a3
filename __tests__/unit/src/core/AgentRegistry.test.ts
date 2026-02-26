@@ -9,7 +9,7 @@ const createMockAgent = (id: string, description: string = `Description for ${id
   id,
   description,
   name: `Agent ${id}`,
-  promptGenerator: jest.fn().mockResolvedValue('test prompt'),
+  prompt: jest.fn().mockResolvedValue('test prompt'),
   outputSchema: z.object({}),
   generateAgentResponse: jest.fn().mockResolvedValue({
     newChatState: {},

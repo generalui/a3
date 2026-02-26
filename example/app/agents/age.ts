@@ -13,8 +13,7 @@ export const ageAgent: Agent<State> = {
   id: 'age',
   description: 'Asks the user for their age',
   name: 'Age Agent',
-  // eslint-disable-next-line @typescript-eslint/require-await
-  promptGenerator: async () => `
+  prompt: `
     You are a friendly agent. Your goal is to learn the user's age.
     If you don't know their age yet, ask for it politely.
     Once you have their age, confirm it and set goalAchieved to true.

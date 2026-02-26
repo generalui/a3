@@ -54,7 +54,7 @@ KEY FILES:
 ARCHITECTURE:
 
 - Agents are registered with the core framework
-- Each agent implements the Agent interface (id, promptGenerator, responseFormat, etc.)
+- Each agent implements the Agent interface (id, prompt, responseFormat, etc.)
 - Providers are pluggable and handle LLM communication
 - Chat flow manages agent switching based on responses
 - Response schemas use zod for validation

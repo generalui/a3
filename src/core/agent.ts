@@ -23,11 +23,14 @@ export const prepareAgentRequest = async <
   sessionData,
   lastAgentUnsentMessage,
 }: FlowInput<TState, TContext>) => {
-  const dynamicPrompt = await agent.promptGenerator({
-    agent,
-    sessionData,
-    lastAgentUnsentMessage,
-  })
+  const dynamicPrompt =
+    typeof agent.prompt === 'string'
+      ? agent.prompt
+      : await agent.prompt({
+          agent,
+          sessionData,
+          lastAgentUnsentMessage,
+        })
   // Resolve widgets (supports both static record and function form)
   const resolvedWidgets = typeof agent.widgets === 'function' ? agent.widgets(sessionData) : agent.widgets
 
