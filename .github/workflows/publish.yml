@@ -101,7 +101,7 @@ jobs:
         with:
           body: ${{ steps.changelog.outputs.changes }}
           makeLatest: true
-          name: 'Version ${{ steps.image_tags.outputs.new_tag }} - Image tag: ${{ steps.image_tag.outputs.tag }}'
+          name: 'Version ${{ steps.image_tags.outputs.new_tag }}'
           prerelease: false
           skipIfReleaseExists: true
           tag: ${{ steps.image_tags.outputs.new_tag }}
