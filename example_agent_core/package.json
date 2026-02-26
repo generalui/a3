@@ -5,7 +5,6 @@
   "type": "module",
   "main": "dist/agent_core_entry.js",
   "scripts": {
-    "preinstall": "if [ -d ../dist ]; then rm -rf npm_modules/@genui-a3 && mkdir -p npm_modules/@genui-a3/core && cp -r ../dist/* npm_modules/@genui-a3/core && cp modules-package.json npm_modules/@genui-a3/core/package.json; fi",
     "build": "tsc",
     "start": "node dist/agent_core_entry.js",
     "dev": "npx tsx --watch agent_core_entry.ts"
@@ -19,7 +18,7 @@
     "@aws-sdk/client-bedrock-runtime": "3.975.0",
     "@aws-sdk/client-cloudformation": "3.975.0",
     "@datadog/browser-logs": "6.25.4",
-    "@genui-a3/core": "file:./npm_modules/@genui-a3/core",
+    "@genui-a3/core": "^0.1.1",
     "@opentelemetry/auto-instrumentations-node": "^0.56.0",
     "bedrock-agentcore": "^0.2.0",
     "chrono-node": "2.9.0",
