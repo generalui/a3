@@ -53,7 +53,7 @@ export function StreamChat() {
     setIsLoading(true)
 
     // Create a placeholder assistant message for streaming into
-    const assistantId = crypto.randomUUID()
+    let assistantId = crypto.randomUUID()
     assistantIdRef.current = assistantId
 
     const streamingMsg: ChatMessageType = {
@@ -101,6 +101,14 @@ export function StreamChat() {
 
             if (event.type === 'TextMessageContent' && event.delta) {
               setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, body: m.body + event.delta } : m)))
+            } else if (event.type === 'AgentTransition') {
+              const prevAssistantId = assistantId
+              assistantId = crypto.randomUUID()
+              assistantIdRef.current = assistantId
+              setMessages((prev) => {
+                const updated = prev.map((m) => (m.id === prevAssistantId ? { ...m, isStreaming: false } : m))
+                return [...updated, { id: assistantId, body: '', source: 'assistant', isStreaming: true }]
+              })
             } else if (event.type === 'RunFinished') {
               setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, isStreaming: false } : m)))
             } else if (event.type === 'RunError') {
