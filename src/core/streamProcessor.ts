@@ -1,4 +1,5 @@
 import { ConverseStreamOutput } from '@aws-sdk/client-bedrock-runtime'
+import { EventType } from '@ag-ui/client'
 import { ZodType } from 'zod'
 import { AgentId, StreamEvent, BaseState } from 'types'
 import { log } from '@utils/logger'
@@ -32,7 +33,7 @@ export async function* processBedrockStream<TState extends BaseState = BaseState
       // (Bedrock may omit contentBlockStart for the first text block)
       if (delta.text && (currentBlockType === 'text' || currentBlockType === null)) {
         currentBlockType = 'text'
-        yield { type: 'TextMessageContent', delta: delta.text, agentId } as StreamEvent<TState>
+        yield { type: EventType.TEXT_MESSAGE_CONTENT, messageId: '', delta: delta.text, agentId } as StreamEvent<TState>
       } else if (delta.toolUse && (currentBlockType === 'toolUse' || currentBlockType === null)) {
         currentBlockType = 'toolUse'
         toolInputBuffer += delta.toolUse.input ?? ''
@@ -70,15 +71,17 @@ function parseToolCall<TState extends BaseState>(
     const parsed = JSON.parse(toolInputBuffer) as Record<string, unknown>
     const validated = schema.parse(parsed)
     return {
-      type: 'ToolCallResult',
-      data: validated as Record<string, unknown>,
+      type: EventType.TOOL_CALL_RESULT,
+      toolCallId: '',
+      messageId: '',
+      content: JSON.stringify(validated),
       agentId,
     } as StreamEvent<TState>
   } catch (err) {
     log.error('Failed to parse/validate tool call from stream', { agentId, error: err })
     return {
-      type: 'RunError',
-      error: new Error(`Tool call parse/validation failed: ${(err as Error).message}`),
+      type: EventType.RUN_ERROR,
+      message: `Tool call parse/validation failed: ${(err as Error).message}`,
       agentId,
     } as StreamEvent<TState>
   }

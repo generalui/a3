@@ -3,6 +3,7 @@ import { widgetPrompt } from '../../agents/widgetPrompt'
 import { createFullOutputSchema } from '@core/schemas'
 import { sendChatRequest, sendChatRequestStream } from '@providers/awsBedrock'
 import { processBedrockStream } from '@core/streamProcessor'
+import { EventType } from '@ag-ui/client'
 import {
   BaseState,
   BaseChatContext,
@@ -143,16 +144,36 @@ export async function* simpleAgentResponseStream<
   lastAgentUnsentMessage,
 }: FlowInput<TState, TContext>): AsyncGenerator<StreamEvent<TState>, AgentResponseResult<TState>> {
   let toolCallData: Record<string, unknown> | null = null
+  let activeMessageId: string | null = null
 
   for await (const event of getAgentResponseStream({ agent, sessionData, lastAgentUnsentMessage })) {
-    if (event.type === 'TextMessageContent') {
+    if (event.type === EventType.TEXT_MESSAGE_CONTENT) {
+      // Open a text message on first content delta
+      if (activeMessageId === null) {
+        activeMessageId = crypto.randomUUID()
+        yield { type: EventType.TEXT_MESSAGE_START, messageId: activeMessageId, role: 'assistant' } as StreamEvent<TState>
+      }
+      yield { ...event, messageId: activeMessageId } as StreamEvent<TState>
+    } else if (event.type === EventType.TOOL_CALL_RESULT) {
+      // Close any open text message before non-text events
+      if (activeMessageId !== null) {
+        yield { type: EventType.TEXT_MESSAGE_END, messageId: activeMessageId } as StreamEvent<TState>
+        activeMessageId = null
+      }
+      toolCallData = JSON.parse(event.content) as Record<string, unknown>
       yield event
-    } else if (event.type === 'ToolCallResult') {
-      toolCallData = event.data
-      yield event
-    } else if (event.type === 'RunError') {
+    } else if (event.type === EventType.RUN_ERROR) {
+      if (activeMessageId !== null) {
+        yield { type: EventType.TEXT_MESSAGE_END, messageId: activeMessageId } as StreamEvent<TState>
+        activeMessageId = null
+      }
       yield event
     }
+  }
+
+  // Close any still-open text message at end of stream
+  if (activeMessageId !== null) {
+    yield { type: EventType.TEXT_MESSAGE_END, messageId: activeMessageId } as StreamEvent<TState>
   }
 
   if (!toolCallData) {

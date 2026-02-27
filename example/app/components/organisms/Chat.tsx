@@ -1,33 +1,13 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import styled from 'styled-components'
-import { Paper, Typography, CircularProgress } from '@mui/material'
-import type { Theme } from '@mui/material/styles'
+import { Typography, CircularProgress } from '@mui/material'
 import { ChatMessageList } from './ChatMessageList'
+import { ChatContainer, ChatHeader } from '@atoms'
 import { ChatInput } from '@molecules'
 import type { ChatMessage as ChatMessageType } from 'types'
 
 const SESSION_ID = 'demo-session'
-
-const ChatContainer = styled(Paper)`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-`
-
-const ChatHeader = styled.div`
-  border-bottom: 1px solid ${({ theme }) => (theme as Theme).palette.divider};
-  background-color: ${({ theme }) => (theme as Theme).palette.background.paper};
-  padding: ${({ theme }) => (theme as Theme).spacing(2, 3)};
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`
 
 type ChatApiResponse = {
   response: string

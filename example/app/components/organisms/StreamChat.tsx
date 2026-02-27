@@ -1,41 +1,24 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import styled from 'styled-components'
-import { Paper, Typography } from '@mui/material'
-import type { Theme } from '@mui/material/styles'
+import { Typography } from '@mui/material'
 import { ChatMessageList } from './ChatMessageList'
+import { ChatContainer, ChatHeader } from '@atoms'
 import { ChatInput } from '@molecules'
 import type { ChatMessage as ChatMessageType } from 'types'
+import { EventType } from '@ag-ui/client'
 
 const SESSION_ID = 'demo-stream-session'
 
-const ChatContainer = styled(Paper)`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-`
-
-const ChatHeader = styled.div`
-  border-bottom: 1px solid ${({ theme }) => (theme as Theme).palette.divider};
-  background-color: ${({ theme }) => (theme as Theme).palette.background.paper};
-  padding: ${({ theme }) => (theme as Theme).spacing(2, 3)};
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`
-
 type StreamEvent = {
-  type: 'TextMessageContent' | 'ToolCallResult' | 'AgentTransition' | 'RunFinished' | 'RunError'
+  type: EventType
   delta?: string
   agentId?: string
-  response?: Record<string, unknown>
-  error?: Error
-  data?: Record<string, unknown>
+  result?: Record<string, unknown>
+  message?: string
+  content?: string
+  name?: string
+  value?: Record<string, unknown>
 }
 
 export function StreamChat() {
@@ -99,9 +82,9 @@ export function StreamChat() {
           try {
             const event = JSON.parse(data) as StreamEvent
 
-            if (event.type === 'TextMessageContent' && event.delta) {
+            if (event.type === EventType.TEXT_MESSAGE_CONTENT && event.delta) {
               setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, body: m.body + event.delta } : m)))
-            } else if (event.type === 'AgentTransition') {
+            } else if (event.type === EventType.CUSTOM && event.name === 'AgentTransition') {
               const prevAssistantId = assistantId
               assistantId = crypto.randomUUID()
               assistantIdRef.current = assistantId
@@ -109,9 +92,9 @@ export function StreamChat() {
                 const updated = prev.map((m) => (m.id === prevAssistantId ? { ...m, isStreaming: false } : m))
                 return [...updated, { id: assistantId, body: '', source: 'assistant', isStreaming: true }]
               })
-            } else if (event.type === 'RunFinished') {
+            } else if (event.type === EventType.RUN_FINISHED) {
               setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, isStreaming: false } : m)))
-            } else if (event.type === 'RunError') {
+            } else if (event.type === EventType.RUN_ERROR) {
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantId

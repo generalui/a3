@@ -1,5 +1,6 @@
 import { AgentRegistry } from '@core/AgentRegistry'
 import { simpleAgentResponseStream } from '@core/agent'
+import { EventType } from '@ag-ui/client'
 import {
   Agent,
   AgentResponseResult,
@@ -151,8 +152,10 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
 
   if (activeAgent === undefined) {
     yield {
-      type: 'RunFinished',
-      response: {
+      type: EventType.RUN_FINISHED,
+      threadId: sessionData.sessionId,
+      runId: '',
+      result: {
         responseMessage: 'No active agent',
         state: sessionData.state,
         activeAgentId: null,
@@ -177,9 +180,9 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
 
   if (decision.action === 'transition') {
     yield {
-      type: 'AgentTransition',
-      fromAgentId: activeAgent.id,
-      toAgentId: decision.nextAgent.id,
+      type: EventType.CUSTOM,
+      name: 'AgentTransition',
+      value: { fromAgentId: activeAgent.id, toAgentId: decision.nextAgent.id },
     } as StreamEvent<TState>
     yield* manageFlowStream({
       agent: decision.nextAgent,
@@ -190,5 +193,10 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
     return
   }
 
-  yield { type: 'RunFinished', response: decision.response } as StreamEvent<TState>
+  yield {
+    type: EventType.RUN_FINISHED,
+    threadId: sessionData.sessionId,
+    runId: '',
+    result: decision.response,
+  } as StreamEvent<TState>
 }
