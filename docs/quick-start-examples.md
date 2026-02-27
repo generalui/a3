@@ -20,7 +20,7 @@ export const greetingAgent: Agent<State> = {
   id: 'greeting',
   name: 'Greeting Agent',
   description: 'Greets the user and collects their name',
-  promptGenerator: async () => `
+  prompt: async () => `
     You are a friendly greeting agent. Your goal is to greet the user
     and learn their name. Once you have their name, set goalAchieved to true.
   `,
@@ -28,7 +28,7 @@ export const greetingAgent: Agent<State> = {
     userName: z.string().optional(),
   }),
   generateAgentResponse: simpleAgentResponse,
-  fitDataInGeneralFormat: (data, state) => ({ ...state, ...data }),
+  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'end' : 'greeting',
 }
@@ -78,13 +78,13 @@ const greetingAgent: Agent<AppState> = {
   id: 'greeting',
   name: 'Greeting Agent',
   description: 'Greets the user and collects their name',
-  promptGenerator: async () => `
+  prompt: async () => `
     Greet the user warmly. Ask for their name.
     Once you have it, set goalAchieved to true.
   `,
   outputSchema: z.object({ userName: z.string().optional() }),
   generateAgentResponse: simpleAgentResponse,
-  fitDataInGeneralFormat: (data, state) => ({ ...state, ...data }),
+  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'auth' : 'greeting',
   transitionsTo: ['auth'],
@@ -95,14 +95,14 @@ const authAgent: Agent<AppState> = {
   id: 'auth',
   name: 'Auth Agent',
   description: 'Verifies user identity',
-  promptGenerator: async ({ sessionData }) => `
+  prompt: async ({ sessionData }) => `
     The user's name is ${sessionData.state.userName}.
     Ask them to confirm their email to verify identity.
     Set goalAchieved to true once verified.
   `,
   outputSchema: z.object({ isAuthenticated: z.boolean() }),
   generateAgentResponse: simpleAgentResponse,
-  fitDataInGeneralFormat: (data, state) => ({ ...state, ...data }),
+  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'support' : 'auth',
   transitionsTo: ['support'],
@@ -113,7 +113,7 @@ const supportAgent: Agent<AppState> = {
   id: 'support',
   name: 'Support Agent',
   description: 'Helps resolve user issues',
-  promptGenerator: async ({ sessionData }) => `
+  prompt: async ({ sessionData }) => `
     The user ${sessionData.state.userName} is authenticated.
     Help them with their issue. Categorize it.
     Set goalAchieved when resolved.
@@ -122,7 +122,7 @@ const supportAgent: Agent<AppState> = {
     issueCategory: z.string().optional(),
   }),
   generateAgentResponse: simpleAgentResponse,
-  fitDataInGeneralFormat: (data, state) => ({ ...state, ...data }),
+  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'end' : 'support',
 }

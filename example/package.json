@@ -8,6 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ag-ui/client": "0.0.45",
+    "@ag-ui/encoder": "0.0.45",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@genui-a3/core": "file:..",

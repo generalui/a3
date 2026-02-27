@@ -9,7 +9,7 @@ const createMockAgent = (id: string, description: string = `Description for ${id
   id,
   description,
   name: `Agent ${id}`,
-  promptGenerator: jest.fn().mockResolvedValue('test prompt'),
+  prompt: jest.fn().mockResolvedValue('test prompt'),
   outputSchema: z.object({}),
   generateAgentResponse: jest.fn().mockResolvedValue({
     newChatState: {},
@@ -17,7 +17,7 @@ const createMockAgent = (id: string, description: string = `Description for ${id
     goalAchieved: false,
     nextAgentId: '',
   }),
-  fitDataInGeneralFormat: jest.fn().mockReturnValue({}),
+  setState: jest.fn().mockReturnValue({}),
 })
 
 describe('AgentRegistry', () => {

@@ -1,5 +1,6 @@
 import { manageFlow, manageFlowStream } from './chatFlow'
 import { AgentRegistry } from './AgentRegistry'
+import { EventType } from '@ag-ui/client'
 import {
   SessionStore,
   SessionData,
@@ -75,8 +76,8 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
     let completedResponse: ChatResponse<TState> | null = null
 
     for await (const event of this.processMessageStream(context)) {
-      if (event.type === 'RunFinished') {
-        completedResponse = event.response
+      if (event.type === EventType.RUN_FINISHED) {
+        completedResponse = event.result ?? null
       }
       yield event
     }

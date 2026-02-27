@@ -52,13 +52,13 @@ export type Agent<TState extends BaseState = BaseState, TContext extends BaseCha
   description: string
   modelId?: string // LLM Provider Model ID
   name: string
-  promptGenerator: (params: FlowInput<TState, TContext>) => Promise<string>
+  prompt: string | ((params: FlowInput<TState, TContext>) => Promise<string>)
   outputSchema: AgentOutputSchema<TState, TContext>
   generateAgentResponse: GenerateAgentResponseSpecification<TState, TContext>
   /** Optional streaming response generator. Falls back to simpleAgentResponseStream. */
   generateAgentResponseStream?: GenerateAgentResponseStreamSpecification<TState, TContext>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fitDataInGeneralFormat: (data: any, state: TState) => TState
+  setState?: (data: any, state: TState) => TState
   nextAgentSelector?: (state: TState, agentGoalAchieved: boolean) => AgentId
   /** Agent IDs this agent can transition to. Used to constrain redirectToAgent in the schema. */
   transitionsTo?: AgentId[]
