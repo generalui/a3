@@ -151,7 +151,11 @@ export async function* simpleAgentResponseStream<
       // Open a text message on first content delta
       if (activeMessageId === null) {
         activeMessageId = crypto.randomUUID()
-        yield { type: EventType.TEXT_MESSAGE_START, messageId: activeMessageId, role: 'assistant' } as StreamEvent<TState>
+        yield {
+          type: EventType.TEXT_MESSAGE_START,
+          messageId: activeMessageId,
+          role: 'assistant',
+        } as StreamEvent<TState>
       }
       yield { ...event, messageId: activeMessageId } as StreamEvent<TState>
     } else if (event.type === EventType.TOOL_CALL_RESULT) {

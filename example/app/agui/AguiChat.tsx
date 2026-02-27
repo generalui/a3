@@ -16,7 +16,6 @@ export function AguiChat() {
   const [messages, setMessages] = useState<ChatMessageType[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const assistantIdRef = useRef<string>('')
-  const threadIdRef = useRef<string>(crypto.randomUUID())
 
   const handleSubmit = useCallback(async (text: string) => {
     const userMsg: ChatMessageType = {
@@ -41,14 +40,14 @@ export function AguiChat() {
     try {
       const runId = crypto.randomUUID()
 
+      // Add the user message to the agent's internal state BEFORE running.
+      agent.addMessage({ id: crypto.randomUUID(), role: 'user', content: text })
+
       await agent.runAgent(
         {
-          threadId: threadIdRef.current,
           runId,
-          messages: [{ id: crypto.randomUUID(), role: 'user', content: text }],
           tools: [],
           context: [],
-          state: {},
           forwardedProps: {},
         },
         {
