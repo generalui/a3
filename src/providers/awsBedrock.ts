@@ -138,7 +138,7 @@ function prepareChatParams<TState extends BaseState, TContext extends BaseChatCo
 
   const filteredConversation = agent.filterHistoryStrategy ? agent.filterHistoryStrategy(conversation) : conversation
   const inputSchema = { json: jsonSchema } as ToolInputSchema
-  const prependedConversation = [{ text: 'Hi', metadata: { source: MessageSender.USER } }, ...filteredConversation]
+  const prependedConversation = [{ text: 'Hi\n', metadata: { source: MessageSender.USER } }, ...filteredConversation]
   const mergedMessages = mergeSequentialMessages(prependedConversation)
 
   return { systemPrompt, inputSchema, mergedMessages }
