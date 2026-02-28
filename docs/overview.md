@@ -87,7 +87,7 @@ A3 optimizes for **simplicity and speed-to-value**.
 │                                                              │
 └───────────┬──────────────────────────────────────────────────┘
             │                                  ▲
-            │ generateAgentResponse            │ { chatbotMessage,
+            │ generateResponse            │ { chatbotMessage,
             │   ({ agent, sessionData })       │   newState,
             │                                  │   nextAgentId }
             ▼                                  │
@@ -123,7 +123,7 @@ A3 optimizes for **simplicity and speed-to-value**.
 
 1. Your app calls `session.send(message)` with the user's input
 1. **ChatSession** loads session data (history, state) from the configured store and appends the user message
-1. **ChatFlow** looks up the active agent and calls `generateAgentResponse`
+1. **ChatFlow** looks up the active agent and calls `generateResponse`
 1. The **Agent** builds a system prompt, defines its Zod output schema, and delegates to the provider
 1. The **Provider** sends the request to the LLM and returns structured JSON
 1. The **Agent** extracts state updates and a routing decision (`nextAgentId`) from the response
@@ -143,7 +143,7 @@ Each agent has a focused responsibility and defines how it generates responses, 
 
 ```typescript
 import { z } from 'zod'
-import { Agent, simpleAgentResponse, BaseState } from '@genui-a3/core'
+import { Agent, BaseState } from '@genui-a3/core'
 
 interface MyState extends BaseState {
   userName?: string
@@ -167,15 +167,6 @@ const greetingAgent: Agent<MyState> = {
     userName: z.string().optional(),
   }),
 
-  // Response generator: how to process the LLM response
-  generateAgentResponse: simpleAgentResponse,
-
-  // State mapper: merge extracted data into global state
-  setState: (data, state) => ({
-    ...state,
-    ...data,
-  }),
-
   // Routing: decide the next agent after each turn
   nextAgentSelector: (state, goalAchieved) => {
     return goalAchieved ? 'next-agent' : 'greeting'
@@ -192,8 +183,8 @@ const greetingAgent: Agent<MyState> = {
 | `description` | Yes | What this agent does (used in agent pool prompts) |
 | `prompt` | Yes | System prompt string, or async function returning the system prompt |
 | `outputSchema` | Yes | Zod schema defining structured data to extract from LLM responses |
-| `generateAgentResponse` | Yes | Function that orchestrates the full response cycle |
-| `setState` | Yes | Maps extracted LLM data into the shared state object |
+| `generateResponse` | No | Function that orchestrates the full response cycle (defaults to `simpleAgentResponse`) |
+| `setState` | No | Maps extracted LLM data into the shared state object (defaults to shallow merge) |
 | `nextAgentSelector` | No | Determines the next agent based on state and goal status |
 | `transitionsTo` | No | Array of agent IDs this agent is allowed to redirect to |
 | `filterHistoryStrategy` | No | Custom function to filter conversation history before sending to the LLM |
@@ -371,11 +362,6 @@ Three agents routing between each other, demonstrating state flowing across agen
 
 Real-time token streaming via the AG-UI protocol.
 Instead of waiting for a complete response, your frontend receives tokens as they're generated.
-
-### Simplified Agent API -- Coming Soon
-
-Reduce agent definitions to just the essentials.
-Many of the current required properties will get sensible defaults, bringing the minimum agent definition down to 1-2 required parameters.
 
 ### Provider Abstraction -- Coming Soon
 

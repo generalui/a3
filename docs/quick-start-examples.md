@@ -10,7 +10,7 @@ npm install @genui-a3/core
 
 ```typescript
 import { z } from 'zod'
-import { Agent, simpleAgentResponse, BaseState } from '@genui-a3/core'
+import { Agent, BaseState } from '@genui-a3/core'
 
 interface State extends BaseState {
   userName?: string
@@ -27,8 +27,6 @@ export const greetingAgent: Agent<State> = {
   outputSchema: z.object({
     userName: z.string().optional(),
   }),
-  generateAgentResponse: simpleAgentResponse,
-  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'end' : 'greeting',
 }
@@ -65,7 +63,7 @@ Here's a pattern with three agents that route between each other, demonstrating 
 
 ```typescript
 import { z } from 'zod'
-import { Agent, simpleAgentResponse, BaseState } from '@genui-a3/core'
+import { Agent, BaseState } from '@genui-a3/core'
 
 interface AppState extends BaseState {
   userName?: string
@@ -83,8 +81,6 @@ const greetingAgent: Agent<AppState> = {
     Once you have it, set goalAchieved to true.
   `,
   outputSchema: z.object({ userName: z.string().optional() }),
-  generateAgentResponse: simpleAgentResponse,
-  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'auth' : 'greeting',
   transitionsTo: ['auth'],
@@ -101,8 +97,6 @@ const authAgent: Agent<AppState> = {
     Set goalAchieved to true once verified.
   `,
   outputSchema: z.object({ isAuthenticated: z.boolean() }),
-  generateAgentResponse: simpleAgentResponse,
-  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'support' : 'auth',
   transitionsTo: ['support'],
@@ -121,8 +115,6 @@ const supportAgent: Agent<AppState> = {
   outputSchema: z.object({
     issueCategory: z.string().optional(),
   }),
-  generateAgentResponse: simpleAgentResponse,
-  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'end' : 'support',
 }

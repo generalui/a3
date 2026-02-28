@@ -1,5 +1,5 @@
 import { AgentRegistry } from '@core/AgentRegistry'
-import { simpleAgentResponseStream } from '@core/agent'
+import { simpleAgentResponseStream, simpleAgentResponse } from '@core/agent'
 import { EventType } from '@ag-ui/client'
 import {
   Agent,
@@ -121,7 +121,8 @@ export const manageFlow = async <TState extends BaseState, TContext extends Base
   }
 
   log.log('activeAgent:', activeAgent.id)
-  const agentResult = await activeAgent.generateAgentResponse({
+  const responseFn = activeAgent.generateResponse ?? simpleAgentResponse
+  const agentResult = await responseFn({
     agent: activeAgent,
     sessionData,
     lastAgentUnsentMessage,
@@ -169,7 +170,7 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
 
   log.log('activeAgent (stream):', activeAgent.id)
 
-  const streamFn = activeAgent.generateAgentResponseStream ?? simpleAgentResponseStream
+  const streamFn = activeAgent.generateResponseStream ?? simpleAgentResponseStream
   const agentResult = yield* streamFn({
     agent: activeAgent,
     sessionData,

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { Agent, simpleAgentResponse, BaseState } from '@genui-a3/core'
+import { Agent, BaseState } from '@genui-a3/core'
 
 /**
  * Consumer defines their GLOBAL state extending BaseState.
@@ -19,15 +19,12 @@ const greetingPayload = z.object({
 
 export const greetingAgent: Agent<State> = {
   id: 'greeting',
-  description: 'Greets the user and collects their name',
-  name: 'Greeting Agent',
   prompt: `
     You are a friendly greeting agent. Your goal is to greet the user and learn their name.
     If you don't know their name yet, ask for it politely.
     Once you have their name, greet them by name and set goalAchieved to true.
   `,
   outputSchema: greetingPayload,
-  generateAgentResponse: simpleAgentResponse,
   nextAgentSelector: (state, agentGoalAchieved) => {
     if (agentGoalAchieved) {
       return 'age'

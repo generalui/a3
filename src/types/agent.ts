@@ -25,12 +25,12 @@ export type AgentResponseResult<TState extends BaseState = BaseState> = {
   widgets?: object
 }
 
-export type GenerateAgentResponseSpecification<
+export type GenerateResponseSpecification<
   TState extends BaseState = BaseState,
   TContext extends BaseChatContext = BaseChatContext,
 > = (input: FlowInput<TState, TContext>) => Promise<AgentResponseResult<TState>>
 
-export type GenerateAgentResponseStreamSpecification<
+export type GenerateResponseStreamSpecification<
   TState extends BaseState = BaseState,
   TContext extends BaseChatContext = BaseChatContext,
 > = (input: FlowInput<TState, TContext>) => AsyncGenerator<StreamEvent<TState>, AgentResponseResult<TState>>
@@ -49,14 +49,14 @@ export type AgentOutputSchema<
 export type Agent<TState extends BaseState = BaseState, TContext extends BaseChatContext = BaseChatContext> = {
   id: AgentId
   /** Description of the agent's purpose, used for agent pool discovery */
-  description: string
+  description?: string
   modelId?: string // LLM Provider Model ID
-  name: string
+  name?: string
   prompt: string | ((params: FlowInput<TState, TContext>) => Promise<string>)
   outputSchema: AgentOutputSchema<TState, TContext>
-  generateAgentResponse: GenerateAgentResponseSpecification<TState, TContext>
+  generateResponse?: GenerateResponseSpecification<TState, TContext>
   /** Optional streaming response generator. Falls back to simpleAgentResponseStream. */
-  generateAgentResponseStream?: GenerateAgentResponseStreamSpecification<TState, TContext>
+  generateResponseStream?: GenerateResponseStreamSpecification<TState, TContext>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setState?: (data: any, state: TState) => TState
   nextAgentSelector?: (state: TState, agentGoalAchieved: boolean) => AgentId

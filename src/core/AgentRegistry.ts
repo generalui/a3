@@ -124,7 +124,9 @@ export class AgentRegistry<TState extends BaseState = BaseState, TContext extend
   getDescriptions(): Record<AgentId, string> {
     const descriptions: Record<AgentId, string> = {}
     for (const [id, agent] of this.agents) {
-      descriptions[id] = agent.description
+      if (agent.description) {
+        descriptions[id] = agent.description
+      }
     }
     return descriptions
   }
