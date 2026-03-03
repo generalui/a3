@@ -1,10 +1,20 @@
 {
-  "name": "create-genui-a3",
-  "version": "0.1.0",
+  "name": "@genui-a3/create",
+  "version": "0.1.1",
   "description": "CLI scaffolding tool for GenUI A3 agentic apps",
+  "keywords": [
+    "genui",
+    "a3",
+    "agentic",
+    "scaffold",
+    "cli"
+  ],
+  "license": "ISC",
+  "author": "",
   "type": "module",
+  "main": "dist/index.js",
   "bin": {
-    "create-genui-a3": "./dist/index.js"
+    "create-genui-a3": "dist/index.js"
   },
   "files": [
     "dist",
@@ -17,14 +27,9 @@
     "prepare-template": "node scripts/prepare-template.mjs",
     "prepublishOnly": "npm run clean && npm run build"
   },
-  "keywords": [
-    "genui",
-    "a3",
-    "agentic",
-    "scaffold",
-    "cli"
-  ],
-  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "chalk": "5.4.1",
     "fs-extra": "11.3.0",
