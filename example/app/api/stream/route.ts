@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
-import { greetingAgent, State } from '../../../agents/greeting'
-import { ageAgent } from '../../../agents/age'
+import { greetingAgent, State } from '../../agents/greeting'
+import { ageAgent } from '../../agents/age'
 
 // Guard: agent may already be registered by the non-streaming route
 const registry = AgentRegistry.getInstance<State>()
