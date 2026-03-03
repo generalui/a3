@@ -96,7 +96,7 @@ A3 optimizes for **simplicity and speed-to-value**.
 │                                                              │
 │  • Builds system prompt (prompt)                    │
 │  • Defines output schema (Zod)                               │
-│  • Determines next agent (nextAgentSelector)                 │
+│  • Determines next agent (transition)                        │
 │                                                              │
 └───────────┬──────────────────────────────────────────────────┘
             │                                  ▲
@@ -168,7 +168,7 @@ const greetingAgent: Agent<MyState> = {
   }),
 
   // Routing: decide the next agent after each turn
-  nextAgentSelector: (state, goalAchieved) => {
+  transition: (state, goalAchieved) => {
     return goalAchieved ? 'next-agent' : 'greeting'
   },
 }
@@ -185,8 +185,7 @@ const greetingAgent: Agent<MyState> = {
 | `outputSchema` | Yes | Zod schema defining structured data to extract from LLM responses |
 | `generateResponse` | No | Function that orchestrates the full response cycle (defaults to `simpleAgentResponse`) |
 | `setState` | No | Maps extracted LLM data into the shared state object (defaults to shallow merge) |
-| `nextAgentSelector` | No | Determines the next agent based on state and goal status |
-| `transitionsTo` | No | Array of agent IDs this agent is allowed to redirect to |
+| `transition` | No | Routing config: a function `(state, goalAchieved) => AgentId` for deterministic routing, or an `AgentId[]` array for LLM-driven routing |
 | `filterHistoryStrategy` | No | Custom function to filter conversation history before sending to the LLM |
 | `modelId` | No | Override the default model for this agent |
 
@@ -280,33 +279,36 @@ Schemas serve two purposes:
 
 ### Routing
 
-Agents route to each other in three ways:
+The `transition` property controls how an agent hands off to the next agent.
+It supports two modes:
 
-**1. `nextAgentSelector`** -- Choose the next agent programmatically after each turn:
+**1. Deterministic (function)** -- Your code decides the next agent after each turn:
 
 ```typescript
-nextAgentSelector: (state, goalAchieved) => {
+transition: (state, goalAchieved) => {
   if (goalAchieved) return 'main-menu'
   if (state.failedAttempts > 3) return 'escalation'
   return 'auth'  // stay on current agent
 }
 ```
 
-**2. `redirectToAgent`** -- The LLM itself can request a redirect via the base response schema.
-The agent's prompt and agent pool listing tell the LLM which agents are available.
+When `transition` is a function, `redirectToAgent` is **not exposed to the LLM** -- routing is fully code-controlled.
 
-**3. `transitionsTo`** -- Constrain which agents the LLM can redirect to:
+**2. Non-deterministic (array)** -- The LLM decides which agent to hand off to:
 
 ```typescript
 const agent: Agent<MyState> = {
   id: 'triage',
-  transitionsTo: ['billing', 'support', 'account'],
-  // LLM can only redirect to these three agents
+  transition: ['billing', 'support', 'account'],
+  // LLM can redirect to any of these agents via redirectToAgent
   // ...
 }
 ```
 
-When a redirect happens, **ChatFlow recursively invokes the next agent** in the same request.
+When `transition` is an array, the `redirectToAgent` field in the LLM output schema is constrained to those agent IDs.
+The LLM chooses based on conversation context.
+
+In both cases, when a transition happens, **ChatFlow recursively invokes the next agent** in the same request.
 The user sees a single response, even if multiple agents were involved.
 
 ### Session Stores

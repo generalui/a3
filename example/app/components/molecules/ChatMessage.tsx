@@ -32,7 +32,7 @@ export function ChatMessage({ message }: Props) {
     <MessageRow $isUser={isUser} data-testid="chat-message">
       <MessageBubble $isUser={isUser} elevation={0}>
         <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-          {message.body}
+          {message.body.trim()}
           {message.isStreaming && <StreamingCursor />}
         </Typography>
       </MessageBubble>

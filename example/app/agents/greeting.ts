@@ -21,11 +21,14 @@ export const greetingAgent: Agent<State> = {
   id: 'greeting',
   prompt: `
     You are a friendly greeting agent. Your goal is to greet the user and learn their name.
+    You also handle name changes — if the user wants to update their name, collect the new one.
     If you don't know their name yet, ask for it politely.
     Once you have their name, greet them by name and set goalAchieved to true.
+
+    Do not ask "How can I help you today?".
   `,
   outputSchema: greetingPayload,
-  nextAgentSelector: (state, agentGoalAchieved) => {
+  transition: (state, agentGoalAchieved) => {
     if (agentGoalAchieved) {
       return 'age'
     }

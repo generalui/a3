@@ -51,7 +51,8 @@ export function generateAgentPoolItem(agentId: AgentId): string {
 
 /**
  * Gets the agent IDs that should be included in the agent pool for a given agent.
- * Returns the current agent's ID plus any agents it can transition to.
+ * Returns the current agent's ID plus any agents it can transition to (when transition is an array).
+ * When transition is a function (deterministic routing), only the current agent's ID is returned.
  *
  * @param agent - The agent to get the pool IDs for
  * @returns An array of AgentId values
@@ -59,5 +60,6 @@ export function generateAgentPoolItem(agentId: AgentId): string {
 export function getAgentPoolIds<TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>(
   agent: Agent<TState, TContext>,
 ): AgentId[] {
-  return [agent.id, ...(agent.transitionsTo ?? [])]
+  const transitionTargets = Array.isArray(agent.transition) ? agent.transition : []
+  return [agent.id, ...transitionTargets]
 }

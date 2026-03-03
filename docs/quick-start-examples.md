@@ -27,7 +27,7 @@ export const greetingAgent: Agent<State> = {
   outputSchema: z.object({
     userName: z.string().optional(),
   }),
-  nextAgentSelector: (_state, goalAchieved) =>
+  transition: (_state, goalAchieved) =>
     goalAchieved ? 'end' : 'greeting',
 }
 ```
@@ -81,9 +81,8 @@ const greetingAgent: Agent<AppState> = {
     Once you have it, set goalAchieved to true.
   `,
   outputSchema: z.object({ userName: z.string().optional() }),
-  nextAgentSelector: (_state, goalAchieved) =>
+  transition: (_state, goalAchieved) =>
     goalAchieved ? 'auth' : 'greeting',
-  transitionsTo: ['auth'],
 }
 
 // Agent 2: Auth -- verifies identity, then routes to support
@@ -97,9 +96,8 @@ const authAgent: Agent<AppState> = {
     Set goalAchieved to true once verified.
   `,
   outputSchema: z.object({ isAuthenticated: z.boolean() }),
-  nextAgentSelector: (_state, goalAchieved) =>
+  transition: (_state, goalAchieved) =>
     goalAchieved ? 'support' : 'auth',
-  transitionsTo: ['support'],
 }
 
 // Agent 3: Support -- handles the user's issue
@@ -115,7 +113,7 @@ const supportAgent: Agent<AppState> = {
   outputSchema: z.object({
     issueCategory: z.string().optional(),
   }),
-  nextAgentSelector: (_state, goalAchieved) =>
+  transition: (_state, goalAchieved) =>
     goalAchieved ? 'end' : 'support',
 }
 ```
