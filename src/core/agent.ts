@@ -35,14 +35,29 @@ export const prepareAgentRequest = async <
   // Resolve widgets (supports both static record and function form)
   const resolvedWidgets = typeof agent.widgets === 'function' ? agent.widgets(sessionData) : agent.widgets
 
-  const systemPrompt = `${dynamicPrompt}\n${widgetPrompt({ ...agent, widgets: resolvedWidgets })}`
+  // Automatically inject transition context when agent was invoked via a transition
+  const transitionContext = lastAgentUnsentMessage
+    ? `\n\n[Transition Context]\nYou are now the active agent. The last assistant message in the conversation history was sent by a DIFFERENT agent (not you). That agent's response ("${lastAgentUnsentMessage}") is already visible to the user. Continue the conversation seamlessly and proceed directly with YOUR goal.`
+    : ''
+
+  const systemPrompt = `${dynamicPrompt}${transitionContext}\n${widgetPrompt({ ...agent, widgets: resolvedWidgets })}`
 
   // Get the consumer's output schema
   const outputSchema = typeof agent.outputSchema === 'function' ? agent.outputSchema(sessionData) : agent.outputSchema
 
   // Merge with base fields to create the full output schema
-  // If transitionsTo is provided, redirectToAgent will be constrained to those values
-  const fullOutputSchema = createFullOutputSchema(outputSchema, agent.transitionsTo, resolvedWidgets)
+  // When transition is an array, constrain redirectToAgent to those agent IDs (LLM decides).
+  // When transition is a function, don't expose redirectToAgent — routing is code-controlled.
+  const transitionTargets = Array.isArray(agent.transition) ? agent.transition : undefined
+  const isDeterministicRouting = typeof agent.transition === 'function'
+  // Suppress redirectToAgent on the first turn after a transition to prevent immediate bounce-back
+  const suppressRedirect = !!lastAgentUnsentMessage
+  const fullOutputSchema = createFullOutputSchema(
+    outputSchema,
+    transitionTargets,
+    resolvedWidgets,
+    isDeterministicRouting || suppressRedirect,
+  )
 
   return { systemPrompt, fullOutputSchema }
 }
@@ -86,7 +101,10 @@ export const processAgentResponseData = <TState extends BaseState, TContext exte
     widgets = undefined
   }
 
-  const nextAgentId = redirectToAgent ? redirectToAgent : agent.nextAgentSelector?.(newState, goalAchieved) || ''
+  // Deterministic routing (function): code decides, ignore LLM's redirectToAgent.
+  // Non-deterministic routing (array) or absent: use LLM's redirectToAgent, default to staying on current agent.
+  const nextAgentId =
+    typeof agent.transition === 'function' ? agent.transition(newState, goalAchieved) : redirectToAgent || agent.id
 
   return {
     newState,

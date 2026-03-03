@@ -55,9 +55,7 @@ function getCommandInput(params: SendWithModelParams, isStream: boolean) {
           },
         },
       ],
-      toolChoice: {
-        auto: {},
-      },
+      toolChoice: isStream ? { auto: {} } : { any: {} },
     },
   }
 }

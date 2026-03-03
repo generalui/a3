@@ -59,9 +59,26 @@ export type Agent<TState extends BaseState = BaseState, TContext extends BaseCha
   generateResponseStream?: GenerateResponseStreamSpecification<TState, TContext>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setState?: (data: any, state: TState) => TState
-  nextAgentSelector?: (state: TState, agentGoalAchieved: boolean) => AgentId
-  /** Agent IDs this agent can transition to. Used to constrain redirectToAgent in the schema. */
-  transitionsTo?: AgentId[]
+  /**
+   * Defines how this agent transitions to the next agent.
+   *
+   * **Array (non-deterministic):** Provide an array of `AgentId` strings.
+   * The LLM decides which agent to hand off to via the `redirectToAgent` schema field,
+   * constrained to the listed agent IDs.
+   *
+   * **Function (deterministic):** Provide a function `(state, goalAchieved) => AgentId`.
+   * Your code decides the next agent after each turn. When a function is provided,
+   * `redirectToAgent` is not exposed to the LLM — routing is fully code-controlled.
+   *
+   * @example
+   * // Non-deterministic: LLM chooses from candidates
+   * transition: ['billing', 'support', 'account']
+   *
+   * @example
+   * // Deterministic: code decides
+   * transition: (state, goalAchieved) => goalAchieved ? 'next-agent' : 'current-agent'
+   */
+  transition?: AgentId[] | ((state: TState, agentGoalAchieved: boolean) => AgentId)
 
   /*
     Strategy to filter conversation history before sending to agent.

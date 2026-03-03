@@ -24,6 +24,7 @@ type StreamEvent = {
 export function StreamChat() {
   const [messages, setMessages] = useState<ChatMessageType[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isTransitioning, setIsTransitioning] = useState(false)
   const assistantIdRef = useRef<string>('')
 
   const handleSubmit = useCallback(async (text: string) => {
@@ -83,18 +84,22 @@ export function StreamChat() {
             const event = JSON.parse(data) as StreamEvent
 
             if (event.type === EventType.TEXT_MESSAGE_CONTENT && event.delta) {
+              setIsTransitioning(false)
               setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, body: m.body + event.delta } : m)))
             } else if (event.type === EventType.CUSTOM && event.name === 'AgentTransition') {
               const prevAssistantId = assistantId
               assistantId = crypto.randomUUID()
               assistantIdRef.current = assistantId
+              setIsTransitioning(true)
               setMessages((prev) => {
                 const updated = prev.map((m) => (m.id === prevAssistantId ? { ...m, isStreaming: false } : m))
                 return [...updated, { id: assistantId, body: '', source: 'assistant', isStreaming: true }]
               })
             } else if (event.type === EventType.RUN_FINISHED) {
+              setIsTransitioning(false)
               setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, isStreaming: false } : m)))
             } else if (event.type === EventType.RUN_ERROR) {
+              setIsTransitioning(false)
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantId
@@ -133,6 +138,11 @@ export function StreamChat() {
         </Typography>
       </ChatHeader>
       <ChatMessageList messages={messages} />
+      {isTransitioning && (
+        <Typography variant="caption" color="textSecondary" sx={{ px: 2, pb: 1, fontStyle: 'italic' }}>
+          Agent transition in progress...
+        </Typography>
+      )}
       <ChatInput onSubmit={handleSubmit} disabled={isLoading} />
     </ChatContainer>
   )

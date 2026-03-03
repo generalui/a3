@@ -10,6 +10,7 @@ import {
   StreamEvent,
   ChatResponse,
   SessionData,
+  MessageSender,
 } from 'types'
 import { Events } from 'types/events'
 import { logEvent } from '@utils/eventLogger'
@@ -180,6 +181,13 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
   const decision = resolveTransition({ agents, activeAgent, agentResult, sessionData, _depth })
 
   if (decision.action === 'transition') {
+    decision.updatedSessionData.messages.push({
+      text: decision.chatbotMessage,
+      metadata: {
+        source: MessageSender.ASSISTANT,
+        timestamp: Date.now(),
+      },
+    })
     yield {
       type: EventType.CUSTOM,
       name: 'AgentTransition',

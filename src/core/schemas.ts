@@ -31,20 +31,22 @@ export type BaseResponse = z.infer<typeof baseResponseSchema>
 
 /**
  * Creates a full output schema by merging base fields with the agent's outputSchema.
- * If transitionsTo is provided, redirectToAgent is constrained to those values.
+ * If transitionTargets is provided, redirectToAgent is constrained to those values.
+ * If isDeterministicRouting is true, redirectToAgent is omitted entirely (code controls routing).
  */
 export function createFullOutputSchema<T extends z.ZodObject<{ [key: string]: z.ZodTypeAny }>>(
   outputSchema: T,
-  transitionsTo?: AgentId[],
+  transitionTargets?: AgentId[],
   widgets?: Record<string, z.ZodObject>,
+  isDeterministicRouting = false,
 ) {
-  // Create redirectToAgent field - either enum (if transitionsTo provided) or string
+  // Create redirectToAgent field - either enum (if transitionTargets provided) or string
   const redirectToAgentField =
-    transitionsTo && transitionsTo.length > 0
+    transitionTargets && transitionTargets.length > 0
       ? z
-          .enum(transitionsTo as [string])
+          .enum(transitionTargets as [string])
           .nullable()
-          .describe(`Next agent to hand off to (${transitionsTo.join(', ')}), or null`)
+          .describe(`Next agent to hand off to (${transitionTargets.join(', ')}), or null`)
       : z.string().nullable().describe('Next agent to hand off to, or null')
 
   // Create widgets field - dynamically provided schemas for each widget
@@ -60,9 +62,17 @@ export function createFullOutputSchema<T extends z.ZodObject<{ [key: string]: z.
 
   const widgetsField = widgets ? z.union([widgetsSchema, falsy]) : falsy
 
-  return baseResponseSchema.extend({
-    redirectToAgent: redirectToAgentField,
+  // When routing is deterministic or redirect is suppressed, omit redirectToAgent entirely from the schema
+  const base = isDeterministicRouting ? baseResponseSchema.omit({ redirectToAgent: true }) : baseResponseSchema
+
+  const schemaExtension: Record<string, z.ZodTypeAny> = {
     conversationPayload: outputSchema,
     widgets: z.preprocess(coerceFromString, widgetsField).optional(),
-  })
+  }
+
+  if (!isDeterministicRouting) {
+    schemaExtension.redirectToAgent = redirectToAgentField
+  }
+
+  return base.extend(schemaExtension)
 }
