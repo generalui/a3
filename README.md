@@ -56,7 +56,7 @@ npm install @genui-a3/core
 
 ```typescript
 import { z } from 'zod'
-import { Agent, simpleAgentResponse, BaseState } from '@genui-a3/core'
+import { Agent, BaseState } from '@genui-a3/core'
 
 interface State extends BaseState {
   userName?: string
@@ -73,8 +73,6 @@ export const greetingAgent: Agent<State> = {
   outputSchema: z.object({
     userName: z.string().optional(),
   }),
-  generateAgentResponse: simpleAgentResponse,
-  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'end' : 'greeting',
 }
@@ -139,7 +137,7 @@ One agent, one session, one function call.
 │                                                              │
 └───────────┬──────────────────────────────────────────────────┘
             │                                  ▲
-            │ generateAgentResponse            │ { chatbotMessage,
+            │ generateResponse            │ { chatbotMessage,
             │   ({ agent, sessionData })       │   newState,
             │                                  │   nextAgentId }
             ▼                                  │
@@ -175,7 +173,7 @@ One agent, one session, one function call.
 
 1. Your app calls `session.send(message)` with the user's input
 1. **ChatSession** loads session data (history, state) from the configured store and appends the user message
-1. **ChatFlow** looks up the active agent and calls `generateAgentResponse`
+1. **ChatFlow** looks up the active agent and calls `generateResponse`
 1. The **Agent** builds a system prompt, defines its Zod output schema, and delegates to the provider
 1. The **Provider** sends the request to the LLM and returns structured JSON
 1. The **Agent** extracts state updates and a routing decision (`nextAgentId`) from the response
@@ -195,7 +193,7 @@ Each agent has a focused responsibility and defines how it generates responses, 
 
 ```typescript
 import { z } from 'zod'
-import { Agent, simpleAgentResponse, BaseState } from '@genui-a3/core'
+import { Agent, BaseState } from '@genui-a3/core'
 
 interface MyState extends BaseState {
   userName?: string
@@ -219,15 +217,6 @@ const greetingAgent: Agent<MyState> = {
     userName: z.string().optional(),
   }),
 
-  // Response generator: how to process the LLM response
-  generateAgentResponse: simpleAgentResponse,
-
-  // State mapper: merge extracted data into global state
-  setState: (data, state) => ({
-    ...state,
-    ...data,
-  }),
-
   // Routing: decide the next agent after each turn
   nextAgentSelector: (state, goalAchieved) => {
     return goalAchieved ? 'next-agent' : 'greeting'
@@ -244,8 +233,8 @@ const greetingAgent: Agent<MyState> = {
 | `description` | Yes | What this agent does (used in agent pool prompts) |
 | `prompt` | Yes | System prompt string, or async function returning the system prompt |
 | `outputSchema` | Yes | Zod schema defining structured data to extract from LLM responses |
-| `generateAgentResponse` | Yes | Function that orchestrates the full response cycle |
-| `setState` | Yes | Maps extracted LLM data into the shared state object |
+| `generateResponse` | No | Function that orchestrates the full response cycle (defaults to `simpleAgentResponse`) |
+| `setState` | No | Maps extracted LLM data into the shared state object (defaults to shallow merge) |
 | `nextAgentSelector` | No | Determines the next agent based on state and goal status |
 | `transitionsTo` | No | Array of agent IDs this agent is allowed to redirect to |
 | `filterHistoryStrategy` | No | Custom function to filter conversation history before sending to the LLM |
@@ -457,7 +446,7 @@ Three agents routing between each other, demonstrating state flowing across agen
 
 ```typescript
 import { z } from 'zod'
-import { Agent, simpleAgentResponse, BaseState } from '@genui-a3/core'
+import { Agent, BaseState } from '@genui-a3/core'
 
 interface AppState extends BaseState {
   userName?: string
@@ -475,8 +464,6 @@ const greetingAgent: Agent<AppState> = {
     Once you have it, set goalAchieved to true.
   `,
   outputSchema: z.object({ userName: z.string().optional() }),
-  generateAgentResponse: simpleAgentResponse,
-  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'auth' : 'greeting',
   transitionsTo: ['auth'],
@@ -493,8 +480,6 @@ const authAgent: Agent<AppState> = {
     Set goalAchieved to true once verified.
   `,
   outputSchema: z.object({ isAuthenticated: z.boolean() }),
-  generateAgentResponse: simpleAgentResponse,
-  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'support' : 'auth',
   transitionsTo: ['support'],
@@ -513,8 +498,6 @@ const supportAgent: Agent<AppState> = {
   outputSchema: z.object({
     issueCategory: z.string().optional(),
   }),
-  generateAgentResponse: simpleAgentResponse,
-  setState: (data, state) => ({ ...state, ...data }),
   nextAgentSelector: (_state, goalAchieved) =>
     goalAchieved ? 'end' : 'support',
 }
@@ -634,7 +617,6 @@ Notice that:
 
 ## Roadmap
 
-- **Simplified Agent API** -- reduce agent definitions to just the essentials with sensible defaults
 - **Provider Abstraction** -- first-class support for OpenAI, Anthropic, and custom providers alongside Bedrock
 - **AG-UI Protocol** -- full compliance with the [ag-ui.com](https://ag-ui.com) protocol for standardized agent-to-frontend event streaming
 

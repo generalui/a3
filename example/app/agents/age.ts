@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { Agent, simpleAgentResponse } from '@genui-a3/core'
+import { Agent } from '@genui-a3/core'
 import { State } from './greeting'
 
 /**
@@ -11,15 +11,12 @@ const agePayload = z.object({
 
 export const ageAgent: Agent<State> = {
   id: 'age',
-  description: 'Asks the user for their age',
-  name: 'Age Agent',
   prompt: `
     You are a friendly agent. Your goal is to learn the user's age.
     If you don't know their age yet, ask for it politely.
     Once you have their age, confirm it and set goalAchieved to true.
   `,
   outputSchema: agePayload,
-  generateAgentResponse: simpleAgentResponse,
   nextAgentSelector: (state, agentGoalAchieved) => {
     if (agentGoalAchieved) {
       return 'age'

@@ -7,7 +7,7 @@ import { EventType } from '@ag-ui/client'
 import {
   BaseState,
   BaseChatContext,
-  GenerateAgentResponseSpecification,
+  GenerateResponseSpecification,
   FlowInput,
   StreamEvent,
   Agent,
@@ -104,7 +104,7 @@ export const simpleAgentResponse = async <
   agent,
   sessionData,
   lastAgentUnsentMessage,
-}: FlowInput<TState, TContext>): Promise<Awaited<ReturnType<GenerateAgentResponseSpecification<TState, TContext>>>> => {
+}: FlowInput<TState, TContext>): Promise<Awaited<ReturnType<GenerateResponseSpecification<TState, TContext>>>> => {
   const res = await getAgentResponse({
     agent,
     sessionData,
