@@ -49,7 +49,7 @@ export function StreamChat() {
     setMessages((prev) => [...prev, streamingMsg])
 
     try {
-      const response = await fetch('/api/chat/stream', {
+      const response = await fetch('/api/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, sessionId: SESSION_ID }),

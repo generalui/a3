@@ -1,3 +1,8 @@
+/**
+ * Synchronous (blocking / unary) chat endpoint.
+ * This is the non-streaming version of the /api/stream endpoint.
+ * It waits for the full agent response before returning a complete JSON payload.
+ */
 import { NextRequest, NextResponse } from 'next/server'
 import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
 import { greetingAgent, State } from '../../agents/greeting'
@@ -5,7 +10,12 @@ import { ageAgent } from '../../agents/age'
 
 // Register the agent on module load
 const registry = AgentRegistry.getInstance<State>()
-registry.register([greetingAgent, ageAgent])
+if (!registry.has('greeting')) {
+  registry.register(greetingAgent)
+}
+if (!registry.has('age')) {
+  registry.register(ageAgent)
+}
 
 // Shared store instance (in production, use Redis/DynamoDB)
 const store = new MemorySessionStore<State>()

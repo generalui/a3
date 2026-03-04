@@ -1,6 +1,6 @@
 {
   "name": "@genui-a3/core",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Core package for the A3 agentic backend framework",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -18,7 +18,8 @@
     "README.md"
   ],
   "workspaces": [
-    "example"
+    "example",
+    "create"
   ],
   "scripts": {
     "build": "tsup",
@@ -29,10 +30,9 @@
     "example:dev": "cd example && npm run dev",
     "example:setup": "cd example && npm i",
     "example:start": "cd example && npm run start",
-    "lint": "run-p lint:project lint:markdown lint:example",
-    "lint:example": "eslint './example/**/*.{ts,tsx}' './example_agent_core/**/*.{ts,tsx}' --max-warnings=0 --cache --cache-location .eslintcache",
+    "lint": "run-p lint:project lint:markdown",
     "lint:markdown": "markdownlint-cli2 '**/*.md'",
-    "lint:project": "eslint './**/*.{ts,tsx}' --ignore-pattern 'example/**' --ignore-pattern 'example_agent_core/**' --max-warnings=0 --cache --cache-location .eslintcache",
+    "lint:project": "eslint './**/*.{ts,tsx}' --ignore-pattern 'example_agent_core/**' --max-warnings=0 --cache --cache-location .eslintcache",
     "prepublishOnly": "npm run clean && npm run build",
     "test": "run-p test:unit",
     "test:coverage": "run-p test:unit:coverage",
