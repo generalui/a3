@@ -1,11 +1,13 @@
 {
   "name": "@genui-a3/create",
-  "version": "0.1.1",
-  "description": "CLI scaffolding tool for GenUI A3 agentic apps",
+  "version": "0.1.2",
+  "description": "CLI scaffolding tool for A3 agentic apps",
   "keywords": [
     "genui",
     "a3",
+    "ai",
     "agentic",
+    "architecture",
     "scaffold",
     "cli"
   ],
