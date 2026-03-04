@@ -39,7 +39,7 @@ async function main() {
         },
       },
     )
-    projectName = response.projectName
+    projectName = response.projectName as string
   }
 
   if (!projectName) {
@@ -70,7 +70,7 @@ async function main() {
 
   const pkgJsonPath = path.join(targetDir, 'package.json')
   if (fsExtra.existsSync(pkgJsonPath)) {
-    const pkg = fsExtra.readJsonSync(pkgJsonPath)
+    const pkg = fsExtra.readJsonSync(pkgJsonPath) as Record<string, unknown>
     pkg.name = projectName
     delete pkg.private
     fsExtra.writeJsonSync(pkgJsonPath, pkg, { spaces: 2 })

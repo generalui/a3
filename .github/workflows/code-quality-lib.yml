@@ -113,6 +113,11 @@ jobs:
         run: npm ci
         shell: bash
 
+      - name: Build project
+        if: steps.check-js.outputs.run == 'true'
+        run: npm run build
+        shell: bash
+
       - name: Lint project
         if: steps.check-js.outputs.run == 'true'
         run: npm run lint:project

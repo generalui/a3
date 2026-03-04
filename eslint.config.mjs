@@ -19,6 +19,7 @@ export default tseslint.config(
       'example/node_modules/*',
       'example/npm_modules/*',
       'example/.next/*',
+      'create/template/*',
       'example_agent_core/dist/*',
       'example_agent_core/node_modules/*',
       'example_agent_core/npm_modules/*',
@@ -47,12 +48,21 @@ export default tseslint.config(
       },
     },
   },
+  // Create CLI config
+  {
+    files: ['create/**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        project: './create/tsconfig.json',
+      },
+    },
+  },
   // Main app config
   ...tseslint.configs.recommendedTypeChecked,
   // React rules (manually configured to avoid FlatCompat circular structure issues)
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    ignores: ['example/**', 'example_agent_core/**'],
+    ignores: ['example/**', 'example_agent_core/**', 'create/**'],
     plugins: {},
     languageOptions: {
       parserOptions: {
@@ -76,7 +86,7 @@ export default tseslint.config(
   },
   {
     files: ['**/*.{ts,tsx}'],
-    ignores: ['example/**', 'example_agent_core/**'],
+    ignores: ['example/**', 'example_agent_core/**', 'create/**'],
     linterOptions: {
       reportUnusedDisableDirectives: 'error',
     },
@@ -119,7 +129,7 @@ export default tseslint.config(
   },
   // Config files - disable type checking (not in tsconfig)
   {
-    files: ['*.config.{js,mjs,ts}', 'jest.*.ts', 'tsup.config.ts'],
+    files: ['*.config.{js,mjs,ts}', 'jest.*.ts', 'tsup.config.ts', 'create/tsup.config.ts'],
     ...tseslint.configs.disableTypeChecked,
   },
   // Jest test files config
