@@ -16,7 +16,7 @@ const banner = `
   ${chalk.cyan('██║  ██║██████╔╝')}
   ${chalk.cyan('╚═╝  ╚═╝╚═════╝ ')}
 
-  ${chalk.white.bold('GenUI A3')} ${chalk.dim('— Agentic App Scaffold')}
+  ${chalk.white.bold('A3')} ${chalk.dim('— Agentic App Architecture')}
 `
 
 async function main() {
