@@ -101,11 +101,11 @@ function resolveTransition<TState extends BaseState, TContext extends BaseChatCo
   }
 }
 
-export const manageFlow = async <TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>({
+export async function manageFlow<TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>({
   sessionData,
   lastAgentUnsentMessage,
   _depth = 0,
-}: FlowInput<TState, TContext> & { _depth?: number }): Promise<ChatResponse<TState>> => {
+}: FlowInput<TState, TContext> & { _depth?: number }): Promise<ChatResponse<TState>> {
   const { activeAgentId } = sessionData
   const agents = AgentRegistry.getInstance<TState, TContext>().getAll()
   const activeAgent = agents.find((a) => a.id === activeAgentId)

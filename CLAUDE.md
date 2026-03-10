@@ -1,9 +1,27 @@
-PROJECT: A3 Core
+PROJECT: A3 (Monorepo)
 
-Core package for the A3 agentic backend framework.
+A3 is a monorepo for the A3 agentic backend framework ecosystem.
+
+WORKSPACES & PACKAGES:
+
+- src/           → @genui-a3/core — Core orchestration framework (main npm package)
+- agents/        → Temporary agent implementations used by the example app (may become individual npm packages)
+- example/       → Example agentic application showcasing A3 usage (see example/CLAUDE.md)
+- create/        → @genui-a3/create — CLI for quickstarting A3 applications
+
+FUTURE DIRECTION:
+
+- Providers will be extracted into individual npm packages (e.g., @genui-a3/bedrock, @genui-a3/openai, @genui-a3/anthropic)
+- Agents will become individual npm packages (e.g., @genui-a3/agent-auth)
+
+---
+
+PACKAGE: @genui-a3/core
+
+Core orchestration framework for agentic applications.
 A developer-installable npm package that provides agent orchestration patterns.
-Agents can be registered with the core framework.
-Providers (OpenAI, Bedrock, Anthropic, etc.) are pluggable via additional packages.
+Agents are separate entities that connect to the orchestration — created green-field by a developer or installed as npm packages.
+Providers (OpenAI, Bedrock, Anthropic, etc.) are pluggable; a future goal is individual provider npm packages.
 
 CONSTRAINTS:
 
@@ -20,17 +38,29 @@ TECH STACK:
 - Jest 30.2.0 for testing (with ts-jest, jsdom environment)
 - ESLint 9.39.2 + Prettier 3.7.4 for linting/formatting
 - zod 4.3.6 for schema validation
-- Path aliases for clean imports (@agents, @core, @utils, etc.)
+- @ag-ui/client — AG-UI protocol for agent-to-app communication and streaming events
 
-FOLDER STRUCTURE:
+PATH ALIASES:
+
+- @core       → src/core
+- @utils      → src/utils
+- @providers  → src/providers
+- @constants  → src/constants
+- @prompts    → src/prompts
+- @stores     → src/stores
+- @agents     → agents/ (root — temporary; will be removed when agents become npm packages)
+- types       → src/types (bare module name, no @ prefix — always import as 'types' or 'types/submodule')
+- `types/*`   → src/types/* (sub-module imports, e.g. import { Events } from 'types/events')
+Note: @skills alias exists in config but src/skills/ does not — do not use.
+
+FOLDER STRUCTURE (src/):
 
 - src/
-  - agents/          → Agent implementations (auth, discharge, etc.)
-  - core/            → Core framework logic (agent, chatFlow, schemas)
+  - core/            → Core framework logic (agent, chatFlow, schemas, registry, streaming)
   - providers/       → Provider implementations (awsBedrock example)
-  - skills/          → Skill-based agent extensions
+  - stores/          → Memory/session store implementations (configurable via API)
   - types/           → TypeScript type definitions
-  - utils/           → Utility functions (logger, uuid, date parsing, etc.)
+  - utils/           → Utility functions (uuid, date parsing, etc.)
   - constants/       → Application constants
   - prompts/         → Shared prompt templates
   - index.ts         → Main entry point (exports)
@@ -40,25 +70,71 @@ FOLDER STRUCTURE:
 
 KEY FILES:
 
-- src/index.ts                    → Main package exports
-- src/core/agent.ts               → Agent response generation logic
-- src/core/chatFlow.ts            → Conversation flow management
-- src/core/schemas.ts              → Base response schemas
-- src/providers/awsBedrock.ts     → AWS Bedrock provider implementation (example)
-- src/agents/basePrompt.ts         → Base prompt template for agents
-- src/types/agent.ts               → Agent interface and types
-- package.json                     → Package configuration, dependencies
-- tsup.config.ts                   → Build configuration
-- jest.base.config.ts              → Jest test configuration
+- src/index.ts                        → Main package exports
+- src/core/agent.ts                   → Agent request preparation and response generation
+- src/core/chatFlow.ts                → Conversation flow and agent-switching management
+- src/core/schemas.ts                 → Base response schemas
+- src/core/AgentRegistry.ts           → Agent registration and lookup
+- src/core/AGUIAgent.ts               → AG-UI protocol integration
+- src/core/chatSession.ts             → Chat session management
+- src/core/streamProcessor.ts         → Streaming response processing
+- src/stores/memoryStore.ts           → Base memory store interface
+- src/stores/agentCoreMemoryStore.ts  → Agent core memory store implementation
+- src/providers/awsBedrock.ts         → AWS Bedrock provider implementation (example)
+- src/types/agent.ts                  → Agent interface and types
+- package.json                        → Package configuration, dependencies
+- tsup.config.ts                      → Build configuration
+- jest.base.config.ts                 → Jest test configuration
 
 ARCHITECTURE:
 
-- Agents are registered with the core framework
-- Each agent implements the Agent interface (id, prompt, responseFormat, etc.)
+- Agents are registered with the core framework via AgentRegistry
+- Each agent implements the Agent interface (id, prompt, outputSchema, transition, etc.)
 - Providers are pluggable and handle LLM communication
-- Chat flow manages agent switching based on responses
+- Chat flow manages agent switching — deterministic (transition function, code-controlled) or LLM-driven (transition array of target agent IDs)
+- AG-UI protocol (@ag-ui/client) handles agent-to-app communication and streaming events
 - Response schemas use zod for validation
+- Stores provide configurable memory/session persistence
 - Path aliases (@agents, @core, @utils, etc.) for clean imports
+
+CODING CONVENTIONS:
+
+Exports:
+
+- Named exports only — no default exports anywhere in src/
+- Re-export via barrel index.ts files per directory
+
+TypeScript:
+
+- Generic parameters follow the pattern: `TState extends BaseState`, `TContext extends BaseChatContext = BaseChatContext`
+- Use `interface` for object shapes; `type` for unions and aliases
+- `private readonly` for immutable class properties
+- Mark fire-and-forget promises with `void` keyword: `void someAsyncFn()`
+- `strict` and `strictNullChecks` are enabled — no implicit any or null
+
+Functions vs Classes:
+
+- Classes for stateful entities, singletons, and interface implementations (AgentRegistry, ChatSession, stores, AGUIAgent)
+- Prefer named function declarations (`export function foo()`) for exported utilities — cleaner with generics, better stack traces, and hoisted
+- Async generators always use named function syntax: `export async function* name()`
+- Non-exported internal helpers use named function declarations, not arrow functions
+
+Naming:
+
+- camelCase for variables, functions, and file names
+- PascalCase for classes, interfaces, and type aliases
+- SCREAMING_SNAKE_CASE for module-level constants
+
+Imports:
+
+- Use path aliases over relative imports except within the same directory (use `'./sibling'` for same-folder imports)
+- Import from `'types'` (bare) for src/types — never `'@types'`
+- Sub-module type imports: `import { Events } from 'types/events'`
+
+Documentation:
+
+- JSDoc with @param, @returns, @throws, and @example on all public APIs
+- Inline comments for non-obvious logic only — do not comment self-evident code
 
 CONFIGURATION:
 
@@ -97,7 +173,8 @@ TESTING:
 - Unit tests: `npm run test:unit` (__tests__/unit/)
 - Integration tests: `npm run test:integration`
 - Coverage: `npm run test:coverage`
-- Watch mode: `npm run test:watch`
+- Unit watch mode: `npm run test:unit:watch`
+- All tests watch mode: `npm run test:watch`
 - Jest configured with ts-jest for TypeScript support
 - jsdom environment for browser API testing
 
@@ -105,7 +182,7 @@ BUILD & PUBLISH:
 
 - Build: `npm run build` (generates dist/ with ESM, CJS, and .d.ts files)
 - Clean: `npm run clean` (removes dist/)
-- Dev: `npm run dev` (watch mode)
+- Dev: `npm run dev` (watch mode for core + example in parallel)
 - Publish: `npm publish` (runs prepublishOnly: clean + build)
 - Package name: @genui-a3/core
 - Organization: genui-a3 (npm)

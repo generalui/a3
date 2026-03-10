@@ -48,7 +48,7 @@ The CLI will not overwrite a non-empty directory.
 
 ## Project Structure
 
-```
+```txt
 my-app/
 ├── app/
 │   ├── (pages)/        # Route groups (chat, stream, agui)

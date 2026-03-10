@@ -1,4 +1,3 @@
-// import { DatadogBrowserLogger } from './datadogBrowserLogger'
 import { LoggerFacade } from './loggerFacade'
 
 // Lazy load Winston to avoid bundling it in client code
