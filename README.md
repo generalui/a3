@@ -144,7 +144,7 @@ One agent, one session, one function call.
 ┌──────────────────────────────────────────────────────────────┐
 │                      Active Agent                            │
 │                                                              │
-│  • Builds system prompt (prompt)                    │
+│  • Builds system prompt (prompt)                             │
 │  • Defines output schema (Zod)                               │
 │  • Determines next agent (transition)                        │
 │                                                              │
@@ -156,7 +156,7 @@ One agent, one session, one function call.
 │                       Provider                               │
 │                      (Bedrock)                               │
 │                                                              │
-│  • Converts Zod → JSON Schema                               │
+│  • Converts Zod → JSON Schema                                │
 │  • Merges message history                                    │
 │  • Model fallback on error                                   │
 │                                                              │

@@ -13,27 +13,11 @@ import loglevel, { LogLevelDesc } from 'loglevel'
  */
 
 function getLevel(): LogLevelDesc {
-  const logLevel = process.env.NEXT_PUBLIC_LOG_LEVEL || 'info'
+  const logLevel = process.env.A3_LOG_LEVEL || 'info'
   return logLevel.toLowerCase() as LogLevelDesc
 }
 
-// const isClient = typeof window !== 'undefined'
-
-// // Use method factory to ensure loglevel only runs on client side. Server side is handled by WinstonServerLogger.
-// const originalFactory = loglevel.methodFactory
-// loglevel.methodFactory = function (methodName, logLevel, loggerName) {
-//   const rawMethod = originalFactory(methodName, logLevel, loggerName)
-
-//   return function (...args: unknown[]) {
-//     // Only execute logging on client side
-//     if (isClient) {
-//       rawMethod(...args)
-//     }
-//   }
-// }
-
 loglevel.setLevel(getLevel())
-// loglevel.rebuild() // Apply the method factory
 
 // function isLogLevelEnabled(requestedLevel: LogLevel[keyof LogLevel]): boolean {
 //   const globalLevel = loglevel.getLevel()
