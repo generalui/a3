@@ -18,7 +18,7 @@ No state machines.
 - **Structured output** -- Zod schemas validate every LLM response at runtime
 - **Streaming** -- real-time token streaming via `send({ message, stream: true })` with AG-UI-compatible event types
 - **Pluggable session stores** -- swap in-memory, AWS AgentCore, Redis, or your own store
-- **Pluggable providers** -- ships with AWS Bedrock; designed for additional providers
+- **Pluggable providers** -- ships with AWS Bedrock and OpenAI; designed for additional providers
 - **TypeScript-native** -- full type safety from agent definitions to response handling
 - **Dual ESM/CJS** -- works in any Node.js environment
 
@@ -161,7 +161,7 @@ One agent, one session, one function call.
             ▼                                  │
 ┌──────────────────────────────────────────────────────────────┐
 │                       Provider                               │
-│                      (Bedrock)                               │
+│                  (Bedrock, OpenAI)                            │
 │                                                              │
 │  • Converts Zod → JSON Schema                                │
 │  • Merges message history                                    │
@@ -405,7 +405,7 @@ Custom stores are straightforward to implement for Redis, DynamoDB, PostgreSQL, 
 
 Providers handle communication with LLM backends.
 A3 uses a pluggable `Provider` interface.
-Providers are separate packages (e.g. `@genui-a3/providers`).
+Providers are separate packages (`@genui-a3/providers`).
 
 ```typescript
 import { Provider } from '@genui-a3/core'
@@ -433,12 +433,22 @@ const provider = createBedrockProvider({
 })
 ```
 
-The Bedrock provider:
+```typescript
+import { createOpenAIProvider } from '@genui-a3/providers/openai'
 
-- Sends structured requests via the AWS Bedrock Converse API
-- Uses tool-based JSON extraction for reliable structured output
-- Supports model fallback (primary model fails, falls back to secondary)
-- Merges sequential same-sender messages for API compatibility
+const provider = createOpenAIProvider({
+  models: ['gpt-4o', 'gpt-4o-mini'],
+  apiKey: process.env.OPENAI_API_KEY, // optional, defaults to OPENAI_API_KEY env var
+})
+```
+
+Both providers support:
+
+- **Model fallback** (primary model fails → falls back to secondary)
+- **Blocking and streaming** modes
+- **Structured output** via Zod schemas
+
+See the [`@genui-a3/providers` README](./providers/README.md) for full configuration options.
 
 **Per-agent provider override:**
 
@@ -447,7 +457,7 @@ Each agent can optionally specify its own `provider` to override the session-lev
 ```typescript
 const agent: Agent<MyState> = {
   id: 'premium',
-  provider: createBedrockProvider({ models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'] }),
+  provider: createOpenAIProvider({ models: ['gpt-4o'] }),
   // ...
 }
 ```
@@ -708,7 +718,7 @@ Notice that:
 
 ## Roadmap
 
-- **Additional providers** -- first-party OpenAI and Anthropic provider packages alongside the existing Bedrock provider
+- **Additional providers** -- first-party Anthropic provider package alongside the existing Bedrock and OpenAI providers
 - **Tool use** -- agent-invoked tool execution within the response cycle
 
 ## Requirements
@@ -716,7 +726,7 @@ Notice that:
 - Node.js 20.19.0+
 - TypeScript 5.9+
 - `zod` 4.x (included as a dependency)
-- A configured LLM provider (AWS Bedrock provider included)
+- A configured LLM provider (AWS Bedrock and OpenAI providers included via `@genui-a3/providers`)
 
 ## Contributing
 

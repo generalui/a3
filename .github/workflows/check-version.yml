@@ -1,0 +1,78 @@
+name: Check Version
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+    paths:
+      - 'src/**'
+      - 'example/**'
+      - 'package.json'
+      - 'tsconfig*'
+      - 'tsup*'
+      - 'create/**'
+      - 'providers/**'
+  workflow_dispatch:
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - package: lib
+            path: .
+            files: |
+              src/**
+              example/**
+              package.json
+              tsconfig*
+              tsup*
+          - package: create
+            path: create
+            files: create/**
+          - package: providers
+            path: providers
+            files: providers/**
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: ${{ matrix.files }}
+
+      - name: Version and Release Setup
+        run: |
+          if [ "${{ matrix.path }}" = "." ]; then
+            version=$(cat package.json | jq -r '.version')
+          else
+            version=$(cat ${{ matrix.path }}/package.json | jq -r '.version')
+          fi
+          version_tag="${{ matrix.package }}-${version}"
+
+          echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
+
+          echo "::group::Version Tag"
+          echo "Version Tag: ${version_tag}"
+          echo "::endgroup::"
+        shell: bash
+        id: version
+
+      - name: Check for Tag
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          tag="${{ steps.version.outputs.version_tag }}"
+
+          if git show-ref --tags --verify --quiet "refs/tags/${tag}"; then
+              if [ "${{ matrix.path }}" = "." ]; then
+                echo "The tag ${tag} already exists, please update the version in 'package.json'."
+              else
+                echo "The tag ${tag} already exists, please update the version in '${{ matrix.path }}/package.json'."
+              fi
+              exit 1
+          fi
+          echo "Proceed with PR"
+        shell: bash

@@ -5,7 +5,7 @@ A3 is a monorepo for the A3 agentic backend framework ecosystem.
 WORKSPACES & PACKAGES:
 
 - src/           → @genui-a3/core — Core orchestration framework (main npm package)
-- providers/     → @genui-a3/providers — Pluggable LLM provider implementations (e.g. Bedrock)
+- providers/     → @genui-a3/providers — Pluggable LLM provider implementations (Bedrock, OpenAI)
 - agents/        → Temporary agent implementations used by the example app (may become individual npm packages)
 - example/       → Example agentic application showcasing A3 usage (see example/CLAUDE.md)
 - create/        → @genui-a3/create — CLI for quickstarting A3 applications
@@ -81,6 +81,7 @@ KEY FILES:
 - src/core/streamProcessor.ts         → Streaming response processing
 - src/stores/memoryStore.ts           → Base memory store interface
 - providers/bedrock/index.ts          → AWS Bedrock provider implementation (createBedrockProvider)
+- providers/openai/index.ts           → OpenAI provider implementation (createOpenAIProvider)
 - src/types/agent.ts                  → Agent interface and types
 - package.json                        → Package configuration, dependencies
 - tsup.config.ts                      → Build configuration
