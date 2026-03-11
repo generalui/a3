@@ -5,7 +5,7 @@
 
 **LLM provider implementations for the [A3 agentic framework](https://www.npmjs.com/package/@genui-a3/core).**
 
-Ships with **AWS Bedrock** and **OpenAI** providers out of the box.
+Ships with **AWS Bedrock**, **Anthropic** and **OpenAI** providers out of the box.
 Both support blocking and streaming modes, model fallback, and structured output via Zod schemas.
 
 ## Install
