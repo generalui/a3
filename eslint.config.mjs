@@ -20,9 +20,6 @@ export default tseslint.config(
       'example/npm_modules/*',
       'example/.next/*',
       'create/template/*',
-      'example_agent_core/dist/*',
-      'example_agent_core/node_modules/*',
-      'example_agent_core/npm_modules/*',
     ],
   },
   eslint.configs.recommended,
@@ -39,15 +36,6 @@ export default tseslint.config(
     files: ['example/**/*.{js,jsx,mjs}'],
     ...tseslint.configs.disableTypeChecked,
   },
-  // Example Agent Core config
-  {
-    files: ['example_agent_core/**/*.{ts,tsx}'],
-    languageOptions: {
-      parserOptions: {
-        project: './example_agent_core/tsconfig.json',
-      },
-    },
-  },
   // Create CLI config
   {
     files: ['create/**/*.{ts,tsx}'],
@@ -62,7 +50,7 @@ export default tseslint.config(
   // React rules (manually configured to avoid FlatCompat circular structure issues)
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    ignores: ['example/**', 'example_agent_core/**', 'create/**'],
+    ignores: ['example/**', 'create/**'],
     plugins: {},
     languageOptions: {
       parserOptions: {
@@ -86,7 +74,7 @@ export default tseslint.config(
   },
   {
     files: ['**/*.{ts,tsx}'],
-    ignores: ['example/**', 'example_agent_core/**', 'create/**'],
+    ignores: ['example/**', 'create/**'],
     linterOptions: {
       reportUnusedDisableDirectives: 'error',
     },

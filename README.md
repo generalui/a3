@@ -398,7 +398,6 @@ interface SessionStore<TState extends BaseState> {
 | Store | Use case |
 |---|---|
 | `MemorySessionStore` | Development and testing (sessions lost on restart) |
-| `AgentCoreMemoryStore` | AWS Bedrock AgentCore integration for persistent storage |
 
 Custom stores are straightforward to implement for Redis, DynamoDB, PostgreSQL, or any other backend.
 
@@ -656,7 +655,6 @@ Notice that:
 | `manageFlowStream` | Function | Streaming variant of `manageFlow` yielding `StreamEvent`s |
 | `createFullOutputSchema` | Function | Merges agent schema with base response fields |
 | `MemorySessionStore` | Class | In-memory session store for development and testing |
-| `AgentCoreMemoryStore` | Class | AWS Bedrock AgentCore session store |
 
 ### ChatSession Methods
 

@@ -36,7 +36,7 @@
     "example:start": "cd example && npm run start",
     "lint": "run-p lint:project lint:markdown",
     "lint:markdown": "markdownlint-cli2 '**/*.md'",
-    "lint:project": "eslint './**/*.{ts,tsx}' --ignore-pattern 'example_agent_core/**' --max-warnings=0 --cache --cache-location .eslintcache",
+    "lint:project": "eslint './**/*.{ts,tsx}' --max-warnings=0 --cache --cache-location .eslintcache",
     "prepublishOnly": "npm run clean && npm run build",
     "test": "run-p test:unit",
     "test:coverage": "run-p test:unit:coverage",

@@ -12,7 +12,6 @@ export default defineConfig({
   target: 'node20',
   outDir: 'dist',
   tsconfig: './tsconfig.json',
-  external: ['@aws-sdk/client-bedrock-agentcore'],
   esbuildOptions(options) {
     // Resolve path aliases to absolute paths for esbuild
     const alias = options.alias || {}

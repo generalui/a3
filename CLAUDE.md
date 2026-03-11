@@ -80,7 +80,6 @@ KEY FILES:
 - src/core/chatSession.ts             → Chat session management
 - src/core/streamProcessor.ts         → Streaming response processing
 - src/stores/memoryStore.ts           → Base memory store interface
-- src/stores/agentCoreMemoryStore.ts  → Agent core memory store implementation
 - providers/bedrock/index.ts          → AWS Bedrock provider implementation (createBedrockProvider)
 - src/types/agent.ts                  → Agent interface and types
 - package.json                        → Package configuration, dependencies
