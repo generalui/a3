@@ -3,6 +3,7 @@ import { defineConfig } from 'tsup'
 export default defineConfig({
   entry: {
     'bedrock/index': 'bedrock/index.ts',
+    'openai/index': 'openai/index.ts',
   },
   format: ['cjs', 'esm'],
   dts: true,

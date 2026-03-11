@@ -13,8 +13,14 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "lib": ["esnext"],
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@genui-a3/core": ["../dist/index.d.ts"],
+      "openai": ["../node_modules/openai"],
+      "openai/*": ["../node_modules/openai/*"]
+    }
   },
-  "include": ["bedrock/**/*.ts"],
+  "include": ["bedrock/**/*.ts", "openai/**/*.ts", "utils/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

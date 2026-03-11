@@ -49,6 +49,7 @@ export function ChatInput({ onSubmit, disabled, placeholder = 'Type a message...
           disabled={disabled}
           variant="outlined"
           size="small"
+          autoComplete="off"
           data-testid="chat-input"
         />
         <Button
