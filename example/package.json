@@ -13,6 +13,7 @@
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@genui-a3/core": "file:..",
+    "@genui-a3/providers": "file:../providers",
     "@mui/icons-material": "7.3.7",
     "@mui/material": "7.3.7",
     "next": "16.1.6",

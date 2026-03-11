@@ -1,6 +1,6 @@
 {
   "name": "@genui-a3/core",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Core package for the A3 agentic backend framework",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -18,15 +18,19 @@
     "README.md"
   ],
   "workspaces": [
+    "providers",
     "example",
     "create"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "run-s build:core build:providers build:example",
+    "build:core": "tsup",
+    "build:providers": "npm run build -w providers",
+    "build:example": "npm run build -w example",
     "clean": "rm -rf dist",
-    "dev": "run-p dev:core example:dev",
+    "dev": "run-p dev:core dev:providers example:dev",
     "dev:core": "tsup --watch",
-    "example:build": "cd example && npm run build",
+    "dev:providers": "npm run dev -w providers",
     "example:dev": "cd example && npm run dev",
     "example:setup": "cd example && npm i",
     "example:start": "cd example && npm run start",
@@ -84,9 +88,6 @@
   },
   "dependencies": {
     "@ag-ui/client": "0.0.47",
-    "@aws-sdk/client-bedrock-agentcore": "^3.981.0",
-    "@aws-sdk/client-bedrock-runtime": "3.975.0",
-    "@aws-sdk/client-cloudformation": "3.975.0",
     "@datadog/browser-logs": "6.25.4",
     "chrono-node": "2.9.0",
     "date-fns": "4.1.0",

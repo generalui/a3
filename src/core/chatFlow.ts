@@ -18,6 +18,28 @@ import { log } from '@utils/logger'
 
 const MAX_AUTO_TRANSITIONS = 10
 
+function isAsyncIterable(value: unknown): boolean {
+  return Symbol.asyncIterator in Object(value)
+}
+
+export const STREAM_REQUIRED_ERROR = (agentId: string) =>
+  `Agent "${agentId}" returned a Promise from generateResponse, but streaming was requested (input.stream = true). ` +
+  `Return an AsyncGenerator instead, or check input.stream to branch behavior.`
+
+export const BLOCKING_REQUIRED_ERROR = (agentId: string) =>
+  `Agent "${agentId}" returned an AsyncGenerator from generateResponse, but blocking was requested (input.stream = false). ` +
+  `Return a Promise instead, or check input.stream to branch behavior.`
+
+function validateGenerateResponseResult(result: unknown, stream: boolean, agentId: string): void {
+  if (stream && !isAsyncIterable(result)) {
+    throw new Error(STREAM_REQUIRED_ERROR(agentId))
+  }
+
+  if (!stream && isAsyncIterable(result)) {
+    throw new Error(BLOCKING_REQUIRED_ERROR(agentId))
+  }
+}
+
 type TransitionDecision<TState extends BaseState, TContext extends BaseChatContext> =
   | { action: 'respond'; response: ChatResponse<TState> }
   | {
@@ -104,6 +126,8 @@ function resolveTransition<TState extends BaseState, TContext extends BaseChatCo
 export async function manageFlow<TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>({
   sessionData,
   lastAgentUnsentMessage,
+  stream,
+  provider,
   _depth = 0,
 }: FlowInput<TState, TContext> & { _depth?: number }): Promise<ChatResponse<TState>> {
   const { activeAgentId } = sessionData
@@ -122,12 +146,17 @@ export async function manageFlow<TState extends BaseState, TContext extends Base
   }
 
   log.log('activeAgent:', activeAgent.id)
-  const responseFn = activeAgent.generateResponse ?? simpleAgentResponse
-  const agentResult = await responseFn({
-    agent: activeAgent,
-    sessionData,
-    lastAgentUnsentMessage,
-  })
+  const flowInput = { agent: activeAgent, sessionData, lastAgentUnsentMessage, stream, provider }
+
+  let agentResult: AgentResponseResult<TState>
+
+  if (activeAgent.generateResponse) {
+    const result = activeAgent.generateResponse(flowInput)
+    validateGenerateResponseResult(result, stream, activeAgent.id)
+    agentResult = await (result as Promise<AgentResponseResult<TState>>)
+  } else {
+    agentResult = await simpleAgentResponse(flowInput)
+  }
 
   const decision = resolveTransition({ agents, activeAgent, agentResult, sessionData, _depth })
 
@@ -136,6 +165,8 @@ export async function manageFlow<TState extends BaseState, TContext extends Base
       agent: decision.nextAgent,
       sessionData: decision.updatedSessionData,
       lastAgentUnsentMessage: decision.chatbotMessage,
+      stream,
+      provider,
       _depth: decision.newDepth,
     })
   }
@@ -146,6 +177,8 @@ export async function manageFlow<TState extends BaseState, TContext extends Base
 export async function* manageFlowStream<TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>({
   sessionData,
   lastAgentUnsentMessage,
+  stream,
+  provider,
   _depth = 0,
 }: FlowInput<TState, TContext> & { _depth?: number }): AsyncGenerator<StreamEvent<TState>> {
   const { activeAgentId } = sessionData
@@ -170,13 +203,17 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
   }
 
   log.log('activeAgent (stream):', activeAgent.id)
+  const flowInput = { agent: activeAgent, sessionData, lastAgentUnsentMessage, stream, provider }
 
-  const streamFn = activeAgent.generateResponseStream ?? simpleAgentResponseStream
-  const agentResult = yield* streamFn({
-    agent: activeAgent,
-    sessionData,
-    lastAgentUnsentMessage,
-  })
+  let agentResult: AgentResponseResult<TState>
+
+  if (activeAgent.generateResponse) {
+    const result = activeAgent.generateResponse(flowInput)
+    validateGenerateResponseResult(result, stream, activeAgent.id)
+    agentResult = yield* result as AsyncGenerator<StreamEvent<TState>, AgentResponseResult<TState>>
+  } else {
+    agentResult = yield* simpleAgentResponseStream(flowInput)
+  }
 
   const decision = resolveTransition({ agents, activeAgent, agentResult, sessionData, _depth })
 
@@ -197,6 +234,8 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
       agent: decision.nextAgent,
       sessionData: decision.updatedSessionData,
       lastAgentUnsentMessage: decision.chatbotMessage,
+      stream,
+      provider,
       _depth: decision.newDepth,
     })
     return

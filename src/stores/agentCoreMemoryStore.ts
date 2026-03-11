@@ -28,7 +28,7 @@ export class AgentCoreMemoryStore<
       const events = response.events || []
 
       for (const event of events) {
-        const blobPayload = event.payload?.find((p) => p.blob)
+        const blobPayload = event.payload?.find((p: { blob?: unknown }) => p.blob)
         if (blobPayload && blobPayload.blob) {
           return JSON.parse(blobPayload.blob as string) as SessionData<TState, TContext>
         }

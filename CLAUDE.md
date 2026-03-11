@@ -5,6 +5,7 @@ A3 is a monorepo for the A3 agentic backend framework ecosystem.
 WORKSPACES & PACKAGES:
 
 - src/           → @genui-a3/core — Core orchestration framework (main npm package)
+- providers/     → @genui-a3/providers — Pluggable LLM provider implementations (e.g. Bedrock)
 - agents/        → Temporary agent implementations used by the example app (may become individual npm packages)
 - example/       → Example agentic application showcasing A3 usage (see example/CLAUDE.md)
 - create/        → @genui-a3/create — CLI for quickstarting A3 applications
@@ -80,7 +81,7 @@ KEY FILES:
 - src/core/streamProcessor.ts         → Streaming response processing
 - src/stores/memoryStore.ts           → Base memory store interface
 - src/stores/agentCoreMemoryStore.ts  → Agent core memory store implementation
-- src/providers/awsBedrock.ts         → AWS Bedrock provider implementation (example)
+- providers/bedrock/index.ts          → AWS Bedrock provider implementation (createBedrockProvider)
 - src/types/agent.ts                  → Agent interface and types
 - package.json                        → Package configuration, dependencies
 - tsup.config.ts                      → Build configuration
@@ -90,7 +91,8 @@ ARCHITECTURE:
 
 - Agents are registered with the core framework via AgentRegistry
 - Each agent implements the Agent interface (id, prompt, outputSchema, transition, etc.)
-- Providers are pluggable and handle LLM communication
+- Providers implement the Provider interface (sendRequest, sendRequestStream) and are pluggable; installed as separate packages
+- ChatSession requires a provider instance at construction time
 - Chat flow manages agent switching — deterministic (transition function, code-controlled) or LLM-driven (transition array of target agent IDs)
 - AG-UI protocol (@ag-ui/client) handles agent-to-app communication and streaming events
 - Response schemas use zod for validation

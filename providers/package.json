@@ -1,6 +1,6 @@
 {
   "name": "@genui-a3/providers",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Provider implementations for the A3 agentic framework",
   "type": "module",
   "exports": {
@@ -15,6 +15,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "dev": "tsup --watch",
     "clean": "rm -rf dist"
   },
   "keywords": [

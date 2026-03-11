@@ -36,18 +36,24 @@ export const greetingAgent: Agent<State> = {
 
 ```typescript
 import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
+import { createBedrockProvider } from '@genui-a3/providers/bedrock'
 
 const registry = AgentRegistry.getInstance<State>()
 registry.register(greetingAgent)
+
+const provider = createBedrockProvider({
+  models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
+})
 
 const session = new ChatSession<State>({
   sessionId: 'demo',
   store: new MemorySessionStore(),
   initialAgentId: 'greeting',
   initialState: { userName: undefined },
+  provider,
 })
 
-const response = await session.send('Hi there!')
+const response = await session.send({ message: 'Hi there!' })
 console.log(response.responseMessage)
 // => "Hello! I'd love to get to know you. What's your name?"
 ```
@@ -122,15 +128,21 @@ const supportAgent: Agent<AppState> = {
 
 ```typescript
 import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
+import { createBedrockProvider } from '@genui-a3/providers/bedrock'
 
 const registry = AgentRegistry.getInstance<AppState>()
 registry.register([greetingAgent, authAgent, supportAgent])
+
+const provider = createBedrockProvider({
+  models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
+})
 
 const session = new ChatSession<AppState>({
   sessionId: 'user-456',
   store: new MemorySessionStore(),
   initialAgentId: 'greeting',
   initialState: { isAuthenticated: false },
+  provider,
 })
 ```
 
@@ -138,21 +150,21 @@ const session = new ChatSession<AppState>({
 
 ```typescript
 // Turn 1: User greets, greeting agent responds
-await session.send('Hello!')
+await session.send({ message: 'Hello!' })
 // => Greeting agent asks for name
 
 // Turn 2: User provides name, greeting agent completes and chains to auth
-await session.send('I'm Alex')
+await session.send({ message: "I'm Alex" })
 // => Auth agent asks for email verification
 // (greeting → auth happened automatically in one request)
 
 // Turn 3: User verifies, auth completes and chains to support
-await session.send('alex@example.com')
+await session.send({ message: 'alex@example.com' })
 // => Support agent asks how it can help
 // State now: { userName: 'Alex', isAuthenticated: true }
 
 // Turn 4: Support agent handles the issue
-await session.send('I need help with my billing')
+await session.send({ message: 'I need help with my billing' })
 // => Support agent resolves the issue
 // State: { userName: 'Alex', isAuthenticated: true, issueCategory: 'billing' }
 ```

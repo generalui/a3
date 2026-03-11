@@ -7,9 +7,6 @@ export * from './core/chatSession'
 export * from './core/AGUIAgent'
 export * from './stores'
 
-// Provider exports
-export * from './providers/awsBedrock'
-
 // Type exports
 export * from './types'
 
@@ -18,7 +15,6 @@ export * from './constants'
 
 // Utils exports
 export * from './utils/agentPool'
-export * from './utils/messageMerger'
 
 // Prompts exports
 export * from './prompts/antiHallucination'

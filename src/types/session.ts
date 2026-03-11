@@ -1,6 +1,7 @@
 import { Conversation, Message, MessageMetadata } from 'types/chat'
 import { AgentId } from 'types/agent'
 import { SessionStore } from 'types/storage'
+import { Provider } from 'types/provider'
 
 /**
  * BaseState defines the minimum required fields for state.
@@ -67,4 +68,7 @@ export interface ChatSessionConfig<
   initialChatContext?: TContext
 
   initialMessages?: Message[]
+
+  /** LLM provider instance for this session. Required unless all agents have their own provider. */
+  provider: Provider
 }

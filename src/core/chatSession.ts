@@ -13,6 +13,7 @@ import {
   ChatResponse,
   ChatSessionConfig,
   StreamEvent,
+  Provider,
 } from 'types'
 import { MemorySessionStore } from '@stores/memoryStore'
 
@@ -21,13 +22,24 @@ import { MemorySessionStore } from '@stores/memoryStore'
  *
  * @example
  * ```typescript
+ * import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+ *
+ * const provider = createBedrockProvider({
+ *   models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
+ * })
+ *
  * const session = new ChatSession({
  *   sessionId: 'user-123',
  *   store: new RedisSessionStore(redis),
  *   initialAgentId: 'greeting',
+ *   provider,
  * })
  *
- * const result = await session.send('Hello!')
+ * // Blocking
+ * const result = await session.send({ message: 'Hello!' })
+ *
+ * // Streaming
+ * const stream = session.send({ message: 'Hello!', stream: true })
  * ```
  */
 export class ChatSession<TState extends BaseState = BaseState, TContext extends BaseChatContext = BaseChatContext> {
@@ -37,6 +49,7 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
   private readonly initialState: TState
   private readonly initialChatContext: TContext
   private readonly initialMessages?: Message[]
+  private readonly provider: Provider
 
   constructor(config: ChatSessionConfig<TState, TContext>) {
     this.sessionId = config.sessionId
@@ -45,32 +58,68 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
     this.initialState = config.initialState ?? ({} as TState)
     this.initialChatContext = config.initialChatContext ?? ({} as TContext)
     this.initialMessages = config.initialMessages
+    this.provider = config.provider
   }
 
   /**
-   * Send a message and get a response.
+   * Send a message and get a response (blocking).
    *
-   * Flow:
-   * 1. Load existing session or create new
-   * 2. Append user message to history
-   * 3. Run manageFlow with current agent
-   * 4. Append assistant response to history
-   * 5. Save updated session
-   * 6. Return response
+   * @param params - Message string or object with message and optional stream flag
+   * @returns Promise resolving to ChatResponse when not streaming
+   *
+   * @example
+   * ```typescript
+   * // Blocking (returns Promise<ChatResponse>)
+   * const result = await session.send({ message: 'Hello' })
+   *
+   * // Legacy string form (blocking)
+   * const result = await session.send('Hello')
+   * ```
    */
-  async send(message: string): Promise<ChatResponse<TState>> {
+  async send(params: string | { message: string; stream?: false }): Promise<ChatResponse<TState>>
+  /**
+   * Send a message and stream the response.
+   *
+   * @param params - Object with message and stream: true
+   * @returns AsyncGenerator yielding StreamEvents
+   *
+   * @example
+   * ```typescript
+   * const stream = session.send({ message: 'Hello', stream: true })
+   * for await (const event of stream) {
+   *   console.log(event)
+   * }
+   * ```
+   */
+  send(params: { message: string; stream: true }): AsyncGenerator<StreamEvent<TState>>
+  send(
+    params: string | { message: string; stream?: boolean },
+  ): Promise<ChatResponse<TState>> | AsyncGenerator<StreamEvent<TState>> {
+    const message = typeof params === 'string' ? params : params.message
+    const stream = typeof params === 'string' ? false : params.stream === true
+
+    if (stream) {
+      return this.sendStreamInternal(message)
+    }
+
+    return this.sendBlocking(message)
+  }
+
+  /**
+   * @deprecated Use `send({ message, stream: true })` instead.
+   * Send a message and stream the response as an async generator of StreamEvents.
+   */
+  async *sendStream(message: string): AsyncGenerator<StreamEvent<TState>> {
+    yield* this.sendStreamInternal(message)
+  }
+
+  private async sendBlocking(message: string): Promise<ChatResponse<TState>> {
     const context = await this.beforeProcessMessage(message)
     const result = await this.processMessage(context)
     return await this.afterProcessMessage(context.sessionData, result)
   }
 
-  /**
-   * Send a message and stream the response as an async generator of StreamEvents.
-   *
-   * Text deltas are yielded immediately for real-time rendering.
-   * Session state is persisted after the stream is fully consumed.
-   */
-  async *sendStream(message: string): AsyncGenerator<StreamEvent<TState>> {
+  private async *sendStreamInternal(message: string): AsyncGenerator<StreamEvent<TState>> {
     const context = await this.beforeProcessMessage(message)
 
     let completedResponse: ChatResponse<TState> | null = null
@@ -124,7 +173,11 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
     sessionData: SessionData<TState, TContext>
     agent: Agent<TState, TContext>
   }) {
-    return await manageFlow(context)
+    return await manageFlow({
+      ...context,
+      stream: false,
+      provider: this.provider,
+    })
   }
 
   /**
@@ -134,7 +187,11 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
     sessionData: SessionData<TState, TContext>
     agent: Agent<TState, TContext>
   }): AsyncGenerator<StreamEvent<TState>> {
-    yield* manageFlowStream<TState, TContext>(context)
+    yield* manageFlowStream<TState, TContext>({
+      ...context,
+      stream: true,
+      provider: this.provider,
+    })
   }
 
   /**

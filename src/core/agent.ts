@@ -1,8 +1,6 @@
 import { basePrompt } from '../../agents/basePrompt'
 import { widgetPrompt } from '../../agents/widgetPrompt'
 import { createFullOutputSchema } from '@core/schemas'
-import { sendChatRequest, sendChatRequestStream } from '@providers/awsBedrock'
-import { processBedrockStream } from '@core/streamProcessor'
 import { EventType } from '@ag-ui/client'
 import {
   BaseState,
@@ -13,8 +11,37 @@ import {
   Agent,
   AgentResponseResult,
   SessionData,
+  Provider,
+  ProviderMessage,
 } from 'types'
 import { log } from '@utils/logger'
+
+/**
+ * Resolves the provider for an agent request.
+ * Agent-level provider takes precedence over session-level provider.
+ *
+ * @param agent - The agent (may have its own provider)
+ * @param sessionProvider - The session-level provider (fallback)
+ * @returns The resolved provider instance
+ */
+export function resolveProvider<TState extends BaseState, TContext extends BaseChatContext>(
+  agent: Agent<TState, TContext>,
+  sessionProvider: Provider,
+): Provider {
+  return agent.provider ?? sessionProvider
+}
+
+/**
+ * Converts conversation messages to provider-agnostic format.
+ */
+function toProviderMessages(conversation: { text: string; metadata?: { source?: string } }[]): ProviderMessage[] {
+  return conversation
+    .filter((msg) => msg.text)
+    .map((msg) => ({
+      role: msg.metadata?.source === 'assistant' ? 'assistant' : 'user',
+      content: msg.text,
+    }))
+}
 
 export const prepareAgentRequest = async <
   TState extends BaseState,
@@ -23,6 +50,8 @@ export const prepareAgentRequest = async <
   agent,
   sessionData,
   lastAgentUnsentMessage,
+  stream,
+  provider,
 }: FlowInput<TState, TContext>) => {
   const dynamicPrompt =
     typeof agent.prompt === 'string'
@@ -31,6 +60,8 @@ export const prepareAgentRequest = async <
           agent,
           sessionData,
           lastAgentUnsentMessage,
+          stream,
+          provider,
         })
   // Resolve widgets (supports both static record and function form)
   const resolvedWidgets = typeof agent.widgets === 'function' ? agent.widgets(sessionData) : agent.widgets
@@ -62,26 +93,25 @@ export const prepareAgentRequest = async <
   return { systemPrompt, fullOutputSchema }
 }
 
-export const getAgentResponse = async <TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>({
-  agent,
-  sessionData,
-  lastAgentUnsentMessage,
-}: FlowInput<TState, TContext>) => {
-  const { systemPrompt, fullOutputSchema } = await prepareAgentRequest({
-    agent,
-    sessionData,
-    lastAgentUnsentMessage,
-  })
+export const getAgentResponse = async <TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>(
+  input: FlowInput<TState, TContext>,
+) => {
+  const { agent, sessionData } = input
+  const { systemPrompt, fullOutputSchema } = await prepareAgentRequest(input)
   log.log('agent id:', agent.id)
 
-  const response = await sendChatRequest({
-    agent,
-    systemPrompt,
-    basePrompt: basePrompt(agent, sessionData),
-    conversation: sessionData.messages,
-    responseFormat: fullOutputSchema,
+  const provider = resolveProvider(agent, input.provider)
+  const filteredConversation = agent.filterHistoryStrategy
+    ? agent.filterHistoryStrategy(sessionData.messages)
+    : sessionData.messages
+  const messages = toProviderMessages(filteredConversation)
+
+  const response = await provider.sendRequest({
+    systemPrompt: systemPrompt + basePrompt(agent, sessionData),
+    messages,
+    responseSchema: fullOutputSchema,
   })
-  return fullOutputSchema.parse(JSON.parse(response))
+  return fullOutputSchema.parse(JSON.parse(response.content))
 }
 
 export const processAgentResponseData = <TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>(
@@ -115,56 +145,42 @@ export const processAgentResponseData = <TState extends BaseState, TContext exte
   }
 }
 
-export const simpleAgentResponse = async <
-  TState extends BaseState,
-  TContext extends BaseChatContext = BaseChatContext,
->({
-  agent,
-  sessionData,
-  lastAgentUnsentMessage,
-}: FlowInput<TState, TContext>): Promise<Awaited<ReturnType<GenerateResponseSpecification<TState, TContext>>>> => {
-  const res = await getAgentResponse({
-    agent,
-    sessionData,
-    lastAgentUnsentMessage,
-  })
-
-  return processAgentResponseData(agent, sessionData, res)
+export const simpleAgentResponse = async <TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>(
+  input: FlowInput<TState, TContext>,
+): Promise<Awaited<ReturnType<GenerateResponseSpecification<TState, TContext>>>> => {
+  const res = await getAgentResponse(input)
+  return processAgentResponseData(input.agent, input.sessionData, res)
 }
 
 export async function* getAgentResponseStream<
   TState extends BaseState,
   TContext extends BaseChatContext = BaseChatContext,
->({ agent, sessionData, lastAgentUnsentMessage }: FlowInput<TState, TContext>): AsyncGenerator<StreamEvent<TState>> {
-  const { systemPrompt, fullOutputSchema } = await prepareAgentRequest({
-    agent,
-    sessionData,
-    lastAgentUnsentMessage,
-  })
+>(input: FlowInput<TState, TContext>): AsyncGenerator<StreamEvent<TState>> {
+  const { agent, sessionData } = input
+  const { systemPrompt, fullOutputSchema } = await prepareAgentRequest(input)
   log.log('agent id (stream):', agent.id)
 
-  const rawStream = await sendChatRequestStream({
-    agent,
-    systemPrompt,
-    basePrompt: basePrompt(agent, sessionData),
-    conversation: sessionData.messages,
-    responseFormat: fullOutputSchema,
+  const provider = resolveProvider(agent, input.provider)
+  const filteredConversation = agent.filterHistoryStrategy
+    ? agent.filterHistoryStrategy(sessionData.messages)
+    : sessionData.messages
+  const messages = toProviderMessages(filteredConversation)
+
+  yield* provider.sendRequestStream<TState>({
+    systemPrompt: systemPrompt + basePrompt(agent, sessionData),
+    messages,
+    responseSchema: fullOutputSchema,
   })
-  yield* processBedrockStream<TState>(rawStream, agent.id, fullOutputSchema)
 }
 
 export async function* simpleAgentResponseStream<
   TState extends BaseState,
   TContext extends BaseChatContext = BaseChatContext,
->({
-  agent,
-  sessionData,
-  lastAgentUnsentMessage,
-}: FlowInput<TState, TContext>): AsyncGenerator<StreamEvent<TState>, AgentResponseResult<TState>> {
+>(input: FlowInput<TState, TContext>): AsyncGenerator<StreamEvent<TState>, AgentResponseResult<TState>> {
   let toolCallData: Record<string, unknown> | null = null
   let activeMessageId: string | null = null
 
-  for await (const event of getAgentResponseStream({ agent, sessionData, lastAgentUnsentMessage })) {
+  for await (const event of getAgentResponseStream(input)) {
     if (event.type === EventType.TEXT_MESSAGE_CONTENT) {
       // Open a text message on first content delta
       if (activeMessageId === null) {
@@ -202,5 +218,5 @@ export async function* simpleAgentResponseStream<
     throw new Error('Stream completed without tool call data')
   }
 
-  return processAgentResponseData(agent, sessionData, toolCallData)
+  return processAgentResponseData(input.agent, input.sessionData, toolCallData)
 }

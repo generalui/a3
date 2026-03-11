@@ -15,6 +15,7 @@ import type {
 } from '@genui-a3/core'
 import { mergeSequentialMessages } from './messageMerger'
 import { processBedrockStream } from './streamProcessor'
+import { executeWithFallback } from '../utils/executeWithFallback'
 
 const RESPONSE_FORMAT_INSTRUCTIONS = `
 
@@ -46,8 +47,7 @@ export interface BedrockProviderConfig {
 }
 
 type SendWithModelParams = {
-  modelArn: string
-  modelName: string
+  modelId: string
   systemPrompt: string
   mergedMessages: ReturnType<typeof mergeSequentialMessages>
   inputSchema: ToolInputSchema | undefined
@@ -55,7 +55,7 @@ type SendWithModelParams = {
 
 function getCommandInput(params: SendWithModelParams, isStream: boolean) {
   return {
-    modelId: params.modelArn,
+    modelId: params.modelId,
     system: [{ text: params.systemPrompt }],
     messages: params.mergedMessages,
     toolConfig: {
@@ -133,34 +133,6 @@ function prepareRequest(request: ProviderRequest) {
   return { systemPrompt, inputSchema, mergedMessages }
 }
 
-async function executeWithFallback<T>(
-  models: string[],
-  action: (model: { arn: string; name: string }, attemptCount: number) => Promise<T>,
-): Promise<T> {
-  const errors: Array<{ model: string; error: Error }> = []
-  let attemptCount = 0
-
-  for (const modelArn of models) {
-    const isLastModel = attemptCount === models.length - 1
-    const model = { arn: modelArn, name: modelArn }
-
-    try {
-      return await action(model, attemptCount)
-    } catch (error) {
-      const errorObj = error as Error
-      errors.push({ model: model.name, error: errorObj })
-
-      if (isLastModel) {
-        throw errorObj
-      }
-
-      attemptCount++
-    }
-  }
-
-  throw new Error('All models failed')
-}
-
 /**
  * Creates an AWS Bedrock provider instance.
  *
@@ -185,10 +157,9 @@ export function createBedrockProvider(config: BedrockProviderConfig): Provider {
     async sendRequest(request: ProviderRequest): Promise<ProviderResponse> {
       const { systemPrompt, inputSchema, mergedMessages } = prepareRequest(request)
 
-      return executeWithFallback(models, (model) =>
+      return executeWithFallback(models, (modelId) =>
         sendWithModel(client, {
-          modelArn: model.arn,
-          modelName: model.name,
+          modelId,
           systemPrompt,
           mergedMessages,
           inputSchema,
@@ -201,10 +172,9 @@ export function createBedrockProvider(config: BedrockProviderConfig): Provider {
     ): AsyncGenerator<StreamEvent<TState>> {
       const { systemPrompt, inputSchema, mergedMessages } = prepareRequest(request)
 
-      const rawStream = await executeWithFallback(models, (model) =>
+      const rawStream = await executeWithFallback(models, (modelId) =>
         sendStreamWithModel(client, {
-          modelArn: model.arn,
-          modelName: model.name,
+          modelId,
           systemPrompt,
           mergedMessages,
           inputSchema,
