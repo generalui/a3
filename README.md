@@ -16,7 +16,7 @@ No state machines.
 - **Multi-agent orchestration** -- agents route to each other dynamically based on conversation context
 - **Shared state** -- a single state object flows across all agents in a session
 - **Structured output** -- Zod schemas validate every LLM response at runtime
-- **Streaming** -- real-time token streaming via `sendStream` with AG-UI-compatible event types
+- **Streaming** -- real-time token streaming via `send({ message, stream: true })` with AG-UI-compatible event types
 - **Pluggable session stores** -- swap in-memory, AWS AgentCore, Redis, or your own store
 - **Pluggable providers** -- ships with AWS Bedrock; designed for additional providers
 - **TypeScript-native** -- full type safety from agent definitions to response handling
@@ -83,17 +83,24 @@ export const greetingAgent: Agent<State> = {
 ```typescript
 import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
 
+import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+
 const registry = AgentRegistry.getInstance<State>()
 registry.register(greetingAgent)
+
+const provider = createBedrockProvider({
+  models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
+})
 
 const session = new ChatSession<State>({
   sessionId: 'demo',
   store: new MemorySessionStore(),
   initialAgentId: 'greeting',
   initialState: { userName: undefined },
+  provider,
 })
 
-const response = await session.send('Hi there!')
+const response = await session.send({ message: 'Hi there!' })
 console.log(response.responseMessage)
 // => "Hello! I'd love to get to know you. What's your name?"
 ```
@@ -229,15 +236,16 @@ const greetingAgent: Agent<MyState> = {
 | Property | Required | Description |
 |---|---|---|
 | `id` | Yes | Unique identifier for the agent |
-| `name` | Yes | Human-readable display name |
-| `description` | Yes | What this agent does (used in agent pool prompts) |
+| `name` | No | Human-readable display name |
+| `description` | No | What this agent does (used in agent pool prompts) |
 | `prompt` | Yes | System prompt string, or async function returning the system prompt |
 | `outputSchema` | Yes | Zod schema defining structured data to extract from LLM responses |
-| `generateResponse` | No | Function that orchestrates the full response cycle (defaults to `simpleAgentResponse`) |
+| `provider` | No | Per-agent provider override; falls back to the session-level provider |
+| `generateResponse` | No | Custom response generator. Must check `input.stream` and return a `Promise` (blocking) or `AsyncGenerator` (streaming). See [Custom generateResponse](#custom-generateresponse). Defaults to the built-in pipeline |
 | `setState` | No | Maps extracted LLM data into the shared state object (defaults to shallow merge) |
 | `transition` | No | Routing config: a function `(state, goalAchieved) => AgentId` for deterministic routing, or an `AgentId[]` array for LLM-driven routing |
 | `filterHistoryStrategy` | No | Custom function to filter conversation history before sending to the LLM |
-| `modelId` | No | Override the default model for this agent |
+| `widgets` | No | Zod schemas defining widgets available to the agent (static record or function) |
 
 ### AgentRegistry
 
@@ -267,16 +275,22 @@ Create a session, send messages, get responses.
 
 ```typescript
 import { ChatSession, MemorySessionStore } from '@genui-a3/core'
+import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+
+const provider = createBedrockProvider({
+  models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
+})
 
 const session = new ChatSession<MyState>({
   sessionId: 'user-123',
   store: new MemorySessionStore(),     // pluggable persistence
   initialAgentId: 'greeting',
   initialState: { userName: undefined },
+  provider,                            // required
 })
 
-// Send a message and get a structured response
-const result = await session.send('Hello!')
+// Blocking: send a message and get a structured response
+const result = await session.send({ message: 'Hello!' })
 
 result.responseMessage   // "Hi there! What's your name?"
 result.activeAgentId     // 'greeting'
@@ -284,6 +298,11 @@ result.nextAgentId       // 'greeting'
 result.state             // { userName: undefined }
 result.goalAchieved      // false
 result.sessionId         // 'user-123'
+
+// Streaming: send a message and stream the response
+for await (const event of session.send({ message: 'Hello!', stream: true })) {
+  console.log(event)
+}
 ```
 
 ### State
@@ -379,17 +398,39 @@ interface SessionStore<TState extends BaseState> {
 | Store | Use case |
 |---|---|
 | `MemorySessionStore` | Development and testing (sessions lost on restart) |
-| `AgentCoreMemoryStore` | AWS Bedrock AgentCore integration for persistent storage |
 
 Custom stores are straightforward to implement for Redis, DynamoDB, PostgreSQL, or any other backend.
 
 ### Providers
 
 Providers handle communication with LLM backends.
-A3 ships with an AWS Bedrock provider and is designed so additional providers can be added.
+A3 uses a pluggable `Provider` interface.
+Providers are separate packages (e.g. `@genui-a3/providers`).
 
 ```typescript
-import { sendChatRequest } from '@genui-a3/core'
+import { Provider } from '@genui-a3/core'
+```
+
+The `Provider` interface requires three members:
+
+| Member | Description |
+|---|---|
+| `sendRequest(request)` | Blocking request that returns a structured JSON response |
+| `sendRequestStream(request)` | Streaming request that yields AG-UI compatible events |
+| `name` | Human-readable name for logging |
+
+**Creating a provider:**
+
+```typescript
+import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+
+const provider = createBedrockProvider({
+  models: [
+    'us.anthropic.claude-sonnet-4-5-20250929-v1:0',  // primary
+    'us.anthropic.claude-haiku-4-5-20251001-v1:0',   // fallback
+  ],
+  region: 'us-east-1', // optional, defaults to AWS SDK default
+})
 ```
 
 The Bedrock provider:
@@ -398,15 +439,26 @@ The Bedrock provider:
 - Uses tool-based JSON extraction for reliable structured output
 - Supports model fallback (primary model fails, falls back to secondary)
 - Merges sequential same-sender messages for API compatibility
-- Applies agent-specific history filtering before sending
+
+**Per-agent provider override:**
+
+Each agent can optionally specify its own `provider` to override the session-level provider:
+
+```typescript
+const agent: Agent<MyState> = {
+  id: 'premium',
+  provider: createBedrockProvider({ models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'] }),
+  // ...
+}
+```
 
 ### Streaming
 
-A3 supports real-time token streaming via `sendStream`.
+A3 supports real-time token streaming via `send({ message, stream: true })`.
 Instead of waiting for a complete response, your application receives events as they happen.
 
 ```typescript
-for await (const event of session.sendStream('Hello!')) {
+for await (const event of session.send({ message: 'Hello!', stream: true })) {
   switch (event.type) {
     case 'TextMessageContent':
       process.stdout.write(event.delta) // real-time token output
@@ -439,6 +491,38 @@ for await (const event of session.sendStream('Hello!')) {
 | `AgentTransition` | `fromAgentId`, `toAgentId` | Agent handoff occurred |
 | `RunFinished` | `response` | Stream complete with final `ChatResponse` |
 | `RunError` | `error`, `agentId` | Error during stream |
+
+### Custom generateResponse
+
+When you provide a custom `generateResponse`, it receives `input.stream` (a boolean) so you can branch on whether the caller requested streaming or blocking.
+You **must** return the correct type for the mode:
+
+- **Blocking** (`input.stream === false`): return a `Promise<AgentResponseResult>`
+- **Streaming** (`input.stream === true`): return an `AsyncGenerator<StreamEvent, AgentResponseResult>`
+
+`manageFlow()` in `chatFlow.ts` validates the return type at runtime.
+If you return a `Promise` when streaming was requested (or vice-versa), you will get a descriptive error:
+
+> Agent "my-agent" returned a Promise from generateResponse, but streaming was requested (input.stream = true).
+> Return an AsyncGenerator instead, or check input.stream to branch behavior.
+
+```typescript
+import { simpleAgentResponse, simpleAgentResponseStream } from '@genui-a3/core'
+
+const agent: Agent<MyState> = {
+  id: 'custom',
+  prompt: 'You are a helpful assistant.',
+  outputSchema: z.object({ sentiment: z.string() }),
+  generateResponse(input) {
+    // Custom pre-processing here...
+
+    if (input.stream) {
+      return simpleAgentResponseStream(input)
+    }
+    return simpleAgentResponse(input)
+  },
+}
+```
 
 ## Multi-Agent Example
 
@@ -507,15 +591,21 @@ const supportAgent: Agent<AppState> = {
 
 ```typescript
 import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
+import { createBedrockProvider } from '@genui-a3/providers/bedrock'
 
 const registry = AgentRegistry.getInstance<AppState>()
 registry.register([greetingAgent, authAgent, supportAgent])
+
+const provider = createBedrockProvider({
+  models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
+})
 
 const session = new ChatSession<AppState>({
   sessionId: 'user-456',
   store: new MemorySessionStore(),
   initialAgentId: 'greeting',
   initialState: { isAuthenticated: false },
+  provider,
 })
 ```
 
@@ -523,21 +613,21 @@ const session = new ChatSession<AppState>({
 
 ```typescript
 // Turn 1: User greets, greeting agent responds
-await session.send('Hello!')
+await session.send({ message: 'Hello!' })
 // => Greeting agent asks for name
 
 // Turn 2: User provides name, greeting agent completes and chains to auth
-await session.send("I'm Alex")
+await session.send({ message: "I'm Alex" })
 // => Auth agent asks for email verification
 // (greeting → auth happened automatically in one request)
 
 // Turn 3: User verifies, auth completes and chains to support
-await session.send('alex@example.com')
+await session.send({ message: 'alex@example.com' })
 // => Support agent asks how it can help
 // State now: { userName: 'Alex', isAuthenticated: true }
 
 // Turn 4: Support agent handles the issue
-await session.send('I need help with my billing')
+await session.send({ message: 'I need help with my billing' })
 // => Support agent resolves the issue
 // State: { userName: 'Alex', isAuthenticated: true, issueCategory: 'billing' }
 ```
@@ -556,21 +646,22 @@ Notice that:
 |---|---|---|
 | `ChatSession` | Class | Primary interface for sending messages and managing conversations |
 | `AgentRegistry` | Class | Singleton registry for agent registration and lookup |
-| `simpleAgentResponse` | Function | Default response generator for agents |
-| `getAgentResponse` | Function | Low-level agent response pipeline (prompt, schema, LLM call, validation) |
-| `manageFlow` | Function | Recursive chat flow orchestration with automatic agent chaining |
+| `AGUIAgent` | Class | AG-UI protocol integration for standardized agent-to-frontend streaming |
+| `simpleAgentResponse` | Function | Default blocking response generator for agents |
+| `simpleAgentResponseStream` | Function | Default streaming response generator for agents |
+| `getAgentResponse` | Function | Low-level blocking agent response pipeline (prompt, schema, LLM call, validation) |
+| `getAgentResponseStream` | Function | Low-level streaming agent response pipeline |
+| `manageFlow` | Function | Blocking chat flow orchestration with automatic agent chaining |
 | `manageFlowStream` | Function | Streaming variant of `manageFlow` yielding `StreamEvent`s |
 | `createFullOutputSchema` | Function | Merges agent schema with base response fields |
-| `sendChatRequest` | Function | Sends structured requests to the LLM provider |
 | `MemorySessionStore` | Class | In-memory session store for development and testing |
-| `AgentCoreMemoryStore` | Class | AWS Bedrock AgentCore session store |
 
 ### ChatSession Methods
 
 | Method | Returns | Description |
 |---|---|---|
-| `send(message)` | `Promise<ChatResponse<TState>>` | Send a user message and get the agent's response |
-| `sendStream(message)` | `AsyncGenerator<StreamEvent<TState>>` | Send a message and stream the response as events |
+| `send({ message })` | `Promise<ChatResponse<TState>>` | Send a user message and get the agent's response (blocking) |
+| `send({ message, stream: true })` | `AsyncGenerator<StreamEvent<TState>>` | Send a message and stream the response as events |
 | `getSessionData()` | `Promise<SessionData<TState> \| null>` | Load current session state without sending a message |
 | `getOrCreateSessionData()` | `Promise<SessionData<TState>>` | Load session or create with initial values if none exists |
 | `upsertSessionData(updates)` | `Promise<void>` | Merge partial updates into the current session |
@@ -617,8 +708,8 @@ Notice that:
 
 ## Roadmap
 
-- **Provider Abstraction** -- first-class support for OpenAI, Anthropic, and custom providers alongside Bedrock
-- **AG-UI Protocol** -- full compliance with the [ag-ui.com](https://ag-ui.com) protocol for standardized agent-to-frontend event streaming
+- **Additional providers** -- first-party OpenAI and Anthropic provider packages alongside the existing Bedrock provider
+- **Tool use** -- agent-invoked tool execution within the response cycle
 
 ## Requirements
 

@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { Conversation, MessageMetadata } from 'types/chat'
 import { SessionData, BaseChatContext, BaseState } from 'types/session'
 import { StreamEvent } from 'types/stream'
+import { Provider } from 'types/provider'
 
 /**
  * Agent IDs are string-based to support dynamic registration.
@@ -13,6 +14,10 @@ export interface FlowInput<TState extends BaseState = BaseState, TContext extend
   agent: Agent<TState, TContext>
   sessionData: SessionData<TState, TContext>
   lastAgentUnsentMessage?: string
+  /** Whether the current request should stream responses */
+  stream: boolean
+  /** Provider resolved from session config (agent.provider takes precedence) */
+  provider: Provider
 }
 
 export type AgentResponseResult<TState extends BaseState = BaseState> = {
@@ -50,13 +55,18 @@ export type Agent<TState extends BaseState = BaseState, TContext extends BaseCha
   id: AgentId
   /** Description of the agent's purpose, used for agent pool discovery */
   description?: string
-  modelId?: string // LLM Provider Model ID
+  /** Optional per-agent provider override. Falls back to session provider. */
+  provider?: Provider
   name?: string
   prompt: string | ((params: FlowInput<TState, TContext>) => Promise<string>)
   outputSchema: AgentOutputSchema<TState, TContext>
-  generateResponse?: GenerateResponseSpecification<TState, TContext>
-  /** Optional streaming response generator. Falls back to simpleAgentResponseStream. */
-  generateResponseStream?: GenerateResponseStreamSpecification<TState, TContext>
+  /**
+   * Custom response generator.
+   * Return a Promise for blocking or an AsyncGenerator for streaming.
+   */
+  generateResponse?:
+    | GenerateResponseSpecification<TState, TContext>
+    | GenerateResponseStreamSpecification<TState, TContext>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setState?: (data: any, state: TState) => TState
   /**

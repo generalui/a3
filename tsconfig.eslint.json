@@ -8,6 +8,6 @@
     "types": ["node", "jest", "@testing-library/jest-dom"],
     "outDir": "./dist"
   },
-  "include": ["src/**/*.ts", "agents/**/*.ts", "__tests__/**/*.ts", "jest.*.ts"],
+  "include": ["src/**/*.ts", "agents/**/*.ts", "providers/**/*.ts", "__tests__/**/*.ts", "jest.*.ts"],
   "exclude": ["node_modules", "no_commit", "dist"]
 }

@@ -1,7 +1,7 @@
 import { AbstractAgent, RunAgentInput, BaseEvent, EventType } from '@ag-ui/client'
 import { Observable } from 'rxjs'
 import { ChatSession } from './chatSession'
-import { BaseState, BaseChatContext } from 'types'
+import { BaseState, BaseChatContext, StreamEvent } from 'types'
 
 export interface AGUIAgentConfig {
   agentId?: string
@@ -28,7 +28,8 @@ export class AGUIAgent extends AbstractAgent {
           runId: input.runId,
         } as BaseEvent)
 
-        for await (const event of session.sendStream(message)) {
+        const stream: AsyncGenerator<StreamEvent<BaseState>> = session.send({ message, stream: true })
+        for await (const event of stream) {
           subscriber.next(event as BaseEvent)
         }
         subscriber.complete()

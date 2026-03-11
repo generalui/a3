@@ -1,8 +1,7 @@
 import { ConverseStreamOutput } from '@aws-sdk/client-bedrock-runtime'
 import { EventType } from '@ag-ui/client'
 import { ZodType } from 'zod'
-import { AgentId, StreamEvent, BaseState } from 'types'
-import { log } from '@utils/logger'
+import type { AgentId, StreamEvent, BaseState } from '@genui-a3/core'
 
 export async function* processBedrockStream<TState extends BaseState = BaseState>(
   rawStream: AsyncIterable<ConverseStreamOutput>,
@@ -53,7 +52,6 @@ export async function* processBedrockStream<TState extends BaseState = BaseState
 
     // --- Metadata: log usage ---
     if (event.metadata) {
-      log.debug('Stream metadata', { agentId, usage: event.metadata.usage, metrics: event.metadata.metrics })
       continue
     }
 
@@ -78,7 +76,6 @@ function parseToolCall<TState extends BaseState>(
       agentId,
     } as StreamEvent<TState>
   } catch (err) {
-    log.error('Failed to parse/validate tool call from stream', { agentId, error: err })
     return {
       type: EventType.RUN_ERROR,
       message: `Tool call parse/validation failed: ${(err as Error).message}`,

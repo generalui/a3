@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
+import { createBedrockProvider } from '@genui-a3/providers/bedrock'
 import { greetingAgent, State } from '../../agents/greeting'
 import { ageAgent } from '../../agents/age'
 
@@ -13,6 +14,10 @@ if (!registry.has('age')) {
 }
 
 const store = new MemorySessionStore<State>()
+
+const provider = createBedrockProvider({
+  models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0', 'us.anthropic.claude-haiku-4-5-20251001-v1:0'],
+})
 
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as { message?: string; sessionId?: string }
@@ -30,6 +35,7 @@ export async function POST(request: NextRequest) {
     store,
     initialAgentId: 'greeting',
     initialState: { userName: undefined },
+    provider,
   })
 
   const encoder = new TextEncoder()
@@ -37,7 +43,7 @@ export async function POST(request: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const event of session.sendStream(message)) {
+        for await (const event of session.send({ message, stream: true })) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`))
         }
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
