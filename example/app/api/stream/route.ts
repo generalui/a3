@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
-import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+import { createOpenAIProvider } from '@genui-a3/providers/openai'
 import { greetingAgent, State } from '../../agents/greeting'
 import { ageAgent } from '../../agents/age'
 
@@ -15,10 +15,6 @@ if (!registry.has('age')) {
 
 const store = new MemorySessionStore<State>()
 
-const provider = createBedrockProvider({
-  models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0', 'us.anthropic.claude-haiku-4-5-20251001-v1:0'],
-})
-
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as { message?: string; sessionId?: string }
   const { message, sessionId = 'demo-stream-session' } = body
@@ -29,6 +25,10 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
     })
   }
+
+  const provider = createOpenAIProvider({
+    models: ['gpt-4o', 'gpt-4o-mini'],
+  })
 
   const session = new ChatSession<State>({
     sessionId,

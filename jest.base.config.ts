@@ -59,6 +59,7 @@ export const baseConfig: Config = {
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
     '^types$': '<rootDir>/src/types',
     '^types/(.*)$': '<rootDir>/src/types/$1',
+    '^@genui-a3/core$': '<rootDir>/src/index',
   },
   collectCoverageFrom: [
     '**/*.{ts,tsx}',

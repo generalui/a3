@@ -1,6 +1,6 @@
 {
   "name": "@genui-a3/providers",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Provider implementations for the A3 agentic framework",
   "type": "module",
   "exports": {
@@ -8,6 +8,11 @@
       "types": "./dist/bedrock/index.d.ts",
       "import": "./dist/bedrock/index.js",
       "require": "./dist/bedrock/index.cjs"
+    },
+    "./openai": {
+      "types": "./dist/openai/index.d.ts",
+      "import": "./dist/openai/index.js",
+      "require": "./dist/openai/index.cjs"
     }
   },
   "files": [
@@ -16,12 +21,14 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
     "a3",
     "providers",
     "bedrock",
+    "openai",
     "ai",
     "llm"
   ],
@@ -36,6 +43,7 @@
   "dependencies": {
     "@ag-ui/client": "0.0.47",
     "@aws-sdk/client-bedrock-runtime": "3.975.0",
+    "openai": "6.27.0",
     "zod": "4.3.6"
   },
   "devDependencies": {

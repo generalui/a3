@@ -104,7 +104,7 @@ A3 optimizes for **simplicity and speed-to-value**.
             ▼                                  │
 ┌──────────────────────────────────────────────────────────────┐
 │                       Provider                               │
-│                      (Bedrock)                               │
+│                  (Bedrock, OpenAI)                            │
 │                                                              │
 │  • Converts Zod → JSON Schema                               │
 │  • Merges message history                                    │
@@ -348,7 +348,7 @@ interface SessionStore<TState extends BaseState> {
 
 Providers handle communication with LLM backends.
 A3 uses a pluggable `Provider` interface.
-Providers are separate packages (e.g. `@genui-a3/providers`).
+Providers are separate packages (`@genui-a3/providers`).
 
 ```typescript
 import { Provider } from '@genui-a3/core'
@@ -376,12 +376,22 @@ const provider = createBedrockProvider({
 })
 ```
 
-The Bedrock provider:
+```typescript
+import { createOpenAIProvider } from '@genui-a3/providers/openai'
 
-- Sends structured requests via the AWS Bedrock Converse API
-- Uses tool-based JSON extraction for reliable structured output
-- Supports model fallback (primary model fails, falls back to secondary)
-- Merges sequential same-sender messages for API compatibility
+const provider = createOpenAIProvider({
+  models: ['gpt-4o', 'gpt-4o-mini'],
+  apiKey: process.env.OPENAI_API_KEY, // optional, defaults to OPENAI_API_KEY env var
+})
+```
+
+Both providers support:
+
+- **Model fallback** (primary model fails → falls back to secondary)
+- **Blocking and streaming** modes
+- **Structured output** via Zod schemas
+
+See the [`@genui-a3/providers` README](../providers/README.md) for full configuration options.
 
 **Per-agent provider override:**
 
@@ -390,7 +400,7 @@ Each agent can optionally specify its own `provider` to override the session-lev
 ```typescript
 const agent: Agent<MyState> = {
   id: 'premium',
-  provider: createBedrockProvider({ models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'] }),
+  provider: createOpenAIProvider({ models: ['gpt-4o'] }),
   // ...
 }
 ```
@@ -437,7 +447,7 @@ const agent: Agent<MyState> = {
 
 ## Roadmap
 
-- **Additional providers** -- first-party OpenAI and Anthropic provider packages alongside the existing Bedrock provider
+- **Additional providers** -- first-party Anthropic provider package alongside the existing Bedrock and OpenAI providers
 - **Tool use** -- agent-invoked tool execution within the response cycle
 
 ## API Reference
