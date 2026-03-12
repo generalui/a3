@@ -1,6 +1,6 @@
 {
   "name": "@genui-a3/providers",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Provider implementations for the A3 agentic framework",
   "type": "module",
   "exports": {
@@ -13,6 +13,11 @@
       "types": "./dist/openai/index.d.ts",
       "import": "./dist/openai/index.js",
       "require": "./dist/openai/index.cjs"
+    },
+    "./anthropic": {
+      "types": "./dist/anthropic/index.d.ts",
+      "import": "./dist/anthropic/index.js",
+      "require": "./dist/anthropic/index.cjs"
     }
   },
   "files": [
@@ -29,6 +34,7 @@
     "providers",
     "bedrock",
     "openai",
+    "anthropic",
     "ai",
     "llm"
   ],
@@ -42,7 +48,9 @@
   },
   "dependencies": {
     "@ag-ui/client": "0.0.47",
+    "@ai-sdk/anthropic": "^3.0.58",
     "@aws-sdk/client-bedrock-runtime": "3.975.0",
+    "ai": "^6.0.116",
     "openai": "6.27.0",
     "zod": "4.3.6"
   },
