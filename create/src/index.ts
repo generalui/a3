@@ -1,6 +1,8 @@
 import { execSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+import * as p from '@clack/prompts'
 import chalk from 'chalk'
 import fs from 'fs-extra'
 
@@ -22,14 +24,11 @@ const BANNER = `
 `
 
 function installDependencies(targetDir: string, projectName: string): void {
-  console.log(chalk.cyan('Installing dependencies...\n'))
-
   try {
     execSync('npm install', { cwd: targetDir, stdio: 'inherit' })
   } catch {
-    console.error(chalk.red('\nFailed to install dependencies. You can try manually:'))
-    console.log(`  cd ${projectName}`)
-    console.log('  npm install\n')
+    p.log.error('Failed to install dependencies. You can try manually:')
+    p.log.info(`  cd ${projectName}\n  npm install`)
     process.exit(1)
   }
 }
@@ -37,50 +36,62 @@ function installDependencies(targetDir: string, projectName: string): void {
 function printSuccess(projectName: string, targetDir: string, config: ProviderConfig): void {
   const { label } = PROVIDER_META[config.primaryProvider]
 
-  console.log(`\n${chalk.green.bold('Success!')} Created ${chalk.bold(projectName)} at ${chalk.dim(targetDir)}\n`)
-  console.log(`  ${chalk.bold('Primary provider:')} ${label}`)
-  console.log(`  ${chalk.dim('Check .env for credentials configuration')}\n`)
+  p.note(
+    [
+      `Primary provider: ${label}`,
+      'Check .env for credentials configuration',
+      '',
+      'Get started:',
+      '',
+      `  cd ${projectName}`,
+      '  npm run dev',
+    ].join('\n'),
+    `Created ${projectName} at ${targetDir}`,
+  )
 
-  if (config.providers.includes('bedrock') && config.bedrockAuthMode === 'profile') {
-    console.log(chalk.yellow('  Note: Bedrock with AWS Profile requires the AWS CLI to be installed.'))
-    console.log(chalk.dim('  https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html\n'))
-  }
-
-  console.log('Get started:\n')
-  console.log(chalk.cyan(`  cd ${projectName}`))
-  console.log(chalk.cyan('  npm run dev\n'))
+  p.outro('Happy building!')
 }
 
 async function main() {
   console.log(BANNER)
+  p.intro('Create a new A3 app')
 
   const projectName = await promptProjectName()
   const targetDir = path.resolve(process.cwd(), projectName)
 
   if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
-    console.error(chalk.red(`\nDirectory "${projectName}" already exists and is not empty.`))
+    p.cancel(`Directory "${projectName}" already exists and is not empty.`)
     process.exit(1)
   }
 
   const templateDir = path.resolve(__dirname, '..', 'template')
   if (!fs.existsSync(templateDir)) {
-    console.error(chalk.red('\nTemplate directory not found. The package may not have been built correctly.'))
+    p.cancel('Template directory not found. The package may not have been built correctly.')
     process.exit(1)
   }
 
-  console.log('')
   const providerConfig = await promptProviders()
 
-  console.log(chalk.dim(`\nCreating a new A3 app in ${chalk.bold(targetDir)}...\n`))
+  p.log.info(`Creating a new A3 app in ${targetDir}`)
 
+  const spin = p.spinner()
+
+  spin.start('Scaffolding project files')
   scaffoldProject(templateDir, targetDir, projectName)
+  spin.message('Configuring provider')
   generateProviderFile(targetDir, providerConfig.primaryProvider)
+  spin.message('Generating .env file')
   generateEnvFile(targetDir, providerConfig)
+  spin.stop('Project scaffolded')
+
+  p.log.step('Installing dependencies...')
   installDependencies(targetDir, projectName)
+
   printSuccess(projectName, targetDir, providerConfig)
 }
 
 main().catch((err) => {
-  console.error(chalk.red('Unexpected error:'), err)
+  p.cancel('Unexpected error')
+  console.error(err)
   process.exit(1)
 })
