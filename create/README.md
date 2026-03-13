@@ -73,6 +73,23 @@ Inside a generated project you can run:
 | `npm run build` | Create a production build |
 | `npm start` | Run the production server |
 
+## Local Development
+
+Test the CLI locally before publishing by packing it into a tarball.
+
+```bash
+# 1. Build a local tarball
+npm pack
+
+# This will create a file named genui-a3-create-0.x.x.tgz at the root of this package
+
+# 2. Switch to your desired test directory
+cd ../my-test-workspace
+
+# 3. Scaffold a new project using the tarball
+npx --package=/absolute/path/to/genui-a3-create-0.x.x.tgz create-genui-a3
+```
+
 ## Prerequisites
 
 - Node.js 20.19.0 or later

@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { EventType, type RunAgentInput } from '@ag-ui/client'
 import { EventEncoder } from '@ag-ui/encoder'
 import { AgentRegistry, ChatSession, MemorySessionStore, AGUIAgent } from '@genui-a3/core'
-import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+import { getProvider } from '../../lib/provider'
 import { greetingAgent, State } from '../../agents/greeting'
 import { ageAgent } from '../../agents/age'
 
@@ -16,10 +16,6 @@ if (!registry.has('age')) {
 
 const store = new MemorySessionStore<State>()
 
-const provider = createBedrockProvider({
-  models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0', 'us.anthropic.claude-haiku-4-5-20251001-v1:0'],
-})
-
 const a3Agent = new AGUIAgent({
   agentId: 'a3-demo',
   createSession: (input: RunAgentInput) =>
@@ -27,7 +23,7 @@ const a3Agent = new AGUIAgent({
       sessionId: input.threadId,
       store,
       initialAgentId: 'greeting',
-      provider,
+      provider: getProvider(),
     }),
 })
 

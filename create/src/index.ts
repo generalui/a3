@@ -1,14 +1,18 @@
 import { execSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+import * as p from '@clack/prompts'
 import chalk from 'chalk'
-import fsExtra from 'fs-extra'
-import prompts from 'prompts'
+import fs from 'fs-extra'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+import { generateEnvFile, generateProviderFile, scaffoldProject } from './utils/generators'
+import { promptProjectName, promptProviders } from './utils/prompts'
+import { PROVIDER_META, type ProviderConfig } from './utils/providers'
 
-const banner = `
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+const BANNER = `
   ${chalk.cyan('█████╗ ██████╗ ')}
   ${chalk.cyan('██╔══██╗╚════██╗')}
   ${chalk.cyan('███████║ █████╔╝')}
@@ -19,90 +23,75 @@ const banner = `
   ${chalk.white.bold('A3')} ${chalk.dim('— Agentic App Architecture')}
 `
 
-async function main() {
-  console.log(banner)
-
-  let projectName = process.argv[2]
-
-  if (!projectName) {
-    const response = await prompts(
-      {
-        type: 'text',
-        name: 'projectName',
-        message: 'What is your project named?',
-        initial: 'my-a3-quickstart',
-      },
-      {
-        onCancel: () => {
-          console.log(chalk.red('\nSetup cancelled.'))
-          process.exit(1)
-        },
-      },
-    )
-    projectName = response.projectName as string
-  }
-
-  if (!projectName) {
-    console.error(chalk.red('Project name is required.'))
+function installDependencies(targetDir: string, projectName: string): void {
+  try {
+    execSync('npm install', { cwd: targetDir, stdio: 'inherit' })
+  } catch {
+    p.log.error('Failed to install dependencies. You can try manually:')
+    p.log.info(`  cd ${projectName}\n  npm install`)
     process.exit(1)
   }
+}
 
+function printSuccess(projectName: string, targetDir: string, config: ProviderConfig): void {
+  const { label } = PROVIDER_META[config.primaryProvider]
+
+  p.note(
+    [
+      `Primary provider: ${label}`,
+      'Check .env for credentials configuration',
+      '',
+      'Get started:',
+      '',
+      `  cd ${projectName}`,
+      '  npm run dev',
+    ].join('\n'),
+    `Created ${projectName} at ${targetDir}`,
+  )
+
+  p.outro('Happy building!')
+}
+
+async function main() {
+  console.log(BANNER)
+  p.intro('Create a new A3 app')
+
+  const projectName = await promptProjectName()
   const targetDir = path.resolve(process.cwd(), projectName)
 
-  if (fsExtra.existsSync(targetDir)) {
-    const contents = fsExtra.readdirSync(targetDir)
-    if (contents.length > 0) {
-      console.error(chalk.red(`\nDirectory "${projectName}" already exists and is not empty.`))
-      process.exit(1)
-    }
+  if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
+    p.cancel(`Directory "${projectName}" already exists and is not empty.`)
+    process.exit(1)
   }
 
   const templateDir = path.resolve(__dirname, '..', 'template')
-
-  if (!fsExtra.existsSync(templateDir)) {
-    console.error(chalk.red('\nTemplate directory not found. The package may not have been built correctly.'))
+  if (!fs.existsSync(templateDir)) {
+    p.cancel('Template directory not found. The package may not have been built correctly.')
     process.exit(1)
   }
 
-  console.log(chalk.dim(`\nCreating a new A3 app in ${chalk.bold(targetDir)}...\n`))
+  const providerConfig = await promptProviders()
 
-  fsExtra.copySync(templateDir, targetDir)
+  p.log.info(`Creating a new A3 app in ${targetDir}`)
 
-  const pkgJsonPath = path.join(targetDir, 'package.json')
-  if (fsExtra.existsSync(pkgJsonPath)) {
-    const pkg = fsExtra.readJsonSync(pkgJsonPath) as Record<string, unknown>
-    pkg.name = projectName
-    delete pkg.private
-    fsExtra.writeJsonSync(pkgJsonPath, pkg, { spaces: 2 })
-  }
+  const spin = p.spinner()
 
-  const gitignoreSrc = path.join(targetDir, '_gitignore')
-  const gitignoreDest = path.join(targetDir, '.gitignore')
-  if (fsExtra.existsSync(gitignoreSrc)) {
-    fsExtra.renameSync(gitignoreSrc, gitignoreDest)
-  }
+  spin.start('Scaffolding project files')
+  scaffoldProject(templateDir, targetDir, projectName)
+  spin.message('Configuring provider')
+  generateProviderFile(targetDir, providerConfig.primaryProvider)
+  spin.message('Generating .env file')
+  generateEnvFile(targetDir, providerConfig)
+  spin.stop('Project scaffolded')
 
-  console.log(chalk.cyan('Installing dependencies...\n'))
+  p.log.step('Installing dependencies...')
+  installDependencies(targetDir, projectName)
 
-  try {
-    execSync('npm install', {
-      cwd: targetDir,
-      stdio: 'inherit',
-    })
-  } catch {
-    console.error(chalk.red('\nFailed to install dependencies. You can try manually:'))
-    console.log(`  cd ${projectName}`)
-    console.log('  npm install\n')
-    process.exit(1)
-  }
-
-  console.log(`\n${chalk.green.bold('Success!')} Created ${chalk.bold(projectName)} at ${chalk.dim(targetDir)}\n`)
-  console.log('Get started:\n')
-  console.log(chalk.cyan(`  cd ${projectName}`))
-  console.log(chalk.cyan('  npm run dev\n'))
+  printSuccess(projectName, targetDir, providerConfig)
 }
 
 main().catch((err) => {
-  console.error(chalk.red('Unexpected error:'), err)
+  p.cancel('Unexpected error')
+  console.error(err)
   process.exit(1)
 })

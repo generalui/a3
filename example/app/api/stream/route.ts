@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
-import { createOpenAIProvider } from '@genui-a3/providers/openai'
+import { getProvider } from '../../lib/provider'
 import { greetingAgent, State } from '../../agents/greeting'
 import { ageAgent } from '../../agents/age'
 
@@ -26,16 +26,12 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  const provider = createOpenAIProvider({
-    models: ['gpt-4o', 'gpt-4o-mini'],
-  })
-
   const session = new ChatSession<State>({
     sessionId,
     store,
     initialAgentId: 'greeting',
     initialState: { userName: undefined },
-    provider,
+    provider: getProvider(),
   })
 
   const encoder = new TextEncoder()
