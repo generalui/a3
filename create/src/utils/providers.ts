@@ -2,6 +2,7 @@ export interface ProviderConfig {
   providers: string[]
   primaryProvider: string
   openaiApiKey?: string
+  anthropicApiKey?: string
   bedrockAuthMode?: 'profile' | 'keys'
   awsProfile?: string
   awsAccessKeyId?: string
@@ -21,5 +22,11 @@ export const PROVIDER_META: Record<string, { label: string; importPath: string; 
     importPath: '@genui-a3/providers/bedrock',
     factory: 'createBedrockProvider',
     models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0', 'us.anthropic.claude-haiku-4-5-20251001-v1:0'],
+  },
+  anthropic: {
+    label: 'Anthropic',
+    importPath: '@genui-a3/providers/anthropic',
+    factory: 'createAnthropicProvider',
+    models: ['claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001'],
   },
 }

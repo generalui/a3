@@ -21,6 +21,6 @@
       "openai/*": ["../node_modules/openai/*"]
     }
   },
-  "include": ["bedrock/**/*.ts", "openai/**/*.ts", "utils/**/*.ts"],
+  "include": ["bedrock/**/*.ts", "openai/**/*.ts", "anthropic/**/*.ts", "utils/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

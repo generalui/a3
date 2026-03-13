@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { TextField, Button, Box } from '@mui/material'
 import type { Theme } from '@mui/material/styles'
@@ -26,6 +26,18 @@ const InputForm = styled.form`
 
 export function ChatInput({ onSubmit, disabled, placeholder = 'Type a message...' }: Props) {
   const [value, setValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+  const prevDisabled = useRef(disabled)
+
+  useEffect(() => {
+    // When transitioning from disabled (true) back to enabled (false), restore focus
+    if (prevDisabled.current && !disabled) {
+      // Small timeout to ensure the clear-disabled DOM update finishes
+      const timer = setTimeout(() => inputRef.current?.focus(), 10)
+      return () => clearTimeout(timer)
+    }
+    prevDisabled.current = disabled
+  }, [disabled])
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -42,6 +54,7 @@ export function ChatInput({ onSubmit, disabled, placeholder = 'Type a message...
     <InputContainer>
       <InputForm onSubmit={handleSubmit}>
         <TextField
+          inputRef={inputRef}
           fullWidth
           value={value}
           onChange={(e) => setValue(e.target.value)}

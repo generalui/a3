@@ -60,6 +60,19 @@ async function promptOpenAIConfig(config: ProviderConfig): Promise<void> {
   config.openaiApiKey = openaiApiKey
 }
 
+async function promptAnthropicConfig(config: ProviderConfig): Promise<void> {
+  p.log.step(PROVIDER_META.anthropic.label)
+  const anthropicApiKey = await p.text({
+    message: 'Anthropic API key:',
+    placeholder: 'sk-ant-...',
+    validate(input) {
+      if (!input) return 'API key is required. Get one at https://console.anthropic.com/settings/keys'
+    },
+  })
+  handleCancel(anthropicApiKey)
+  config.anthropicApiKey = anthropicApiKey
+}
+
 async function promptBedrockConfig(config: ProviderConfig): Promise<void> {
   p.log.step(PROVIDER_META.bedrock.label)
   const authMode = await p.select({
@@ -170,6 +183,7 @@ export async function promptProviders(): Promise<ProviderConfig> {
     options: [
       { label: 'OpenAI', value: 'openai' },
       { label: 'AWS Bedrock', value: 'bedrock' },
+      { label: 'Anthropic', value: 'anthropic' },
     ],
     required: true,
   })
@@ -186,6 +200,10 @@ export async function promptProviders(): Promise<ProviderConfig> {
 
   if (providers.includes('bedrock')) {
     await promptBedrockConfig(config)
+  }
+
+  if (providers.includes('anthropic')) {
+    await promptAnthropicConfig(config)
   }
 
   if (providers.length > 1) {

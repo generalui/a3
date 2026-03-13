@@ -32,6 +32,10 @@ export function generateEnvFile(targetDir: string, config: ProviderConfig): void
     lines.push('# OpenAI', `OPENAI_API_KEY=${config.openaiApiKey || ''}`, '')
   }
 
+  if (config.providers.includes('anthropic')) {
+    lines.push('# Anthropic', `ANTHROPIC_API_KEY=${config.anthropicApiKey || ''}`, '')
+  }
+
   if (config.providers.includes('bedrock')) {
     if (config.bedrockAuthMode === 'profile') {
       lines.push('# AWS Bedrock (profile mode)', `AWS_PROFILE=${config.awsProfile || 'default'}`)
