@@ -88,11 +88,11 @@
   },
   "dependencies": {
     "@ag-ui/client": "0.0.47",
-    "@datadog/browser-logs": "6.25.4",
+    "@loglayer/transport-tslog": "4.0.2",
     "chrono-node": "2.9.0",
     "date-fns": "4.1.0",
-    "loglevel": "1.9.2",
-    "winston": "3.19.0",
+    "loglayer": "9.1.0",
+    "tslog": "4.10.2",
     "zod": "4.3.6"
   },
   "devDependencies": {
@@ -101,7 +101,7 @@
     "@testing-library/jest-dom": "6.9.1",
     "@types/jest": "30.0.0",
     "@types/node": "20.19.0",
-    "eslint": "10.0.2",
+    "eslint": "10.0.3",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
     "jest": "30.2.0",
@@ -114,12 +114,13 @@
     "ts-node": "10.9.2",
     "tsup": "8.5.1",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.56.1"
+    "typescript-eslint": "8.57.0"
   },
   "overrides": {
     "@isaacs/brace-expansion": "5.0.1",
     "ajv": "6.14.0",
     "fast-xml-parser": "5.4.2",
+    "flatted": "3.4.1",
     "glob": "13.0.6",
     "jsdom": "27.4.0",
     "minimatch": "10.2.4",

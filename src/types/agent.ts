@@ -3,6 +3,7 @@ import { Conversation, MessageMetadata } from 'types/chat'
 import { SessionData, BaseChatContext, BaseState } from 'types/session'
 import { StreamEvent } from 'types/stream'
 import { Provider } from 'types/provider'
+import type { ILogLayer } from 'loglayer'
 
 /**
  * Agent IDs are string-based to support dynamic registration.
@@ -18,6 +19,8 @@ export interface FlowInput<TState extends BaseState = BaseState, TContext extend
   stream: boolean
   /** Provider resolved from session config (agent.provider takes precedence) */
   provider: Provider
+  /** Logger instance for this flow. Falls back to the module-level default if not provided. */
+  logger?: ILogLayer
 }
 
 export type AgentResponseResult<TState extends BaseState = BaseState> = {

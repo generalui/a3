@@ -1,1 +1,75 @@
-export * from './logger'
+import { type ILogLayer, LogLayer } from 'loglayer'
+import { TsLogTransport } from '@loglayer/transport-tslog'
+import { Logger } from 'tslog'
+
+export type { ILogLayer }
+
+/**
+ * Maps A3_LOG_LEVEL env var string to tslog numeric level.
+ * tslog levels: 0=silly, 1=trace, 2=debug, 3=info, 4=warn, 5=error, 6=fatal
+ */
+function resolveMinLevel(): number {
+  const level = (process.env.A3_LOG_LEVEL ?? 'info').toLowerCase()
+  const levels: Record<string, number> = {
+    silly: 0,
+    trace: 1,
+    debug: 2,
+    info: 3,
+    warn: 4,
+    error: 5,
+    fatal: 6,
+  }
+  return levels[level] ?? 3
+}
+
+/**
+ * Creates the default LogLayer instance backed by tslog.
+ * - Pretty output in development (NODE_ENV !== 'production')
+ * - JSON output in production
+ * - Log level controlled by A3_LOG_LEVEL env var (default: 'info')
+ */
+function createDefaultLogger(): ILogLayer {
+  const tslogInstance = new Logger({
+    type: process.env.NODE_ENV === 'production' ? 'json' : 'pretty',
+    minLevel: resolveMinLevel(),
+  })
+
+  return new LogLayer({
+    transport: new TsLogTransport({ logger: tslogInstance }),
+  })
+}
+
+let _logger: ILogLayer | null = null
+
+/**
+ * Override the default A3 logger with a custom LogLayer instance.
+ *
+ * Call this once during application startup, before creating any ChatSession.
+ * The provided logger will be used for all internal A3 logging.
+ *
+ * @example
+ * ```typescript
+ * import { configureLogger } from '@genui-a3/core'
+ * import { LogLayer } from 'loglayer'
+ * import { PinoTransport } from '@loglayer/transport-pino'
+ * import { pino } from 'pino'
+ *
+ * configureLogger(new LogLayer({
+ *   transport: new PinoTransport({ logger: pino() }),
+ * }))
+ * ```
+ */
+export function configureLogger(logger: ILogLayer): void {
+  _logger = logger
+}
+
+/**
+ * Returns the active A3 logger.
+ * Lazily initialises the default tslog-backed logger on first call if not configured.
+ */
+export function getLogger(): ILogLayer {
+  if (!_logger) {
+    _logger = createDefaultLogger()
+  }
+  return _logger
+}

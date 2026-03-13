@@ -12,9 +12,10 @@ import {
   SessionData,
   MessageSender,
 } from 'types'
+import type { ILogLayer } from 'loglayer'
 import { Events } from 'types/events'
 import { logEvent } from '@utils/eventLogger'
-import { log } from '@utils/logger'
+import { getLogger } from '@utils/logger'
 
 const MAX_AUTO_TRANSITIONS = 10
 
@@ -56,12 +57,14 @@ function resolveTransition<TState extends BaseState, TContext extends BaseChatCo
   agentResult,
   sessionData,
   _depth,
+  logger,
 }: {
   agents: Agent<TState, TContext>[]
   activeAgent: Agent<TState, TContext>
   agentResult: AgentResponseResult<TState>
   sessionData: SessionData<TState, TContext>
   _depth: number
+  logger: ILogLayer
 }): TransitionDecision<TState, TContext> {
   const { newState, chatbotMessage, goalAchieved, nextAgentId, widgets, ...rest } = agentResult
   const nextAgent = agents.find((a) => a.id === nextAgentId)
@@ -69,11 +72,9 @@ function resolveTransition<TState extends BaseState, TContext extends BaseChatCo
 
   if (shouldTransition) {
     if (_depth >= MAX_AUTO_TRANSITIONS) {
-      log.warn(`Max auto-transitions (${MAX_AUTO_TRANSITIONS}) reached. Stopping to prevent infinite loop.`, {
-        activeAgent: activeAgent.id,
-        nextAgent: nextAgent.id,
-        depth: _depth,
-      })
+      logger
+        .withMetadata({ activeAgentId: activeAgent.id, nextAgentId: nextAgent.id, depth: _depth })
+        .warn(`Max auto-transitions (${MAX_AUTO_TRANSITIONS}) reached. Stopping to prevent infinite loop.`)
       return {
         action: 'respond',
         response: {
@@ -89,10 +90,9 @@ function resolveTransition<TState extends BaseState, TContext extends BaseChatCo
       }
     }
 
-    log.debug(`Logging ${Events.AgentChanged} event`, {
-      activeAgent: activeAgent.id,
-      nextAgent: nextAgent.id,
-    })
+    logger
+      .withMetadata({ activeAgentId: activeAgent.id, nextAgentId: nextAgent.id })
+      .debug(`Agent transition: ${Events.AgentChanged}`)
     void logEvent(Events.AgentChanged, { activeAgent: activeAgent.id, nextAgent: nextAgent.id })
 
     return {
@@ -128,8 +128,10 @@ export async function manageFlow<TState extends BaseState, TContext extends Base
   lastAgentUnsentMessage,
   stream,
   provider,
+  logger,
   _depth = 0,
 }: FlowInput<TState, TContext> & { _depth?: number }): Promise<ChatResponse<TState>> {
+  const log = logger ?? getLogger()
   const { activeAgentId } = sessionData
   const agents = AgentRegistry.getInstance<TState, TContext>().getAll()
   const activeAgent = agents.find((a) => a.id === activeAgentId)
@@ -145,8 +147,8 @@ export async function manageFlow<TState extends BaseState, TContext extends Base
     }
   }
 
-  log.log('activeAgent:', activeAgent.id)
-  const flowInput = { agent: activeAgent, sessionData, lastAgentUnsentMessage, stream, provider }
+  log.withMetadata({ agentId: activeAgent.id, sessionId: sessionData.sessionId, depth: _depth }).debug('Managing flow')
+  const flowInput = { agent: activeAgent, sessionData, lastAgentUnsentMessage, stream, provider, logger: log }
 
   let agentResult: AgentResponseResult<TState>
 
@@ -158,7 +160,7 @@ export async function manageFlow<TState extends BaseState, TContext extends Base
     agentResult = await simpleAgentResponse(flowInput)
   }
 
-  const decision = resolveTransition({ agents, activeAgent, agentResult, sessionData, _depth })
+  const decision = resolveTransition({ agents, activeAgent, agentResult, sessionData, _depth, logger: log })
 
   if (decision.action === 'transition') {
     return manageFlow({
@@ -167,6 +169,7 @@ export async function manageFlow<TState extends BaseState, TContext extends Base
       lastAgentUnsentMessage: decision.chatbotMessage,
       stream,
       provider,
+      logger: log,
       _depth: decision.newDepth,
     })
   }
@@ -179,8 +182,10 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
   lastAgentUnsentMessage,
   stream,
   provider,
+  logger,
   _depth = 0,
 }: FlowInput<TState, TContext> & { _depth?: number }): AsyncGenerator<StreamEvent<TState>> {
+  const log = logger ?? getLogger()
   const { activeAgentId } = sessionData
   const agents = AgentRegistry.getInstance<TState, TContext>().getAll()
   const activeAgent = agents.find((a) => a.id === activeAgentId)
@@ -202,8 +207,10 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
     return
   }
 
-  log.log('activeAgent (stream):', activeAgent.id)
-  const flowInput = { agent: activeAgent, sessionData, lastAgentUnsentMessage, stream, provider }
+  log
+    .withMetadata({ agentId: activeAgent.id, sessionId: sessionData.sessionId, depth: _depth })
+    .debug('Managing flow (stream)')
+  const flowInput = { agent: activeAgent, sessionData, lastAgentUnsentMessage, stream, provider, logger: log }
 
   let agentResult: AgentResponseResult<TState>
 
@@ -215,7 +222,7 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
     agentResult = yield* simpleAgentResponseStream(flowInput)
   }
 
-  const decision = resolveTransition({ agents, activeAgent, agentResult, sessionData, _depth })
+  const decision = resolveTransition({ agents, activeAgent, agentResult, sessionData, _depth, logger: log })
 
   if (decision.action === 'transition') {
     decision.updatedSessionData.messages.push({
@@ -236,6 +243,7 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
       lastAgentUnsentMessage: decision.chatbotMessage,
       stream,
       provider,
+      logger: log,
       _depth: decision.newDepth,
     })
     return

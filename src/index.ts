@@ -15,6 +15,8 @@ export * from './constants'
 
 // Utils exports
 export * from './utils/agentPool'
+export { configureLogger, getLogger } from './utils/logger'
+export type { ILogLayer } from './utils/logger'
 
 // Prompts exports
 export * from './prompts/antiHallucination'
