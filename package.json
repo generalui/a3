@@ -1,6 +1,6 @@
 {
   "name": "@genui-a3/core",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Core package for the A3 agentic backend framework",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -15,7 +15,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "docs"
   ],
   "workspaces": [
     "providers",

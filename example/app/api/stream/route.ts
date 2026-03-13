@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
-import { getProvider } from '../../lib/provider'
+import { provider } from '../../lib/providers'
 import { greetingAgent, State } from '../../agents/greeting'
 import { ageAgent } from '../../agents/age'
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     store,
     initialAgentId: 'greeting',
     initialState: { userName: undefined },
-    provider: getProvider(),
+    provider,
   })
 
   const encoder = new TextEncoder()

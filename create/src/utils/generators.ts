@@ -3,26 +3,30 @@ import fs from 'fs-extra'
 
 import { PROVIDER_META, type ProviderConfig } from './providers'
 
-export function generateProviderFile(targetDir: string, primaryProvider: string): void {
-  const { importPath, factory, models } = PROVIDER_META[primaryProvider]
-  const modelsLiteral = models.map((m) => `'${m}'`).join(', ')
+export function generateProviderFiles(targetDir: string, config: ProviderConfig): void {
+  const providersDir = path.join(targetDir, 'app', 'lib', 'providers')
 
-  const content = `import { ${factory} } from '${importPath}'
-import type { Provider } from '@genui-a3/core'
-
-let _provider: Provider
-
-export function getProvider(): Provider {
-  if (!_provider) {
-    _provider = ${factory}({
-      models: [${modelsLiteral}],
-    })
+  // Remove unselected provider files
+  for (const [key, meta] of Object.entries(PROVIDER_META)) {
+    if (!config.providers.includes(key)) {
+      const filePath = path.join(providersDir, meta.file)
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
+    }
   }
-  return _provider
-}
-`
 
-  fs.outputFileSync(path.join(targetDir, 'app', 'lib', 'provider.ts'), content)
+  // Generate index.ts barrel
+  const primaryMeta = PROVIDER_META[config.primaryProvider]
+  const lines: string[] = []
+
+  for (const provKey of config.providers) {
+    const meta = PROVIDER_META[provKey]
+    const baseName = meta.file.replace('.ts', '')
+    lines.push(`export { ${meta.exportName} } from './${baseName}'`)
+  }
+  lines.push(`export { ${primaryMeta.exportName} as provider } from './${primaryMeta.file.replace('.ts', '')}'`)
+  lines.push('')
+
+  fs.outputFileSync(path.join(providersDir, 'index.ts'), lines.join('\n'))
 }
 
 export function generateEnvFile(targetDir: string, config: ProviderConfig): void {

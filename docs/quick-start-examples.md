@@ -1,6 +1,27 @@
 # Quick Start
 
-## Install
+The fastest way to get started with A3 is using the interactive CLI. It scaffolds a full Next.js application, configures your LLM providers, and installs dependencies.
+
+```bash
+npx @genui-a3/create@latest
+```
+
+Follow the prompts to name your project and provide your API keys. Once finished:
+
+```bash
+cd your-project-name
+npm run dev
+```
+
+For more details on the CLI, see the [@genui-a3/create README](https://www.npmjs.com/package/@genui-a3/create).
+
+---
+
+## Manual Installation
+
+If you are adding A3 to an existing project or prefer a manual setup, follow these steps.
+
+### Install
 
 ```bash
 npm install @genui-a3/core
