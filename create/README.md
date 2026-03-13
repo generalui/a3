@@ -5,14 +5,16 @@ Scaffold a new [A3](https://www.npmjs.com/package/@genui-a3/core) agentic app in
 ## Quick Start
 
 ```bash
-npx @genui-a3/create@latest my-app
+npx @genui-a3/create@latest
 ```
 
-This will:
+This starts an **interactive session** that will:
 
-1. Create a new directory with your project name
-1. Copy a production-ready Next.js template
-1. Install all dependencies automatically
+1. Prompt for your project name and directory
+2. Let you select and configure LLM providers (OpenAI, Anthropic, Bedrock)
+3. Generate a production-ready Next.js template
+4. Automatically create your `.env` with the provided credentials
+5. Install all dependencies
 
 Then start developing:
 
@@ -33,6 +35,23 @@ A fully configured Next.js application with:
 - **Agent registration** — define and wire up custom agents using `@genui-a3/core`
 - **Material UI** — pre-configured theming with MUI components
 - **TypeScript** — strict type-checking out of the box
+
+## Configuration & Providers
+
+The CLI guides you through setting up your LLM providers and authentication during scaffolding.
+
+### Supported Providers
+
+| Provider | Authentication | Auto-Generated Config |
+|----------|---------------|------------------------|
+| **OpenAI** | API Key | `OPENAI_API_KEY` |
+| **Anthropic** | API Key | `ANTHROPIC_API_KEY` |
+| **AWS Bedrock** | AWS Profile or Access Keys | `AWS_REGION`, `AWS_ACCESS_KEY_ID`, etc. |
+
+### Automatic Setup
+
+- **Environment Variables**: A `.env` file is generated with your keys so you can run the app immediately.
+- **Provider Registry**: The CLI generates `app/lib/provider.ts`, pre-configuring the A3 `Provider` factory with your primary model selection.
 
 ## Usage
 
