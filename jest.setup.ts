@@ -39,6 +39,7 @@ jest.mock('@utils/logger', () => {
   return {
     getLogger: jest.fn(() => mockLogger),
     configureLogger: jest.fn(),
+    log: mockLogger,
   }
 })
 

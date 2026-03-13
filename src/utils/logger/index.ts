@@ -73,3 +73,40 @@ export function getLogger(): ILogLayer {
   }
   return _logger
 }
+
+/**
+ * Module-level logger for use within the A3 package internals.
+ *
+ * Always routes through the currently configured logger, so a
+ * `configureLogger()` call made before the first log statement takes effect
+ * even though this reference is captured at import time.
+ *
+ * Uses the LogLayer API:
+ * @example
+ * ```typescript
+ * import { log } from '@utils/logger'
+ *
+ * // Basic logging
+ * log.info('Hello world!')
+ *
+ * // Logging with metadata
+ * log.withMetadata({ agentId: 'greeting' }).info('Agent selected')
+ *
+ * // Logging with persistent context
+ * log.withContext({ sessionId: '123' })
+ * log.info('Processing request')
+ *
+ * // Logging errors
+ * log.withError(new Error('Something went wrong')).error('Failed to process request')
+ * ```
+ */
+export const log: ILogLayer = new Proxy({} as ILogLayer, {
+  get(_target, prop: string | symbol) {
+    const logger = getLogger()
+    const value = (logger as unknown as Record<string | symbol, unknown>)[prop]
+    if (typeof value === 'function') {
+      return (value as (...args: unknown[]) => unknown).bind(logger)
+    }
+    return value
+  },
+})

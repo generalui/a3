@@ -14,7 +14,7 @@ import {
   Provider,
   ProviderMessage,
 } from 'types'
-import { getLogger } from '@utils/logger'
+import { log } from '@utils/logger'
 
 /**
  * Resolves the provider for an agent request.
@@ -98,8 +98,7 @@ export const getAgentResponse = async <TState extends BaseState, TContext extend
 ) => {
   const { agent, sessionData } = input
   const { systemPrompt, fullOutputSchema } = await prepareAgentRequest(input)
-  const logger = input.logger ?? getLogger()
-  logger.withMetadata({ agentId: agent.id, sessionId: sessionData.sessionId }).debug('Generating agent response')
+  log.withMetadata({ agentId: agent.id, sessionId: sessionData.sessionId }).debug('Generating agent response')
 
   const provider = resolveProvider(agent, input.provider)
   const filteredConversation = agent.filterHistoryStrategy
@@ -159,8 +158,7 @@ export async function* getAgentResponseStream<
 >(input: FlowInput<TState, TContext>): AsyncGenerator<StreamEvent<TState>> {
   const { agent, sessionData } = input
   const { systemPrompt, fullOutputSchema } = await prepareAgentRequest(input)
-  const logger = input.logger ?? getLogger()
-  logger.withMetadata({ agentId: agent.id, sessionId: sessionData.sessionId }).debug('Generating agent response (stream)')
+  log.withMetadata({ agentId: agent.id, sessionId: sessionData.sessionId }).debug('Generating agent response (stream)')
 
   const provider = resolveProvider(agent, input.provider)
   const filteredConversation = agent.filterHistoryStrategy

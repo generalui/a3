@@ -2,7 +2,6 @@ import { Conversation, Message, MessageMetadata } from 'types/chat'
 import { AgentId } from 'types/agent'
 import { SessionStore } from 'types/storage'
 import { Provider } from 'types/provider'
-import type { ILogLayer } from 'loglayer'
 
 /**
  * BaseState defines the minimum required fields for state.
@@ -72,23 +71,4 @@ export interface ChatSessionConfig<
 
   /** LLM provider instance for this session. Required unless all agents have their own provider. */
   provider: Provider
-
-  /**
-   * Optional LogLayer instance for this session.
-   * When provided, this logger is used instead of the module-level default configured via `configureLogger()`.
-   * Useful when different sessions need different logging destinations or levels.
-   *
-   * @example
-   * ```typescript
-   * import { LogLayer } from 'loglayer'
-   * import { PinoTransport } from '@loglayer/transport-pino'
-   *
-   * const session = new ChatSession({
-   *   sessionId: 'user-123',
-   *   provider,
-   *   logger: new LogLayer({ transport: new PinoTransport({ logger: pino() }) }),
-   * })
-   * ```
-   */
-  logger?: ILogLayer
 }

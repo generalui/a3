@@ -15,9 +15,7 @@ import {
   StreamEvent,
   Provider,
 } from 'types'
-import type { ILogLayer } from 'loglayer'
 import { MemorySessionStore } from '@stores/memoryStore'
-import { getLogger } from '@utils/logger'
 
 /**
  * ChatSession encapsulates the complete message lifecycle.
@@ -52,7 +50,6 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
   private readonly initialChatContext: TContext
   private readonly initialMessages?: Message[]
   private readonly provider: Provider
-  private readonly logger: ILogLayer
 
   constructor(config: ChatSessionConfig<TState, TContext>) {
     this.sessionId = config.sessionId
@@ -62,7 +59,6 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
     this.initialChatContext = config.initialChatContext ?? ({} as TContext)
     this.initialMessages = config.initialMessages
     this.provider = config.provider
-    this.logger = config.logger ?? getLogger()
   }
 
   /**
@@ -181,7 +177,6 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
       ...context,
       stream: false,
       provider: this.provider,
-      logger: this.logger,
     })
   }
 
@@ -196,7 +191,6 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
       ...context,
       stream: true,
       provider: this.provider,
-      logger: this.logger,
     })
   }
 
