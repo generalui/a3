@@ -6,7 +6,7 @@ import * as p from '@clack/prompts'
 import chalk from 'chalk'
 import fs from 'fs-extra'
 
-import { generateEnvFile, generateProviderFile, scaffoldProject } from './utils/generators'
+import { generateEnvFile, generateProviderFiles, scaffoldProject } from './utils/generators'
 import { promptProjectName, promptProviders } from './utils/prompts'
 import { PROVIDER_META, type ProviderConfig } from './utils/providers'
 
@@ -78,8 +78,8 @@ async function main() {
 
   spin.start('Scaffolding project files')
   scaffoldProject(templateDir, targetDir, projectName)
-  spin.message('Configuring provider')
-  generateProviderFile(targetDir, providerConfig.primaryProvider)
+  spin.message('Configuring providers')
+  generateProviderFiles(targetDir, providerConfig)
   spin.message('Generating .env file')
   generateEnvFile(targetDir, providerConfig)
   spin.stop('Project scaffolded')
