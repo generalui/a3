@@ -11,7 +11,7 @@ export interface ProviderConfig {
 }
 
 export const PROVIDER_META: Record<string, { label: string; exportName: string; file: string }> = {
-  openai: { label: 'OpenAI', exportName: 'openaiProvider', file: 'openai.ts' },
-  bedrock: { label: 'AWS Bedrock', exportName: 'bedrockProvider', file: 'bedrock.ts' },
-  anthropic: { label: 'Anthropic', exportName: 'anthropicProvider', file: 'anthropic.ts' },
+  openai: { label: 'OpenAI', exportName: 'getOpenAIProvider', file: 'openai.ts' },
+  bedrock: { label: 'AWS Bedrock', exportName: 'getBedrockProvider', file: 'bedrock.ts' },
+  anthropic: { label: 'Anthropic', exportName: 'getAnthropicProvider', file: 'anthropic.ts' },
 }

@@ -1,4 +1,4 @@
-export { anthropicProvider } from './anthropic'
-export { bedrockProvider } from './bedrock'
-export { openaiProvider } from './openai'
-export { anthropicProvider as provider } from './anthropic'
+export { getAnthropicProvider } from './anthropic'
+export { getBedrockProvider } from './bedrock'
+export { getOpenAIProvider } from './openai'
+export { getAnthropicProvider as getProvider } from './anthropic'

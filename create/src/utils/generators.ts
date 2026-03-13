@@ -23,7 +23,7 @@ export function generateProviderFiles(targetDir: string, config: ProviderConfig)
     const baseName = meta.file.replace('.ts', '')
     lines.push(`export { ${meta.exportName} } from './${baseName}'`)
   }
-  lines.push(`export { ${primaryMeta.exportName} as provider } from './${primaryMeta.file.replace('.ts', '')}'`)
+  lines.push(`export { ${primaryMeta.exportName} as getProvider } from './${primaryMeta.file.replace('.ts', '')}'`)
   lines.push('')
 
   fs.outputFileSync(path.join(providersDir, 'index.ts'), lines.join('\n'))
