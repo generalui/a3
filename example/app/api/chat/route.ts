@@ -5,7 +5,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
-import { provider } from '../../lib/providers'
+import { getProvider } from '../../lib/providers'
 import { greetingAgent, State } from '../../agents/greeting'
 import { ageAgent } from '../../agents/age'
 
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       store,
       initialAgentId: 'greeting',
       initialState: { userName: undefined },
-      provider,
+      provider: getProvider(),
     })
 
     const result = await session.send({ message })
