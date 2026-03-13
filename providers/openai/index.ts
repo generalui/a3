@@ -1,4 +1,5 @@
-import OpenAI from 'openai'
+import { createOpenAI } from '@ai-sdk/openai'
+import { generateText, streamText, Output, ModelMessage, jsonSchema } from 'ai'
 import type {
   Provider,
   ProviderRequest,
@@ -9,7 +10,6 @@ import type {
 } from '@genui-a3/core'
 import { processOpenAIStream } from './streamProcessor'
 import { executeWithFallback } from '../utils/executeWithFallback'
-import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions'
 
 /**
  * Configuration for creating an OpenAI provider.
@@ -31,13 +31,15 @@ export interface OpenAIProviderConfig {
 type JsonSchema = Record<string, unknown>
 
 /**
- * Recursively enforces OpenAI structured output requirements on a JSON Schema:
- * - Adds `additionalProperties: false` to all object types
- * - Ensures all properties are listed in `required`
+ * Enforces strict JSON schema constraints required by OpenAI's structured output API.
+ * OpenAI requires all object properties — including optional ones — to be in the `required` array.
+ * This function recursively adds `required` and `additionalProperties: false` to all objects.
+ *
+ * @param schema - JSON schema to enforce
+ * @returns Enforced JSON schema
  */
 function enforceStrictSchema(schema: JsonSchema): JsonSchema {
   const result = { ...schema }
-
   if (result.type === 'object' && result.properties) {
     result.additionalProperties = false
     result.required = Object.keys(result.properties as Record<string, unknown>)
@@ -48,108 +50,95 @@ function enforceStrictSchema(schema: JsonSchema): JsonSchema {
     }
     result.properties = strictProps
   }
-
   if (result.items && typeof result.items === 'object') {
     result.items = enforceStrictSchema(result.items as JsonSchema)
   }
-
-  // Handle anyOf/oneOf/allOf
   for (const keyword of ['anyOf', 'oneOf', 'allOf'] as const) {
     if (Array.isArray(result[keyword])) {
       result[keyword] = (result[keyword] as JsonSchema[]).map((s) => enforceStrictSchema(s))
     }
   }
-
   return result
 }
 
-function toOpenAIMessages(
-  systemPrompt: string,
-  messages: ProviderMessage[],
-): ChatCompletionMessageParam[] {
-  const openAIMessages: ChatCompletionMessageParam[] = [{ role: 'system', content: systemPrompt }]
-
-  for (const msg of messages) {
-    openAIMessages.push({ role: msg.role, content: msg.content })
-  }
-
-  return openAIMessages
+/**
+ * Converts a Zod schema to an OpenAI-compatible strict JSON schema wrapped for the Vercel AI SDK.
+ *
+ * @param zodSchema - Zod schema to convert
+ * @returns JSON schema wrapped for Vercel AI SDK
+ */
+function toOpenAISchema(zodSchema: ProviderRequest['responseSchema']) {
+  const strict = enforceStrictSchema(zodSchema.toJSONSchema() as JsonSchema)
+  return jsonSchema(strict as never, {
+    validate: (value: unknown) => {
+      const result = zodSchema.safeParse(value)
+      return result.success
+        ? { success: true as const, value: result.data }
+        : { success: false as const, error: result.error }
+    },
+  })
 }
 
-function prepareRequest(request: ProviderRequest) {
-  const jsonSchema = enforceStrictSchema(request.responseSchema.toJSONSchema() as JsonSchema)
-  const responseFormat = {
-    type: 'json_schema' as const,
-    json_schema: {
-      name: 'structuredResponse',
-      strict: true,
-      schema: jsonSchema,
-    },
-  }
-  const openAIMessages = toOpenAIMessages(request.systemPrompt, request.messages)
-
-  return { responseFormat, openAIMessages }
+function toAIMessages(messages: ProviderMessage[]): ModelMessage[] {
+  return messages.map((msg) => ({
+    role: msg.role,
+    content: msg.content,
+  }))
 }
 
 async function sendWithModel(
-  client: OpenAI,
+  openaiProvider: ReturnType<typeof createOpenAI>,
   model: string,
-  openAIMessages: ChatCompletionMessageParam[],
-  responseFormat: {
-    type: 'json_schema'
-    json_schema: { name: string; strict: boolean; schema: JsonSchema }
-  },
+  system: string,
+  messages: ModelMessage[],
+  schema: ProviderRequest['responseSchema'],
 ): Promise<ProviderResponse> {
-  const response = await client.chat.completions.create({
-    model,
-    messages: openAIMessages,
-    response_format: responseFormat,
+  const result = await generateText({
+    model: openaiProvider(model),
+    system,
+    messages,
+    output: Output.object({ schema: toOpenAISchema(schema) }),
   })
 
-  const choice = response.choices[0]
-  if (!choice?.message?.content) {
-    throw new Error('OpenAI returned empty response')
-  }
-
-  if (choice.finish_reason === 'length') {
-    throw new Error('OpenAI response truncated (finish_reason: length)')
-  }
-
   return {
-    content: choice.message.content,
-    usage: response.usage
-      ? {
-          inputTokens: response.usage.prompt_tokens,
-          outputTokens: response.usage.completion_tokens,
-          totalTokens: response.usage.total_tokens,
-        }
-      : undefined,
+    content: JSON.stringify(result.output),
+    usage: {
+      inputTokens: result.usage.inputTokens ?? 0,
+      outputTokens: result.usage.outputTokens ?? 0,
+      totalTokens: (result.usage.inputTokens ?? 0) + (result.usage.outputTokens ?? 0),
+    },
   }
 }
 
 async function sendStreamWithModel(
-  client: OpenAI,
+  openaiProvider: ReturnType<typeof createOpenAI>,
   model: string,
-  openAIMessages: ChatCompletionMessageParam[],
-  responseFormat: {
-    type: 'json_schema'
-    json_schema: { name: string; strict: boolean; schema: JsonSchema }
-  },
+  system: string,
+  messages: ModelMessage[],
+  schema: ProviderRequest['responseSchema'],
 ) {
-  return client.chat.completions.create({
-    model,
-    messages: openAIMessages,
-    response_format: responseFormat,
-    stream: true,
+  const result = streamText({
+    model: openaiProvider(model),
+    system,
+    messages,
+    output: Output.object({ schema: toOpenAISchema(schema) }),
   })
+
+  // Force the API call to start so executeWithFallback can catch connection errors
+  const partialStream = result.partialOutputStream
+  const reader = partialStream[Symbol.asyncIterator]()
+  const first = await reader.next()
+
+  return { result, reader, first }
 }
 
 /**
  * Creates an OpenAI provider instance.
  *
- * Uses OpenAI's structured output (response_format with JSON Schema) for both
- * blocking and streaming paths, with real-time chatbotMessage text streaming
- * via a custom stream processor.
+ * Uses the Vercel AI SDK (`ai` + `@ai-sdk/openai`) for structured output via
+ * `generateText` + `Output.object()` (blocking) and `streamText` + `Output.object()`
+ * (streaming). The AI SDK handles Zod-to-JSON-schema conversion, partial JSON
+ * parsing, and validation internally.
  *
  * @param config - OpenAI provider configuration
  * @returns A Provider implementation using OpenAI
@@ -162,7 +151,7 @@ async function sendStreamWithModel(
  * ```
  */
 export function createOpenAIProvider(config: OpenAIProviderConfig): Provider {
-  const client = new OpenAI({
+  const openaiProvider = createOpenAI({
     apiKey: config.apiKey,
     baseURL: config.baseURL,
     organization: config.organization,
@@ -173,23 +162,23 @@ export function createOpenAIProvider(config: OpenAIProviderConfig): Provider {
     name: 'openai',
 
     async sendRequest(request: ProviderRequest): Promise<ProviderResponse> {
-      const { responseFormat, openAIMessages } = prepareRequest(request)
+      const messages = toAIMessages(request.messages)
 
       return executeWithFallback(models, (model) =>
-        sendWithModel(client, model, openAIMessages, responseFormat),
+        sendWithModel(openaiProvider, model, request.systemPrompt, messages, request.responseSchema),
       )
     },
 
     async *sendRequestStream<TState extends BaseState = BaseState>(
       request: ProviderRequest,
     ): AsyncGenerator<StreamEvent<TState>> {
-      const { responseFormat, openAIMessages } = prepareRequest(request)
+      const messages = toAIMessages(request.messages)
 
-      const rawStream = await executeWithFallback(models, (model) =>
-        sendStreamWithModel(client, model, openAIMessages, responseFormat),
+      const { result, reader, first } = await executeWithFallback(models, (model) =>
+        sendStreamWithModel(openaiProvider, model, request.systemPrompt, messages, request.responseSchema),
       )
 
-      yield* processOpenAIStream<TState>(rawStream, 'openai', request.responseSchema)
+      yield* processOpenAIStream<TState>(result, reader, first, 'openai', request.responseSchema)
     },
   }
 }

@@ -2,6 +2,7 @@ import * as p from '@clack/prompts'
 
 import { detectAwsProfileRegion, detectAwsProfiles } from './aws'
 import { PROVIDER_META, type ProviderConfig } from './providers'
+import { normalizeKey, validateAnthropicKey, validateAwsCredentials, validateOpenAIKey } from './validation'
 
 function handleCancel<T>(value: T | symbol): asserts value is T {
   if (p.isCancel(value)) {
@@ -20,7 +21,7 @@ export async function promptProjectName(): Promise<string> {
       defaultValue: 'my-a3-quickstart',
     })
     handleCancel(value)
-    projectName = value
+    projectName = value.trim()
   }
 
   return projectName
@@ -35,7 +36,7 @@ async function promptAccessKeys(config: ProviderConfig): Promise<void> {
     },
   })
   handleCancel(awsAccessKeyId)
-  config.awsAccessKeyId = awsAccessKeyId
+  config.awsAccessKeyId = normalizeKey(awsAccessKeyId)
 
   const awsSecretAccessKey = await p.password({
     message: 'AWS_SECRET_ACCESS_KEY:',
@@ -44,33 +45,127 @@ async function promptAccessKeys(config: ProviderConfig): Promise<void> {
     },
   })
   handleCancel(awsSecretAccessKey)
-  config.awsSecretAccessKey = awsSecretAccessKey
+  config.awsSecretAccessKey = normalizeKey(awsSecretAccessKey)
 }
 
 async function promptOpenAIConfig(config: ProviderConfig): Promise<void> {
   p.log.step(PROVIDER_META.openai.label)
-  const openaiApiKey = await p.text({
-    message: 'OpenAI API key:',
-    placeholder: 'sk-...',
-    validate(input) {
-      if (!input) return 'API key is required. Get one at https://platform.openai.com/api-keys'
-    },
-  })
-  handleCancel(openaiApiKey)
-  config.openaiApiKey = openaiApiKey
+
+  let validated = false
+  while (!validated) {
+    const openaiApiKey = await p.password({
+      message: 'OpenAI API key:',
+      validate(input) {
+        if (!input) return 'API key is required (starts with sk-...). Get one at https://platform.openai.com/api-keys'
+      },
+    })
+    handleCancel(openaiApiKey)
+    config.openaiApiKey = normalizeKey(openaiApiKey)
+
+    const spin = p.spinner()
+    spin.start('Validating OpenAI credentials...')
+    const result = await validateOpenAIKey(config.openaiApiKey)
+    spin.stop(result.valid ? 'OpenAI credentials verified' : 'OpenAI validation failed')
+
+    if (result.valid) {
+      validated = true
+    } else {
+      p.log.warn(result.message)
+      p.log.info('Please try again.')
+    }
+  }
 }
 
 async function promptAnthropicConfig(config: ProviderConfig): Promise<void> {
   p.log.step(PROVIDER_META.anthropic.label)
-  const anthropicApiKey = await p.text({
-    message: 'Anthropic API key:',
-    placeholder: 'sk-ant-...',
-    validate(input) {
-      if (!input) return 'API key is required. Get one at https://console.anthropic.com/settings/keys'
-    },
+
+  let validated = false
+  while (!validated) {
+    const anthropicApiKey = await p.password({
+      message: 'Anthropic API key:',
+      validate(input) {
+        if (!input) return 'API key is required (starts with sk-ant-...). Get one at https://console.anthropic.com/settings/keys'
+      },
+    })
+    handleCancel(anthropicApiKey)
+    config.anthropicApiKey = normalizeKey(anthropicApiKey)
+
+    const spin = p.spinner()
+    spin.start('Validating Anthropic credentials...')
+    const result = await validateAnthropicKey(config.anthropicApiKey)
+    spin.stop(result.valid ? 'Anthropic credentials verified' : 'Anthropic validation failed')
+
+    if (result.valid) {
+      validated = true
+    } else {
+      p.log.warn(result.message)
+      p.log.info('Please try again.')
+    }
+  }
+}
+
+async function promptProfileSelection(profiles: string[]): Promise<string> {
+  const MANUAL_ENTRY = '__manual__'
+  const awsProfile = await p.select({
+    message: 'AWS profile',
+    options: [
+      ...profiles.map((prof) => ({ label: prof, value: prof })),
+      { label: 'Enter manually', value: MANUAL_ENTRY },
+    ],
   })
-  handleCancel(anthropicApiKey)
-  config.anthropicApiKey = anthropicApiKey
+  handleCancel(awsProfile)
+
+  if (awsProfile === MANUAL_ENTRY) {
+    const manualProfile = await p.text({
+      message: 'AWS profile name:',
+      placeholder: 'default',
+      defaultValue: 'default',
+      validate(input) {
+        if (!input) return 'Profile name is required.'
+      },
+    })
+    handleCancel(manualProfile)
+    return manualProfile.trim()
+  }
+
+  return awsProfile
+}
+
+/**
+ * Detect AWS profiles and prompt for selection, or offer fallback to access keys if none found.
+ * @returns selected profile name, or null if the user switched to access keys
+ */
+async function promptDetectProfile(config: ProviderConfig): Promise<string | null> {
+  const profiles = detectAwsProfiles()
+
+  if (profiles.length > 0) {
+    return promptProfileSelection(profiles)
+  }
+
+  while (true) {
+    p.log.warn('No AWS profiles found in ~/.aws/credentials')
+    p.log.info('Set up a profile with: aws configure\n  Guide: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html')
+
+    const action = await p.select({
+      message: 'How would you like to proceed?',
+      options: [
+        { label: 'Try again', value: 'retry' as const, hint: 'Re-check ~/.aws/credentials' },
+        { label: 'Use access keys instead', value: 'keys' as const, hint: 'Provide key ID + secret directly' },
+      ],
+    })
+    handleCancel(action)
+
+    if (action === 'keys') {
+      config.bedrockAuthMode = 'keys'
+      await promptAccessKeys(config)
+      return null
+    }
+
+    const retryProfiles = detectAwsProfiles()
+    if (retryProfiles.length > 0) {
+      return promptProfileSelection(retryProfiles)
+    }
+  }
 }
 
 async function promptBedrockConfig(config: ProviderConfig): Promise<void> {
@@ -87,85 +182,72 @@ async function promptBedrockConfig(config: ProviderConfig): Promise<void> {
   config.bedrockAuthMode = authMode
 
   if (authMode === 'profile') {
-    const detectedProfiles = detectAwsProfiles()
-
-    let selectedProfile: string = ''
-    if (detectedProfiles.length > 0) {
-      const MANUAL_ENTRY = '__manual__'
-      const awsProfile = await p.select({
-        message: 'AWS profile',
-        options: [
-          ...detectedProfiles.map((prof) => ({ label: prof, value: prof })),
-          { label: 'Enter manually', value: MANUAL_ENTRY },
-        ],
-      })
-      handleCancel(awsProfile)
-
-      if (awsProfile === MANUAL_ENTRY) {
-        const manualProfile = await p.text({
-          message: 'AWS profile name:',
-          placeholder: 'default',
-          defaultValue: 'default',
-          validate(input) {
-            if (!input) return 'Profile name is required.'
-          },
-        })
-        handleCancel(manualProfile)
-        selectedProfile = manualProfile
-      } else {
-        selectedProfile = awsProfile
-      }
-    } else {
-      p.log.warn('No AWS profiles found in ~/.aws/credentials')
-
-      const noProfileAction = await p.select({
-        message: 'How would you like to proceed?',
-        options: [
-          { label: 'Enter a profile name', value: 'manual' as const, hint: 'Configure the profile later with: aws configure --profile <name>' },
-          { label: 'Use access keys instead', value: 'keys' as const, hint: 'Provide key ID + secret directly' },
-        ],
-      })
-      handleCancel(noProfileAction)
-
-      if (noProfileAction === 'manual') {
-        const awsProfile = await p.text({
-          message: 'AWS profile name:',
-          placeholder: 'default',
-          defaultValue: 'default',
-          validate(input) {
-            if (!input) return 'Profile name is required.'
-          },
-        })
-        handleCancel(awsProfile)
-        selectedProfile = awsProfile
-      } else {
-        config.bedrockAuthMode = 'keys'
-        await promptAccessKeys(config)
-      }
-    }
-
-    if (config.bedrockAuthMode === 'profile') {
-      config.awsProfile = selectedProfile
-    }
+    const profile = await promptDetectProfile(config)
+    if (profile) config.awsProfile = profile
   } else {
     await promptAccessKeys(config)
   }
 
-  const detectedRegion = config.bedrockAuthMode === 'profile'
-    ? detectAwsProfileRegion(config.awsProfile!)
-    : undefined
+  let validated = false
+  let firstAttempt = true
+  while (!validated) {
+    if (!firstAttempt) {
+      if (config.bedrockAuthMode === 'keys') {
+        await promptAccessKeys(config)
+      } else {
+        const retryAction = await p.select({
+          message: 'How would you like to retry?',
+          options: [
+            { label: 'Try a different profile', value: 'profile' as const },
+            { label: 'Switch to access keys', value: 'keys' as const },
+          ],
+        })
+        handleCancel(retryAction)
 
-  const awsRegion = await p.text({
-    message: 'AWS region:',
-    ...(detectedRegion
-      ? { initialValue: detectedRegion }
-      : { placeholder: 'us-east-1' }),
-    validate(input) {
-      if (!input) return 'AWS region is required.'
-    },
-  })
-  handleCancel(awsRegion)
-  config.awsRegion = awsRegion
+        if (retryAction === 'keys') {
+          config.bedrockAuthMode = 'keys'
+          await promptAccessKeys(config)
+        } else {
+          const profile = await promptDetectProfile(config)
+          if (profile) config.awsProfile = profile
+        }
+      }
+    }
+    firstAttempt = false
+
+    const currentDetectedRegion = config.bedrockAuthMode === 'profile'
+      ? detectAwsProfileRegion(config.awsProfile!)
+      : undefined
+
+    const awsRegion = await p.text({
+      message: 'AWS region:',
+      ...(currentDetectedRegion
+        ? { initialValue: currentDetectedRegion }
+        : { placeholder: 'us-east-1' }),
+      validate(input) {
+        if (!input) return 'AWS region is required.'
+      },
+    })
+    handleCancel(awsRegion)
+    config.awsRegion = awsRegion.trim()
+
+    const spin = p.spinner()
+    spin.start('Validating AWS Bedrock credentials...')
+
+    const credentialInput = config.bedrockAuthMode === 'profile'
+      ? { mode: 'profile' as const, profile: config.awsProfile!, region: config.awsRegion }
+      : { mode: 'keys' as const, accessKeyId: config.awsAccessKeyId!, secretAccessKey: config.awsSecretAccessKey!, region: config.awsRegion }
+
+    const result = await validateAwsCredentials(credentialInput)
+    spin.stop(result.valid ? 'AWS Bedrock credentials verified' : 'AWS Bedrock validation failed')
+
+    if (result.valid) {
+      validated = true
+    } else {
+      p.log.warn(result.message)
+      p.log.info('Re-entering credentials...')
+    }
+  }
 }
 
 async function promptPrimaryProvider(providers: string[], config: ProviderConfig): Promise<void> {

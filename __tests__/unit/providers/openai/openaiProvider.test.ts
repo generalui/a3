@@ -7,38 +7,21 @@ jest.unmock('../../../../providers/openai/index')
 jest.unmock('../../../../providers/openai/streamProcessor')
 jest.unmock('../../../../providers/utils/executeWithFallback')
 
-// Mock OpenAI SDK
-const mockCreate = jest.fn()
-jest.mock('openai', () => {
-  return {
-    __esModule: true,
-    default: jest.fn().mockImplementation(() => ({
-      chat: {
-        completions: {
-          create: mockCreate,
-        },
-      },
-    })),
-  }
-})
+// Mock AI SDK
+const mockGenerateText = jest.fn()
+const mockStreamText = jest.fn()
+jest.mock('ai', () => ({
+  generateText: (...args: unknown[]) => mockGenerateText(...args) as unknown,
+  streamText: (...args: unknown[]) => mockStreamText(...args) as unknown,
+  Output: { object: ({ schema }: { schema: unknown }) => schema },
+  jsonSchema: (schema: unknown) => schema, // pass-through for testing
+}))
 
-interface MockCreateArgs {
-  model: string
-  messages: { role: string; content: string }[]
-  response_format: {
-    type: string
-    json_schema: {
-      name: string
-      strict: boolean
-      schema: Record<string, unknown>
-    }
-  }
-  stream?: boolean
-}
-
-function getMockCreateArgs(callIndex: number): MockCreateArgs {
-  return (mockCreate.mock.calls as MockCreateArgs[][])[callIndex][0]
-}
+// Mock @ai-sdk/openai
+const mockCreateOpenAI = jest.fn()
+jest.mock('@ai-sdk/openai', () => ({
+  createOpenAI: (...args: unknown[]) => mockCreateOpenAI(...args) as unknown,
+}))
 
 const testSchema = z.object({
   chatbotMessage: z.string(),
@@ -57,8 +40,12 @@ function makeRequest(overrides: Partial<ProviderRequest> = {}): ProviderRequest 
 }
 
 describe('createOpenAIProvider', () => {
+  let mockModelFn: jest.Mock
+
   beforeEach(() => {
     jest.clearAllMocks()
+    mockModelFn = jest.fn().mockReturnValue('mock-model-instance')
+    mockCreateOpenAI.mockReturnValue(mockModelFn)
   })
 
   describe('factory', () => {
@@ -72,26 +59,41 @@ describe('createOpenAIProvider', () => {
       expect(typeof provider.sendRequest).toBe('function')
       expect(typeof provider.sendRequestStream).toBe('function')
     })
+
+    it('should pass apiKey, baseURL, and organization to createOpenAI', () => {
+      createOpenAIProvider({
+        models: ['gpt-4o'],
+        apiKey: 'sk-test',
+        baseURL: 'https://custom.api.com',
+        organization: 'org-123',
+      })
+
+      expect(mockCreateOpenAI).toHaveBeenCalledWith({
+        apiKey: 'sk-test',
+        baseURL: 'https://custom.api.com',
+        organization: 'org-123',
+      })
+    })
   })
 
   describe('sendRequest (blocking)', () => {
     it('should return parsed content and usage on success', async () => {
-      const responseJson = JSON.stringify({
+      const responseObj = {
         chatbotMessage: 'Hello!',
         goalAchieved: false,
         conversationPayload: { userName: 'Alice' },
         redirectToAgent: null,
-      })
+      }
 
-      mockCreate.mockResolvedValue({
-        choices: [{ message: { content: responseJson }, finish_reason: 'stop' }],
-        usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
+      mockGenerateText.mockResolvedValue({
+        output: responseObj,
+        usage: { inputTokens: 10, outputTokens: 20 },
       })
 
       const provider = createOpenAIProvider({ models: ['gpt-4o'] })
       const result = await provider.sendRequest(makeRequest())
 
-      expect(result.content).toBe(responseJson)
+      expect(result.content).toBe(JSON.stringify(responseObj))
       expect(result.usage).toEqual({
         inputTokens: 10,
         outputTokens: 20,
@@ -99,88 +101,101 @@ describe('createOpenAIProvider', () => {
       })
     })
 
-    it('should throw on empty response', async () => {
-      mockCreate.mockResolvedValue({
-        choices: [{ message: { content: null }, finish_reason: 'stop' }],
-      })
-
-      const provider = createOpenAIProvider({ models: ['gpt-4o'] })
-      await expect(provider.sendRequest(makeRequest())).rejects.toThrow('OpenAI returned empty response')
-    })
-
-    it('should throw on truncated response', async () => {
-      mockCreate.mockResolvedValue({
-        choices: [{ message: { content: '{"partial":true}' }, finish_reason: 'length' }],
-      })
-
-      const provider = createOpenAIProvider({ models: ['gpt-4o'] })
-      await expect(provider.sendRequest(makeRequest())).rejects.toThrow('truncated')
-    })
-
-    it('should pass response_format with json_schema to OpenAI', async () => {
-      mockCreate.mockResolvedValue({
-        choices: [{ message: { content: '{}' }, finish_reason: 'stop' }],
-        usage: { prompt_tokens: 5, completion_tokens: 5, total_tokens: 10 },
-      })
-
-      const provider = createOpenAIProvider({ models: ['gpt-4o'] })
-      await provider.sendRequest(makeRequest())
-
-      const callArgs = getMockCreateArgs(0)
-      expect(callArgs.model).toBe('gpt-4o')
-      expect(callArgs.response_format.type).toBe('json_schema')
-      expect(callArgs.response_format.json_schema.name).toBe('structuredResponse')
-      expect(callArgs.response_format.json_schema.strict).toBe(true)
-    })
-
-    it('should include system prompt as first message', async () => {
-      mockCreate.mockResolvedValue({
-        choices: [{ message: { content: '{}' }, finish_reason: 'stop' }],
-        usage: { prompt_tokens: 5, completion_tokens: 5, total_tokens: 10 },
+    it('should pass system prompt and messages to generateText', async () => {
+      mockGenerateText.mockResolvedValue({
+        output: { chatbotMessage: '', goalAchieved: false, conversationPayload: {}, redirectToAgent: null },
+        usage: { inputTokens: 5, outputTokens: 5 },
       })
 
       const provider = createOpenAIProvider({ models: ['gpt-4o'] })
       await provider.sendRequest(makeRequest({ systemPrompt: 'Be helpful.' }))
 
-      const callArgs = getMockCreateArgs(0)
-      expect(callArgs.messages[0]).toEqual({ role: 'system', content: 'Be helpful.' })
-      expect(callArgs.messages[1]).toEqual({ role: 'user', content: 'Hello' })
+      const callArgs = (mockGenerateText.mock.calls as unknown[][])[0][0] as Record<string, unknown>
+      expect(callArgs.system).toBe('Be helpful.')
+      expect(callArgs.messages).toEqual([{ role: 'user', content: 'Hello' }])
     })
 
-    it('should handle response with no usage data', async () => {
-      mockCreate.mockResolvedValue({
-        choices: [{ message: { content: '{"test":true}' }, finish_reason: 'stop' }],
+    it('should pass the model instance from the openai provider', async () => {
+      mockGenerateText.mockResolvedValue({
+        output: {},
+        usage: { inputTokens: 5, outputTokens: 5 },
+      })
+
+      const provider = createOpenAIProvider({ models: ['gpt-4o'] })
+      await provider.sendRequest(makeRequest())
+
+      expect(mockModelFn).toHaveBeenCalledWith('gpt-4o')
+      const callArgs = (mockGenerateText.mock.calls as unknown[][])[0][0] as Record<string, unknown>
+      expect(callArgs.model).toBe('mock-model-instance')
+    })
+
+    it('should handle undefined token counts gracefully', async () => {
+      mockGenerateText.mockResolvedValue({
+        output: { chatbotMessage: 'Hi', goalAchieved: false, conversationPayload: {}, redirectToAgent: null },
+        usage: { inputTokens: undefined, outputTokens: undefined },
       })
 
       const provider = createOpenAIProvider({ models: ['gpt-4o'] })
       const result = await provider.sendRequest(makeRequest())
 
-      expect(result.usage).toBeUndefined()
+      expect(result.usage).toEqual({
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+      })
+    })
+
+    it('should enforce strict JSON schema (additionalProperties: false, all properties required)', async () => {
+      mockGenerateText.mockResolvedValue({
+        output: { chatbotMessage: '', goalAchieved: false, conversationPayload: {}, redirectToAgent: null },
+        usage: { inputTokens: 5, outputTokens: 5 },
+      })
+
+      const provider = createOpenAIProvider({ models: ['gpt-4o'] })
+      await provider.sendRequest(makeRequest())
+
+      const callArgs = (mockGenerateText.mock.calls as unknown[][])[0][0] as Record<string, unknown>
+      const schema = callArgs.output as Record<string, unknown>
+
+      // Top-level object must have additionalProperties: false and all props required
+      expect(schema.additionalProperties).toBe(false)
+      expect(Array.isArray(schema.required)).toBe(true)
+
+      // Nested conversationPayload object must also have userName in required
+      const props = schema.properties as Record<string, Record<string, unknown>>
+      const convPayload = props.conversationPayload
+      expect(convPayload.additionalProperties).toBe(false)
+      expect((convPayload.required as string[])).toContain('userName')
     })
   })
 
   describe('model fallback', () => {
     it('should fall back to the next model on failure', async () => {
-      mockCreate
+      const responseObj = {
+        chatbotMessage: 'Fallback!',
+        goalAchieved: false,
+        conversationPayload: {},
+        redirectToAgent: null,
+      }
+
+      mockGenerateText
         .mockRejectedValueOnce(new Error('Rate limited'))
         .mockResolvedValueOnce({
-          choices: [{ message: { content: '{"fallback":true}' }, finish_reason: 'stop' }],
-          usage: { prompt_tokens: 5, completion_tokens: 5, total_tokens: 10 },
+          output: responseObj,
+          usage: { inputTokens: 5, outputTokens: 5 },
         })
 
       const provider = createOpenAIProvider({ models: ['gpt-4o', 'gpt-4o-mini'] })
       const result = await provider.sendRequest(makeRequest())
 
-      expect(result.content).toBe('{"fallback":true}')
-      expect(mockCreate).toHaveBeenCalledTimes(2)
-      const firstCallArgs = getMockCreateArgs(0)
-      const secondCallArgs = getMockCreateArgs(1)
-      expect(firstCallArgs.model).toBe('gpt-4o')
-      expect(secondCallArgs.model).toBe('gpt-4o-mini')
+      expect(result.content).toBe(JSON.stringify(responseObj))
+      expect(mockGenerateText).toHaveBeenCalledTimes(2)
+      expect(mockModelFn).toHaveBeenNthCalledWith(1, 'gpt-4o')
+      expect(mockModelFn).toHaveBeenNthCalledWith(2, 'gpt-4o-mini')
     })
 
     it('should throw when all models fail', async () => {
-      mockCreate
+      mockGenerateText
         .mockRejectedValueOnce(new Error('Error 1'))
         .mockRejectedValueOnce(new Error('Error 2'))
 
@@ -191,32 +206,35 @@ describe('createOpenAIProvider', () => {
 
   describe('sendRequestStream', () => {
     it('should yield TEXT_MESSAGE_CONTENT and TOOL_CALL_RESULT events', async () => {
-      const json = JSON.stringify({
-        chatbotMessage: 'Hi',
+      const finalObject = {
+        chatbotMessage: 'Hi there',
         goalAchieved: false,
         conversationPayload: {},
         redirectToAgent: null,
-      })
+      }
 
-      // Mock returns an async iterable (stream)
-      mockCreate.mockResolvedValue({
-        async *[Symbol.asyncIterator]() {
-          await Promise.resolve()
-          yield {
-            id: 'chunk-1',
-            object: 'chat.completion.chunk',
-            created: Date.now(),
-            model: 'gpt-4o',
-            choices: [{ index: 0, delta: { content: json }, finish_reason: null }],
+      const partials = [
+        { chatbotMessage: 'Hi' },
+        { chatbotMessage: 'Hi there' },
+      ]
+
+      let partialIndex = 0
+      const mockIterator = {
+        next: jest.fn().mockImplementation(() => {
+          if (partialIndex < partials.length) {
+            return { done: false, value: partials[partialIndex++] }
           }
-          yield {
-            id: 'chunk-2',
-            object: 'chat.completion.chunk',
-            created: Date.now(),
-            model: 'gpt-4o',
-            choices: [{ index: 0, delta: {}, finish_reason: 'stop' }],
-          }
-        },
+          return { done: true, value: undefined }
+        }),
+      }
+
+      const mockPartialOutputStream = {
+        [Symbol.asyncIterator]: () => mockIterator,
+      }
+
+      mockStreamText.mockReturnValue({
+        partialOutputStream: mockPartialOutputStream,
+        output: Promise.resolve(finalObject),
       })
 
       const provider = createOpenAIProvider({ models: ['gpt-4o'] })
@@ -228,24 +246,29 @@ describe('createOpenAIProvider', () => {
       const textEvents = events.filter((e) => e.type === EventType.TEXT_MESSAGE_CONTENT)
       expect(textEvents.length).toBeGreaterThan(0)
       const textContent = textEvents.map((e) => (e as { delta: string }).delta).join('')
-      expect(textContent).toBe('Hi')
+      expect(textContent).toBe('Hi there')
 
       const toolResult = events.find((e) => e.type === EventType.TOOL_CALL_RESULT)
       expect(toolResult).toBeDefined()
     })
 
-    it('should pass stream: true to OpenAI', async () => {
-      mockCreate.mockResolvedValue({
-        async *[Symbol.asyncIterator]() {
-          await Promise.resolve()
-          yield {
-            id: 'chunk-1',
-            object: 'chat.completion.chunk',
-            created: Date.now(),
-            model: 'gpt-4o',
-            choices: [{ index: 0, delta: { content: '{"chatbotMessage":"","goalAchieved":false,"conversationPayload":{},"redirectToAgent":null}' }, finish_reason: 'stop' }],
-          }
-        },
+    it('should pass model and system prompt to streamText', async () => {
+      const mockIterator = {
+        next: jest.fn().mockResolvedValue({ done: true, value: undefined }),
+      }
+
+      const mockPartialOutputStream = {
+        [Symbol.asyncIterator]: () => mockIterator,
+      }
+
+      mockStreamText.mockReturnValue({
+        partialOutputStream: mockPartialOutputStream,
+        output: Promise.resolve({
+          chatbotMessage: '',
+          goalAchieved: false,
+          conversationPayload: {},
+          redirectToAgent: null,
+        }),
       })
 
       const provider = createOpenAIProvider({ models: ['gpt-4o'] })
@@ -254,27 +277,10 @@ describe('createOpenAIProvider', () => {
         // consume
       }
 
-      const callArgs = getMockCreateArgs(0)
-      expect(callArgs.stream).toBe(true)
-    })
-  })
-
-  describe('enforceStrictSchema', () => {
-    it('should add additionalProperties: false to the schema sent to OpenAI', async () => {
-      mockCreate.mockResolvedValue({
-        choices: [{ message: { content: '{}' }, finish_reason: 'stop' }],
-        usage: { prompt_tokens: 5, completion_tokens: 5, total_tokens: 10 },
-      })
-
-      const provider = createOpenAIProvider({ models: ['gpt-4o'] })
-      await provider.sendRequest(makeRequest())
-
-      const callArgs = getMockCreateArgs(0)
-      const schema = callArgs.response_format.json_schema.schema
-
-      expect(schema.additionalProperties).toBe(false)
-      expect(schema.required).toBeDefined()
-      expect(Array.isArray(schema.required)).toBe(true)
+      expect(mockStreamText).toHaveBeenCalledTimes(1)
+      const callArgs = (mockStreamText.mock.calls as unknown[][])[0][0] as Record<string, unknown>
+      expect(callArgs.model).toBe('mock-model-instance')
+      expect(callArgs.system).toBe('You are a helpful assistant.')
     })
   })
 })
