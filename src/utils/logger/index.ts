@@ -7,8 +7,11 @@ export type { ILogLayer }
 /**
  * Maps A3_LOG_LEVEL env var string to tslog numeric level.
  * tslog levels: 0=silly, 1=trace, 2=debug, 3=info, 4=warn, 5=error, 6=fatal
+ *
+ * Exported for unit testing. Not part of the public package API.
+ * @internal
  */
-function resolveMinLevel(): number {
+export function resolveMinLevel(): number {
   const level = (process.env.A3_LOG_LEVEL ?? 'info').toLowerCase()
   const levels: Record<string, number> = {
     silly: 0,
@@ -40,6 +43,16 @@ function createDefaultLogger(): ILogLayer {
 }
 
 let _logger: ILogLayer | null = null
+
+/**
+ * Resets the active logger back to uninitialised.
+ * The next call to `getLogger()` will create a fresh default logger.
+ *
+ * @internal For use in tests only.
+ */
+export function _resetLogger(): void {
+  _logger = null
+}
 
 /**
  * Override the default A3 logger with a custom LogLayer instance.
