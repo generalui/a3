@@ -67,6 +67,22 @@ log.withError(new Error('Something went wrong')).error('Failed to process reques
 
 For the full LogLayer API — including `withPrefix`, child loggers, plugins, and multi-transport — see the [LogLayer documentation](https://loglayer.dev).
 
+### ⚠️ `withContext()` and shared server state
+
+`log` is a module-level singleton shared across all requests in a running process.
+`withContext()` mutates the logger instance and **persists across all subsequent log calls** — including those from other users' requests on the same pod.
+
+Use `withMetadata()` for any request-scoped data (agentId, sessionId, etc.).
+It applies only to the single log call it's chained on.
+
+```typescript
+// ✅ Safe — applies to this log call only
+log.withMetadata({ agentId: 'greeting', sessionId: 'abc' }).debug('Agent selected')
+
+// ❌ Dangerous in a server — persists on the shared instance across all requests
+log.withContext({ sessionId: 'abc' })
+```
+
 ---
 
 ## Log levels
