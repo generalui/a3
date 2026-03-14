@@ -21,21 +21,22 @@ type LoggerModule = {
 function freshModule(): LoggerModule {
   jest.resetModules()
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return require('@utils/logger') as LoggerModule
+  return require('@utils/logger') as unknown as LoggerModule
 }
 
 /** Creates a minimal ILogLayer mock with only the methods needed for each test. */
 function createMockLogger(): ILogLayer {
+  const fn = () => jest.fn<ILogLayer, unknown[]>()
   return {
-    info: jest.fn(),
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    trace: jest.fn(),
-    withMetadata: jest.fn().mockReturnThis(),
-    withContext: jest.fn().mockReturnThis(),
-    withError: jest.fn().mockReturnThis(),
-    withPrefix: jest.fn().mockReturnThis(),
+    info: fn(),
+    debug: fn(),
+    warn: fn(),
+    error: fn(),
+    trace: fn(),
+    withMetadata: fn().mockReturnThis(),
+    withContext: fn().mockReturnThis(),
+    withError: fn().mockReturnThis(),
+    withPrefix: fn().mockReturnThis(),
   } as unknown as ILogLayer
 }
 

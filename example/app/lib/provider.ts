@@ -6,7 +6,7 @@ let _provider: Provider
 export function getProvider(): Provider {
   if (!_provider) {
     _provider = createAnthropicProvider({
-      models: ['claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001'],
+      models: ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
     })
   }
   return _provider
