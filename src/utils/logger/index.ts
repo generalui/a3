@@ -28,7 +28,7 @@ let _logger: ILogLayer | null = null
 export const log: ILogLayer = new Proxy({} as ILogLayer, {
   get(_target, prop: string | symbol) {
     const logger = getLogger()
-    const value = Reflect.get(logger, prop)
+    const value = Reflect.get(logger, prop) as unknown
     if (typeof value === 'function') {
       return (value as (...args: unknown[]) => unknown).bind(logger)
     }
