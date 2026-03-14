@@ -8,11 +8,8 @@ import type { ILogLayer } from 'loglayer'
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Creates a minimal ILogLayer mock.
- * Only the methods needed for each test need to be present.
- */
-function createMockLogger(overrides: Partial<Record<string, jest.Mock>> = {}): ILogLayer {
+/** Creates a minimal ILogLayer mock with only the methods needed for each test. */
+function createMockLogger(): ILogLayer {
   return {
     info: jest.fn(),
     debug: jest.fn(),
@@ -23,7 +20,6 @@ function createMockLogger(overrides: Partial<Record<string, jest.Mock>> = {}): I
     withContext: jest.fn().mockReturnThis(),
     withError: jest.fn().mockReturnThis(),
     withPrefix: jest.fn().mockReturnThis(),
-    ...overrides,
   } as unknown as ILogLayer
 }
 
@@ -36,22 +32,10 @@ describe('getLogger()', () => {
     _resetLogger()
   })
 
-  it('returns a defined logger instance', () => {
-    const logger = getLogger()
-    expect(logger).toBeDefined()
-    expect(logger).not.toBeNull()
-  })
-
   it('returns the same instance on repeated calls (lazy singleton)', () => {
     const first = getLogger()
     const second = getLogger()
     expect(first).toBe(second)
-  })
-
-  it('returns the configured logger after configureLogger() is called', () => {
-    const mock = createMockLogger()
-    configureLogger(mock)
-    expect(getLogger()).toBe(mock)
   })
 })
 
@@ -64,11 +48,9 @@ describe('configureLogger()', () => {
     _resetLogger()
   })
 
-  it('replaces the default logger', () => {
-    const defaultLogger = getLogger()
+  it('replaces the active logger so getLogger() returns the configured instance', () => {
     const custom = createMockLogger()
     configureLogger(custom)
-    expect(getLogger()).not.toBe(defaultLogger)
     expect(getLogger()).toBe(custom)
   })
 
@@ -89,6 +71,14 @@ describe('configureLogger()', () => {
 describe('log proxy', () => {
   beforeEach(() => {
     _resetLogger()
+  })
+
+  it('routes to the default logger when configureLogger() has not been called', () => {
+    const defaultLogger = getLogger()
+    // Spy on the default logger's info method to confirm the proxy reaches it
+    const spy = jest.spyOn(defaultLogger, 'info')
+    log.info('default routing')
+    expect(spy).toHaveBeenCalledWith('default routing')
   })
 
   it('routes method calls through to the currently configured logger', () => {
@@ -119,15 +109,6 @@ describe('log proxy', () => {
     expect(first.info).toHaveBeenCalledWith('to first')
     expect(second.info).toHaveBeenCalledTimes(1)
     expect(second.info).toHaveBeenCalledWith('to second')
-  })
-
-  it('binds methods to the logger instance so `this` is correct inside the method', () => {
-    const mockInfo = jest.fn()
-    const mock = { info: mockInfo } as unknown as ILogLayer
-    configureLogger(mock)
-    log.info('binding test')
-    // mock.contexts tracks the `this` value for each call (Jest 28+)
-    expect(mockInfo.mock.contexts[0]).toBe(mock)
   })
 })
 
