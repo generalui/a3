@@ -25,35 +25,9 @@ A3_LOG_LEVEL=debug node your-app.js
 
 ## Configuring a custom logger
 
-Call `configureLogger()` once during application startup, **before** creating any `ChatSession`.
-
-```typescript
-import { configureLogger } from '@genui-a3/core'
-import { LogLayer } from 'loglayer'
-import { PinoTransport } from '@loglayer/transport-pino'
-import pino from 'pino'
-
-configureLogger(
-  new LogLayer({
-    transport: new PinoTransport({ logger: pino() }),
-  }),
-)
-```
-
-`configureLogger` accepts any [`ILogLayer`](https://loglayer.dev) instance.
-Once set, all A3 internal logs will be routed through your logger automatically.
-
-## Available transports
-
-LogLayer provides official transports for many popular logging libraries, including:
-
-- **Pino** — `@loglayer/transport-pino`
-- **Winston** — `@loglayer/transport-winston`
-- **Bunyan** — `@loglayer/transport-bunyan`
-- **OpenTelemetry** — `@loglayer/transport-opentelemetry`
-- **Datadog** — via the [HTTP transport](https://loglayer.dev/transports/http) or a custom transport
-
-See the full list in the [LogLayer transports documentation](https://loglayer.dev/transports).
+A3 uses the [LogLayer](https://loglayer.dev) interface.
+Call `configureLogger()` with a `LogLayer` instance configured for your preferred logging library.
+See the [LogLayer documentation](https://loglayer.dev) for setup instructions and the full list of available transports.
 
 ## Further reading
 
