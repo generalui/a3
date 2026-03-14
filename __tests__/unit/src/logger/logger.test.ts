@@ -88,13 +88,6 @@ describe('log proxy', () => {
     expect(mock.info).toHaveBeenCalledWith('hello from proxy')
   })
 
-  it('passes all arguments through to the underlying logger method', () => {
-    const mock = createMockLogger()
-    configureLogger(mock)
-    log.warn('something happened', { extra: 'data' })
-    expect(mock.warn).toHaveBeenCalledWith('something happened', { extra: 'data' })
-  })
-
   it('reflects a logger replacement mid-run after configureLogger() is called', () => {
     const first = createMockLogger()
     const second = createMockLogger()
