@@ -1,6 +1,6 @@
 {
   "name": "@genui-a3/providers",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Provider implementations for the A3 agentic framework",
   "type": "module",
   "exports": {
@@ -51,7 +51,7 @@
     "@ai-sdk/anthropic": "^3.0.58",
     "@aws-sdk/client-bedrock-runtime": "3.975.0",
     "ai": "^6.0.116",
-    "openai": "6.27.0",
+    "@ai-sdk/openai": "^3.0.41",
     "zod": "4.3.6"
   },
   "devDependencies": {

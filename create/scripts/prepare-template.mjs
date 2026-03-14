@@ -104,11 +104,10 @@ delete pkg.private
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
 console.log('Updated template package.json')
 
-// Remove provider.ts — the CLI generates it dynamically via generateProviderFile()
-const providerFile = path.join(templateDir, 'app', 'lib', 'provider.ts')
-if (fs.existsSync(providerFile)) {
-  fs.unlinkSync(providerFile)
-  console.log('Removed app/lib/provider.ts (generated dynamically by CLI)')
+// Remove providers/index.ts — the CLI generates it dynamically
+const providersIndex = path.join(templateDir, 'app', 'lib', 'providers', 'index.ts')
+if (fs.existsSync(providersIndex)) {
+  fs.unlinkSync(providersIndex)
 }
 
 // Rename .gitignore → _gitignore (npm publish workaround)

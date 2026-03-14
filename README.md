@@ -22,8 +22,48 @@ No state machines.
 - **TypeScript-native** -- full type safety from agent definitions to response handling
 - **Dual ESM/CJS** -- works in any Node.js environment
 
+## Why GenUI A3?
+
+### The problem
+
+Building agent-based chat applications is harder than it should be.
+Most teams face the same challenges:
+
+- Coordinating multiple specialized agents in a single conversation
+- Managing shared state as users move between agents
+- Getting structured, validated responses from LLMs
+- Swapping LLM providers without rewriting business logic
+- Persisting conversation sessions across requests
+
+Existing frameworks solve pieces of this, this is an alternative approach without the complexity of writing graph definitions or managing complex state machines.
+
+### How A3 solves it
+
+A3 approach: **define agents, register them, and let the framework handle routing.**
+
+Each agent is a focused unit with a clear responsibility.
+Agents decide when to hand off to another agent based on conversation context.
+The framework manages the flow, state, and session persistence automatically.
+
+There are no graphs to define.
+No state machines to maintain.
+
+### How A3 compares
+
+| Capability | GenUI A3 | LangGraph | CrewAI | AutoGen |
+|---|---|---|---|---|
+| **Setup complexity** | Minimal | Moderate | Moderate | High |
+| **Routing model** | Dynamic (agent-driven) | Static graph | Role-based | Conversation-based |
+| **State management** | Shared global state | Graph state | Shared memory | Message passing |
+| **TypeScript-native** | Yes | Python-first | Python-only | Python-first |
+| **Structured output** | Zod schemas | Custom parsers | Pydantic | Custom parsers |
+| **Session persistence** | Pluggable stores | Custom | Custom | Custom |
+
+A3 optimizes for **simplicity and speed-to-value**.
+
 ## Table of Contents
 
+- [Why GenUI A3?](#why-genui-a3)
 - [Quick Start](#quick-start)
 - [Architecture at a Glance](#architecture-at-a-glance)
 - [Core Concepts](#core-concepts)
@@ -38,75 +78,16 @@ No state machines.
   - [Streaming](#streaming)
 - [Multi-Agent Example](#multi-agent-example)
 - [API Reference](#api-reference)
-- [Comparison](#comparison)
 - [Roadmap](#roadmap)
 - [Requirements](#requirements)
 - [Contributing](#contributing)
 - [License](#license)
 
-## Quick Start
+## [Quick Start](./docs/quick-start-examples.md)
 
-### Install
+Install, define a simple agent, register it, and send a message. All in ~20 lines of code.
 
-```bash
-npm install @genui-a3/core
-```
-
-### Define an agent
-
-```typescript
-import { z } from 'zod'
-import { Agent, BaseState } from '@genui-a3/core'
-
-interface State extends BaseState {
-  userName?: string
-}
-
-export const greetingAgent: Agent<State> = {
-  id: 'greeting',
-  name: 'Greeting Agent',
-  description: 'Greets the user and collects their name',
-  prompt: async () => `
-    You are a friendly greeting agent. Your goal is to greet the user
-    and learn their name. Once you have their name, set goalAchieved to true.
-  `,
-  outputSchema: z.object({
-    userName: z.string().optional(),
-  }),
-  transition: (_state, goalAchieved) =>
-    goalAchieved ? 'end' : 'greeting',
-}
-```
-
-### Register and run
-
-```typescript
-import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
-
-import { createBedrockProvider } from '@genui-a3/providers/bedrock'
-
-const registry = AgentRegistry.getInstance<State>()
-registry.register(greetingAgent)
-
-const provider = createBedrockProvider({
-  models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
-})
-
-const session = new ChatSession<State>({
-  sessionId: 'demo',
-  store: new MemorySessionStore(),
-  initialAgentId: 'greeting',
-  initialState: { userName: undefined },
-  provider,
-})
-
-const response = await session.send({ message: 'Hi there!' })
-console.log(response.responseMessage)
-// => "Hello! I'd love to get to know you. What's your name?"
-```
-
-That's it.
-One agent, one session, one function call.
+See the complete [Quick Start Code Example](./docs/quick-start-examples.md#quick-start).
 
 ## Architecture at a Glance
 
@@ -448,7 +429,7 @@ Both providers support:
 - **Blocking and streaming** modes
 - **Structured output** via Zod schemas
 
-See the [`@genui-a3/providers` README](./providers/README.md) for full configuration options.
+See the [`@genui-a3/providers` README](https://www.npmjs.com/package/@genui-a3/providers) for full configuration options.
 
 **Per-agent provider override:**
 
@@ -534,119 +515,11 @@ const agent: Agent<MyState> = {
 }
 ```
 
-## Multi-Agent Example
+## [Multi-Agent Example](./docs/quick-start-examples.md#multi-agent-example)
 
 Three agents routing between each other, demonstrating state flowing across agent boundaries and automatic agent chaining.
 
-### Define the agents
-
-```typescript
-import { z } from 'zod'
-import { Agent, BaseState } from '@genui-a3/core'
-
-interface AppState extends BaseState {
-  userName?: string
-  isAuthenticated: boolean
-  issueCategory?: string
-}
-
-// Agent 1: Greeting -- collects the user's name, then routes to auth
-const greetingAgent: Agent<AppState> = {
-  id: 'greeting',
-  name: 'Greeting Agent',
-  description: 'Greets the user and collects their name',
-  prompt: async () => `
-    Greet the user warmly. Ask for their name.
-    Once you have it, set goalAchieved to true.
-  `,
-  outputSchema: z.object({ userName: z.string().optional() }),
-  transition: (_state, goalAchieved) =>
-    goalAchieved ? 'auth' : 'greeting',
-}
-
-// Agent 2: Auth -- verifies identity, then routes to support
-const authAgent: Agent<AppState> = {
-  id: 'auth',
-  name: 'Auth Agent',
-  description: 'Verifies user identity',
-  prompt: async ({ sessionData }) => `
-    The user's name is ${sessionData.state.userName}.
-    Ask them to confirm their email to verify identity.
-    Set goalAchieved to true once verified.
-  `,
-  outputSchema: z.object({ isAuthenticated: z.boolean() }),
-  transition: (_state, goalAchieved) =>
-    goalAchieved ? 'support' : 'auth',
-}
-
-// Agent 3: Support -- handles the user's issue
-const supportAgent: Agent<AppState> = {
-  id: 'support',
-  name: 'Support Agent',
-  description: 'Helps resolve user issues',
-  prompt: async ({ sessionData }) => `
-    The user ${sessionData.state.userName} is authenticated.
-    Help them with their issue. Categorize it.
-    Set goalAchieved when resolved.
-  `,
-  outputSchema: z.object({
-    issueCategory: z.string().optional(),
-  }),
-  transition: (_state, goalAchieved) =>
-    goalAchieved ? 'end' : 'support',
-}
-```
-
-### Wire them up
-
-```typescript
-import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
-import { createBedrockProvider } from '@genui-a3/providers/bedrock'
-
-const registry = AgentRegistry.getInstance<AppState>()
-registry.register([greetingAgent, authAgent, supportAgent])
-
-const provider = createBedrockProvider({
-  models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
-})
-
-const session = new ChatSession<AppState>({
-  sessionId: 'user-456',
-  store: new MemorySessionStore(),
-  initialAgentId: 'greeting',
-  initialState: { isAuthenticated: false },
-  provider,
-})
-```
-
-### Conversation flow
-
-```typescript
-// Turn 1: User greets, greeting agent responds
-await session.send({ message: 'Hello!' })
-// => Greeting agent asks for name
-
-// Turn 2: User provides name, greeting agent completes and chains to auth
-await session.send({ message: "I'm Alex" })
-// => Auth agent asks for email verification
-// (greeting → auth happened automatically in one request)
-
-// Turn 3: User verifies, auth completes and chains to support
-await session.send({ message: 'alex@example.com' })
-// => Support agent asks how it can help
-// State now: { userName: 'Alex', isAuthenticated: true }
-
-// Turn 4: Support agent handles the issue
-await session.send({ message: 'I need help with my billing' })
-// => Support agent resolves the issue
-// State: { userName: 'Alex', isAuthenticated: true, issueCategory: 'billing' }
-```
-
-Notice that:
-
-- **State persists across agents**: `userName` set by the greeting agent is available to auth and support
-- **Agent chaining is automatic**: when greeting completes, auth starts in the same request
-- **Each agent has its own prompt and schema**: they extract different data but share the same state
+See the complete [Multi-Agent Code Example](./docs/quick-start-examples.md#multi-agent-example).
 
 ## API Reference
 
@@ -704,17 +577,6 @@ Notice that:
 | `goalAchieved` | `boolean` | Whether the agent considers its goal complete |
 | `sessionId` | `string` | Session identifier |
 | `widgets` | `object \| undefined` | Optional widget data for rich UI rendering |
-
-## Comparison
-
-| Capability | GenUI A3 | LangGraph | CrewAI | AutoGen |
-|---|---|---|---|---|
-| **Setup complexity** | Minimal | Moderate | Moderate | High |
-| **Routing model** | Dynamic (agent-driven) | Static graph | Role-based | Conversation-based |
-| **State management** | Shared global state | Graph state | Shared memory | Message passing |
-| **TypeScript-native** | Yes | Python-first | Python-only | Python-first |
-| **Structured output** | Zod schemas | Custom parsers | Pydantic | Custom parsers |
-| **Session persistence** | Pluggable stores | Custom | Custom | Custom |
 
 ## Roadmap
 
