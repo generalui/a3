@@ -2,7 +2,7 @@ import { Agent, AgentId, BaseState, BaseChatContext } from 'types'
 import { AgentRegistry } from '@core/AgentRegistry'
 
 /**
- * Generates a formatted string listing the agents based on the provided agent IDs.
+ * Generates a formatted string listing agents from the registry for the provided agent IDs.
  * The format matches the one used in basePrompt.ts:
  * - 'agentId': Description of the agent
  *
@@ -18,19 +18,12 @@ import { AgentRegistry } from '@core/AgentRegistry'
  * // - 'basicPatientInfo': Collects basic patient information (e.g., user name, user DOB, reason for visit)
  * ```
  */
-export function generateAgentPool<TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>(
-  agents: Agent<TState, TContext>[],
-  agentIds: AgentId[],
-): string {
-  // Filter the agents array to include only those with IDs in the agentIds array
-  const filteredAgents = agents.filter((agent) => agentIds.includes(agent.id))
-
-  if (filteredAgents.length === 0) {
+export function generateAgentPool(agentIds: AgentId[]): string {
+  if (agentIds.length === 0) {
     return ''
   }
 
-  // Format each agent as a line in the output string
-  return filteredAgents.map((agent) => generateAgentPoolItem(agent.id)).join('\n')
+  return agentIds.map((id) => generateAgentPoolItem(id)).join('\n')
 }
 
 /**
