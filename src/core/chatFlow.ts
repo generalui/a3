@@ -69,11 +69,9 @@ function resolveTransition<TState extends BaseState, TContext extends BaseChatCo
 
   if (shouldTransition) {
     if (_depth >= MAX_AUTO_TRANSITIONS) {
-      log.warn(`Max auto-transitions (${MAX_AUTO_TRANSITIONS}) reached. Stopping to prevent infinite loop.`, {
-        activeAgent: activeAgent.id,
-        nextAgent: nextAgent.id,
-        depth: _depth,
-      })
+      log
+        .withMetadata({ activeAgentId: activeAgent.id, nextAgentId: nextAgent.id, depth: _depth })
+        .warn(`Max auto-transitions (${MAX_AUTO_TRANSITIONS}) reached. Stopping to prevent infinite loop.`)
       return {
         action: 'respond',
         response: {
@@ -89,10 +87,9 @@ function resolveTransition<TState extends BaseState, TContext extends BaseChatCo
       }
     }
 
-    log.debug(`Logging ${Events.AgentChanged} event`, {
-      activeAgent: activeAgent.id,
-      nextAgent: nextAgent.id,
-    })
+    log
+      .withMetadata({ activeAgentId: activeAgent.id, nextAgentId: nextAgent.id })
+      .debug(`Agent transition: ${Events.AgentChanged}`)
     void logEvent(Events.AgentChanged, { activeAgent: activeAgent.id, nextAgent: nextAgent.id })
 
     return {
@@ -145,7 +142,7 @@ export async function manageFlow<TState extends BaseState, TContext extends Base
     }
   }
 
-  log.log('activeAgent:', activeAgent.id)
+  log.withMetadata({ agentId: activeAgent.id, sessionId: sessionData.sessionId, depth: _depth }).debug('Managing flow')
   const flowInput = { agent: activeAgent, sessionData, lastAgentUnsentMessage, stream, provider }
 
   let agentResult: AgentResponseResult<TState>
@@ -202,7 +199,9 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
     return
   }
 
-  log.log('activeAgent (stream):', activeAgent.id)
+  log
+    .withMetadata({ agentId: activeAgent.id, sessionId: sessionData.sessionId, depth: _depth })
+    .debug('Managing flow (stream)')
   const flowInput = { agent: activeAgent, sessionData, lastAgentUnsentMessage, stream, provider }
 
   let agentResult: AgentResponseResult<TState>

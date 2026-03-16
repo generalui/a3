@@ -24,22 +24,22 @@ jest.mock('@utils/eventLogger', () => ({
 
 // Mock logger
 jest.mock('@utils/logger', () => {
-  let requestTraceId: string | undefined
+  const mockLogger = {
+    trace: jest.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    withMetadata: jest.fn().mockReturnThis(),
+    withContext: jest.fn().mockReturnThis(),
+    withPrefix: jest.fn().mockReturnThis(),
+    withError: jest.fn().mockReturnThis(),
+  }
 
   return {
-    log: {
-      trace: jest.fn(),
-      debug: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      log: jest.fn(),
-    },
-    withTraceId: jest.fn((traceId, fn) => fn()),
-    withTraceIdAsync: jest.fn(async (traceId, fn) => await fn()),
-    withTraceIdFromToken: jest.fn(async (fn) => await fn()),
-    getCurrentTraceId: jest.fn(() => Promise.resolve(requestTraceId)),
-    getCurrentTraceIdAsync: jest.fn(() => Promise.resolve(requestTraceId)),
+    getLogger: jest.fn(() => mockLogger),
+    configureLogger: jest.fn(),
+    log: mockLogger,
   }
 })
 

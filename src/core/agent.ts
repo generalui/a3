@@ -98,7 +98,7 @@ export const getAgentResponse = async <TState extends BaseState, TContext extend
 ) => {
   const { agent, sessionData } = input
   const { systemPrompt, fullOutputSchema } = await prepareAgentRequest(input)
-  log.log('agent id:', agent.id)
+  log.withMetadata({ agentId: agent.id, sessionId: sessionData.sessionId }).debug('Generating agent response')
 
   const provider = resolveProvider(agent, input.provider)
   const filteredConversation = agent.filterHistoryStrategy
@@ -158,7 +158,7 @@ export async function* getAgentResponseStream<
 >(input: FlowInput<TState, TContext>): AsyncGenerator<StreamEvent<TState>> {
   const { agent, sessionData } = input
   const { systemPrompt, fullOutputSchema } = await prepareAgentRequest(input)
-  log.log('agent id (stream):', agent.id)
+  log.withMetadata({ agentId: agent.id, sessionId: sessionData.sessionId }).debug('Generating agent response (stream)')
 
   const provider = resolveProvider(agent, input.provider)
   const filteredConversation = agent.filterHistoryStrategy

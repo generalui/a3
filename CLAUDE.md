@@ -163,6 +163,39 @@ SECRETS:
 - Never expose API keys, tokens, or credentials in code
 - Provider credentials should be configured via environment variables
 
+LOGGING:
+
+A3 uses [LogLayer](https://loglayer.dev) as its logging abstraction with tslog as the default backend.
+
+Internal logging — use the module-level `log` singleton:
+
+- Import: `import { log } from '@utils/logger'`
+- API: `log.info('msg')`, `log.withMetadata({ key: 'val' }).debug('msg')`, `log.withError(err).error('msg')`
+- `log` is a Proxy over `getLogger()`, so it always routes to the currently configured logger.
+  Do NOT call `getLogger()` at individual log sites — just use `log` directly.
+
+Public API (exported from `@genui-a3/core`):
+
+- `configureLogger(logger: ILogLayer)` — replace the default logger (call once at app startup)
+- `getLogger(): ILogLayer` — returns the active logger instance
+- `ILogLayer` — the LogLayer interface type
+
+The `log` singleton is intentionally NOT exported from the package root.
+It is for internal A3 package use only.
+
+Log level is controlled by the `A3_LOG_LEVEL` env var (default: `info`).
+Valid values: `silly`, `trace`, `debug`, `info`, `warn`, `error`, `fatal`.
+
+Key files:
+
+- `src/utils/logger/index.ts` — logger implementation (Proxy, getLogger, configureLogger, tslog default)
+- `jest.setup.ts` — global mock for `@utils/logger` used in all unit tests
+
+Documentation:
+
+- `docs/LOGGING.md` — internal guide for A3 package developers
+- `docs/CUSTOM_LOGGING.md` — guide for package users who want to provide their own logger
+
 DOCUMENTATION:
 
 - Follow markdownlint rules per .markdownlint.json

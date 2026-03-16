@@ -37,14 +37,14 @@ jobs:
 
       - name: Get changed Code Quality workflow
         id: changed-code-quality
-        uses: tj-actions/changed-files@v41
+        uses: tj-actions/changed-files@v47
         with:
           files: |
             .github/workflows/code-quality-lib.yml
 
       - name: Get changed markdown files
         id: changed-markdown
-        uses: tj-actions/changed-files@v41
+        uses: tj-actions/changed-files@v47
         with:
           files: |
             .markdownlint.json
@@ -55,7 +55,7 @@ jobs:
 
       - name: Get changed JavaScript project files
         id: changed-js-project
-        uses: tj-actions/changed-files@v41
+        uses: tj-actions/changed-files@v47
         with:
           files: |
             .eslint.config.mjs
