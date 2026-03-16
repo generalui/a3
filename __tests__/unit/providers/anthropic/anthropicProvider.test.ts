@@ -3,10 +3,6 @@ import { createAnthropicProvider } from '../../../../providers/anthropic/index'
 import type { ProviderRequest } from '../../../../src/types/provider'
 import { EventType } from '@ag-ui/client'
 
-jest.unmock('../../../../providers/anthropic/index')
-jest.unmock('../../../../providers/anthropic/streamProcessor')
-jest.unmock('../../../../providers/utils/executeWithFallback')
-
 // Mock AI SDK
 const mockGenerateText = jest.fn()
 const mockStreamText = jest.fn()
@@ -120,7 +116,10 @@ describe('createAnthropicProvider', () => {
 
       const provider = createAnthropicProvider({ models: ['claude-sonnet-4-5-20250929'] })
       const request = makeRequest({
-        messages: [{ role: 'user', content: 'Hello' }, { role: 'assistant', content: 'Hi there' }],
+        messages: [
+          { role: 'user', content: 'Hello' },
+          { role: 'assistant', content: 'Hi there' },
+        ],
       })
       await provider.sendRequest(request)
 
@@ -172,14 +171,15 @@ describe('createAnthropicProvider', () => {
         redirectToAgent: null,
       }
 
-      mockGenerateText
-        .mockRejectedValueOnce(new Error('Rate limited'))
-        .mockResolvedValueOnce({
-          output: responseObj,
-          usage: { inputTokens: 5, outputTokens: 5 },
-        })
+      mockGenerateText.mockRejectedValueOnce(new Error('Rate limited')).mockResolvedValueOnce({
+        output: responseObj,
+        usage: { inputTokens: 5, outputTokens: 5 },
+      })
 
-      const provider = createAnthropicProvider({ models: ['claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001'] })
+      const provider = createAnthropicProvider({
+        models: ['claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001'],
+        resilience: { retry: false },
+      })
       const result = await provider.sendRequest(makeRequest())
 
       expect(result.content).toBe(JSON.stringify(responseObj))
@@ -189,12 +189,13 @@ describe('createAnthropicProvider', () => {
     })
 
     it('should throw when all models fail', async () => {
-      mockGenerateText
-        .mockRejectedValueOnce(new Error('Error 1'))
-        .mockRejectedValueOnce(new Error('Error 2'))
+      mockGenerateText.mockRejectedValueOnce(new Error('Error 1')).mockRejectedValueOnce(new Error('Error 2'))
 
-      const provider = createAnthropicProvider({ models: ['claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001'] })
-      await expect(provider.sendRequest(makeRequest())).rejects.toThrow('Error 2')
+      const provider = createAnthropicProvider({
+        models: ['claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001'],
+        resilience: { retry: false },
+      })
+      await expect(provider.sendRequest(makeRequest())).rejects.toThrow('All models failed')
     })
   })
 
@@ -207,10 +208,7 @@ describe('createAnthropicProvider', () => {
         redirectToAgent: null,
       }
 
-      const partials = [
-        { chatbotMessage: 'Hi' },
-        { chatbotMessage: 'Hi there' },
-      ]
+      const partials = [{ chatbotMessage: 'Hi' }, { chatbotMessage: 'Hi there' }]
 
       let partialIndex = 0
       const mockIterator = {
@@ -298,7 +296,10 @@ describe('createAnthropicProvider', () => {
 
       const provider = createAnthropicProvider({ models: ['claude-sonnet-4-5-20250929'] })
       const request = makeRequest({
-        messages: [{ role: 'user', content: 'Hello' }, { role: 'assistant', content: 'Hi there' }],
+        messages: [
+          { role: 'user', content: 'Hello' },
+          { role: 'assistant', content: 'Hi there' },
+        ],
       })
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for await (const _event of provider.sendRequestStream(request)) {

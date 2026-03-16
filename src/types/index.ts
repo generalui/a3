@@ -1,6 +1,7 @@
 export * from './agent'
 export * from './chat'
 export * from './provider'
+export * from './resilience'
 export * from './session'
 export * from './storage'
 export * from './stream'
