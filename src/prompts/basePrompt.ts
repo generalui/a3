@@ -1,7 +1,7 @@
 import { Agent, BaseState, BaseChatContext } from 'types'
 import { SessionData } from 'types/session'
 import { generateAgentPool, getAgentPoolIds } from '@utils/agentPool'
-import { agents } from './index'
+import { agents } from '../../agents/index'
 
 export function basePrompt<TState extends BaseState, TContext extends BaseChatContext = BaseChatContext>(
   agent: Agent<TState, TContext>,
