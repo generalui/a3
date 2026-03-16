@@ -18,7 +18,7 @@ No state machines.
 - **Structured output** -- Zod schemas validate every LLM response at runtime
 - **Streaming** -- real-time token streaming via `send({ message, stream: true })` with AG-UI-compatible event types
 - **Pluggable session stores** -- swap in-memory, AWS AgentCore, Redis, or your own store
-- **Pluggable providers** -- ships with AWS Bedrock and OpenAI; designed for additional providers
+- **Pluggable providers** -- ships with AWS Bedrock, OpenAI, and Anthropic; [build your own](./providers/CUSTOM_PROVIDERS.md) for any LLM
 - **TypeScript-native** -- full type safety from agent definitions to response handling
 - **Dual ESM/CJS** -- works in any Node.js environment
 
@@ -142,7 +142,7 @@ See the complete [Quick Start Code Example](./docs/quick-start-examples.md#quick
             ▼                                  │
 ┌──────────────────────────────────────────────────────────────┐
 │                       Provider                               │
-│                  (Bedrock, OpenAI)                            │
+│             (Bedrock, OpenAI, Anthropic)                     │
 │                                                              │
 │  • Converts Zod → JSON Schema                                │
 │  • Merges message history                                    │
@@ -386,7 +386,7 @@ Custom stores are straightforward to implement for Redis, DynamoDB, PostgreSQL, 
 
 Providers handle communication with LLM backends.
 A3 uses a pluggable `Provider` interface.
-Providers are separate packages (`@genui-a3/providers`).
+Providers are separate packages ([`@genui-a3/providers`](https://www.npmjs.com/package/@genui-a3/providers)).
 
 ```typescript
 import { Provider } from '@genui-a3/core'
@@ -400,7 +400,7 @@ The `Provider` interface requires three members:
 | `sendRequestStream(request)` | Streaming request that yields AG-UI compatible events |
 | `name` | Human-readable name for logging |
 
-**Creating a provider:**
+**Built-in providers:**
 
 ```typescript
 import { createBedrockProvider } from '@genui-a3/providers/bedrock'
@@ -423,13 +423,23 @@ const provider = createOpenAIProvider({
 })
 ```
 
-Both providers support:
+```typescript
+import { createAnthropicProvider } from '@genui-a3/providers/anthropic'
 
-- **Model fallback** (primary model fails → falls back to secondary)
+const provider = createAnthropicProvider({
+  models: ['claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001'],
+  apiKey: process.env.ANTHROPIC_API_KEY, // optional, defaults to ANTHROPIC_API_KEY env var
+})
+```
+
+All three providers support:
+
+- **Model fallback** (primary model fails → falls back to next in list)
 - **Blocking and streaming** modes
 - **Structured output** via Zod schemas
 
 See the [`@genui-a3/providers` README](https://www.npmjs.com/package/@genui-a3/providers) for full configuration options.
+To build a provider for an LLM not listed above, see [Creating a Custom Provider](https://github.com/generalui/a3/blob/main/providers/CUSTOM_PROVIDERS.md).
 
 **Per-agent provider override:**
 
@@ -580,7 +590,6 @@ See the complete [Multi-Agent Code Example](./docs/quick-start-examples.md#multi
 
 ## Roadmap
 
-- **Additional providers** -- first-party Anthropic provider package alongside the existing Bedrock and OpenAI providers
 - **Tool use** -- agent-invoked tool execution within the response cycle
 
 ## Requirements
@@ -588,7 +597,7 @@ See the complete [Multi-Agent Code Example](./docs/quick-start-examples.md#multi
 - Node.js 20.19.0+
 - TypeScript 5.9+
 - `zod` 4.x (included as a dependency)
-- A configured LLM provider (AWS Bedrock and OpenAI providers included via `@genui-a3/providers`)
+- A configured LLM provider (AWS Bedrock, OpenAI, and Anthropic providers included via [`@genui-a3/providers`](https://www.npmjs.com/package/@genui-a3/providers))
 
 ## Contributing
 
