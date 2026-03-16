@@ -3,10 +3,6 @@ import { createOpenAIProvider } from '../../../../providers/openai/index'
 import type { ProviderRequest } from '../../../../src/types/provider'
 import { EventType } from '@ag-ui/client'
 
-jest.unmock('../../../../providers/openai/index')
-jest.unmock('../../../../providers/openai/streamProcessor')
-jest.unmock('../../../../providers/utils/executeWithFallback')
-
 // Mock AI SDK
 const mockGenerateText = jest.fn()
 const mockStreamText = jest.fn()
@@ -165,7 +161,7 @@ describe('createOpenAIProvider', () => {
       const props = schema.properties as Record<string, Record<string, unknown>>
       const convPayload = props.conversationPayload
       expect(convPayload.additionalProperties).toBe(false)
-      expect((convPayload.required as string[])).toContain('userName')
+      expect(convPayload.required as string[]).toContain('userName')
     })
   })
 
@@ -178,14 +174,15 @@ describe('createOpenAIProvider', () => {
         redirectToAgent: null,
       }
 
-      mockGenerateText
-        .mockRejectedValueOnce(new Error('Rate limited'))
-        .mockResolvedValueOnce({
-          output: responseObj,
-          usage: { inputTokens: 5, outputTokens: 5 },
-        })
+      mockGenerateText.mockRejectedValueOnce(new Error('Rate limited')).mockResolvedValueOnce({
+        output: responseObj,
+        usage: { inputTokens: 5, outputTokens: 5 },
+      })
 
-      const provider = createOpenAIProvider({ models: ['gpt-4o', 'gpt-4o-mini'] })
+      const provider = createOpenAIProvider({
+        models: ['gpt-4o', 'gpt-4o-mini'],
+        resilience: { retry: false },
+      })
       const result = await provider.sendRequest(makeRequest())
 
       expect(result.content).toBe(JSON.stringify(responseObj))
@@ -195,12 +192,13 @@ describe('createOpenAIProvider', () => {
     })
 
     it('should throw when all models fail', async () => {
-      mockGenerateText
-        .mockRejectedValueOnce(new Error('Error 1'))
-        .mockRejectedValueOnce(new Error('Error 2'))
+      mockGenerateText.mockRejectedValueOnce(new Error('Error 1')).mockRejectedValueOnce(new Error('Error 2'))
 
-      const provider = createOpenAIProvider({ models: ['gpt-4o', 'gpt-4o-mini'] })
-      await expect(provider.sendRequest(makeRequest())).rejects.toThrow('Error 2')
+      const provider = createOpenAIProvider({
+        models: ['gpt-4o', 'gpt-4o-mini'],
+        resilience: { retry: false },
+      })
+      await expect(provider.sendRequest(makeRequest())).rejects.toThrow('All models failed')
     })
   })
 
@@ -213,10 +211,7 @@ describe('createOpenAIProvider', () => {
         redirectToAgent: null,
       }
 
-      const partials = [
-        { chatbotMessage: 'Hi' },
-        { chatbotMessage: 'Hi there' },
-      ]
+      const partials = [{ chatbotMessage: 'Hi' }, { chatbotMessage: 'Hi there' }]
 
       let partialIndex = 0
       const mockIterator = {

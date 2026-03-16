@@ -1,12 +1,8 @@
 import { z } from 'zod'
 import { createBedrockProvider } from '../../../../providers/bedrock/index'
 import type { ProviderRequest } from '../../../../src/types/provider'
+import { A3ResilienceError } from '../../../../src/errors/resilience'
 import { EventType } from '@ag-ui/client'
-
-jest.unmock('../../../../providers/bedrock/index')
-jest.unmock('../../../../providers/bedrock/messageMerger')
-jest.unmock('../../../../providers/bedrock/streamProcessor')
-jest.unmock('../../../../providers/utils/executeWithFallback')
 
 // Mock AWS Bedrock SDK
 const mockSend = jest.fn()
@@ -29,7 +25,7 @@ interface MockSendInput {
 }
 
 function getMockSendInput(callIndex: number): MockSendInput {
-  return ((mockSend.mock.calls as { input: MockSendInput }[][])[callIndex][0]).input
+  return (mockSend.mock.calls as { input: MockSendInput }[][])[callIndex][0].input
 }
 
 const testSchema = z.object({
@@ -78,9 +74,7 @@ describe('createBedrockProvider', () => {
       mockSend.mockResolvedValue({
         output: {
           message: {
-            content: [
-              { toolUse: { input: toolResponse } },
-            ],
+            content: [{ toolUse: { input: toolResponse } }],
           },
         },
         usage: { inputTokens: 100, outputTokens: 50 },
@@ -103,15 +97,22 @@ describe('createBedrockProvider', () => {
       mockSend.mockResolvedValue({
         output: {
           message: {
-            content: [
-              { toolUse: { input: { invalid: true } } },
-            ],
+            content: [{ toolUse: { input: { invalid: true } } }],
           },
         },
       })
 
-      const provider = createBedrockProvider({ models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'] })
-      await expect(provider.sendRequest(makeRequest())).rejects.toThrow('invalid tool response')
+      const provider = createBedrockProvider({
+        models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
+        resilience: { retry: false },
+      })
+      try {
+        await provider.sendRequest(makeRequest())
+        fail('Should have thrown')
+      } catch (err) {
+        expect(err).toBeInstanceOf(A3ResilienceError)
+        expect((err as A3ResilienceError).errors[0].error.message).toMatch('invalid tool response')
+      }
     })
 
     it('should throw on response with no tool use block', async () => {
@@ -123,8 +124,17 @@ describe('createBedrockProvider', () => {
         },
       })
 
-      const provider = createBedrockProvider({ models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'] })
-      await expect(provider.sendRequest(makeRequest())).rejects.toThrow('invalid tool response')
+      const provider = createBedrockProvider({
+        models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
+        resilience: { retry: false },
+      })
+      try {
+        await provider.sendRequest(makeRequest())
+        fail('Should have thrown')
+      } catch (err) {
+        expect(err).toBeInstanceOf(A3ResilienceError)
+        expect((err as A3ResilienceError).errors[0].error.message).toMatch('invalid tool response')
+      }
     })
 
     it('should throw on empty content blocks', async () => {
@@ -132,8 +142,17 @@ describe('createBedrockProvider', () => {
         output: { message: { content: [] } },
       })
 
-      const provider = createBedrockProvider({ models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'] })
-      await expect(provider.sendRequest(makeRequest())).rejects.toThrow('invalid tool response')
+      const provider = createBedrockProvider({
+        models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
+        resilience: { retry: false },
+      })
+      try {
+        await provider.sendRequest(makeRequest())
+        fail('Should have thrown')
+      } catch (err) {
+        expect(err).toBeInstanceOf(A3ResilienceError)
+        expect((err as A3ResilienceError).errors[0].error.message).toMatch('invalid tool response')
+      }
     })
 
     it('should prepend RESPONSE_FORMAT_INSTRUCTIONS to the system prompt', async () => {
@@ -211,14 +230,15 @@ describe('createBedrockProvider', () => {
         redirectToAgent: null,
       }
 
-      mockSend
-        .mockRejectedValueOnce(new Error('Throttling'))
-        .mockResolvedValueOnce({
-          output: { message: { content: [{ toolUse: { input: toolResponse } }] } },
-          usage: { inputTokens: 10, outputTokens: 10 },
-        })
+      mockSend.mockRejectedValueOnce(new Error('Throttling')).mockResolvedValueOnce({
+        output: { message: { content: [{ toolUse: { input: toolResponse } }] } },
+        usage: { inputTokens: 10, outputTokens: 10 },
+      })
 
-      const provider = createBedrockProvider({ models: ['model-primary', 'model-fallback'] })
+      const provider = createBedrockProvider({
+        models: ['model-primary', 'model-fallback'],
+        resilience: { retry: false },
+      })
       const result = await provider.sendRequest(makeRequest())
 
       const parsed = JSON.parse(result.content) as Record<string, unknown>
@@ -226,13 +246,14 @@ describe('createBedrockProvider', () => {
       expect(mockSend).toHaveBeenCalledTimes(2)
     })
 
-    it('should throw when all models fail', async () => {
-      mockSend
-        .mockRejectedValueOnce(new Error('Error 1'))
-        .mockRejectedValueOnce(new Error('Error 2'))
+    it('should throw A3ResilienceError when all models fail', async () => {
+      mockSend.mockRejectedValueOnce(new Error('Error 1')).mockRejectedValueOnce(new Error('Error 2'))
 
-      const provider = createBedrockProvider({ models: ['model-1', 'model-2'] })
-      await expect(provider.sendRequest(makeRequest())).rejects.toThrow('Error 2')
+      const provider = createBedrockProvider({
+        models: ['model-1', 'model-2'],
+        resilience: { retry: false },
+      })
+      await expect(provider.sendRequest(makeRequest())).rejects.toThrow('All models failed')
     })
   })
 
@@ -297,13 +318,17 @@ describe('createBedrockProvider', () => {
     it('should throw when no stream is returned', async () => {
       mockSend.mockResolvedValue({ stream: null })
 
-      const provider = createBedrockProvider({ models: ['model-1'] })
-      await expect(async () => {
+      const provider = createBedrockProvider({ models: ['model-1'], resilience: { retry: false } })
+      try {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        for await (const _event of provider.sendRequestStream(makeRequest())) {
+        for await (const _ of provider.sendRequestStream(makeRequest())) {
           // consume
         }
-      }).rejects.toThrow('No stream returned from Bedrock')
+        fail('Should have thrown')
+      } catch (err) {
+        expect(err).toBeInstanceOf(A3ResilienceError)
+        expect((err as A3ResilienceError).errors[0].error.message).toMatch('No stream returned from Bedrock')
+      }
     })
   })
 })

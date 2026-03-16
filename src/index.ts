@@ -17,6 +17,11 @@ export * from './constants'
 export * from './utils/agentPool'
 export { configureLogger, getLogger } from './utils/logger'
 export type { ILogLayer } from 'loglayer'
+export { resolveResilienceConfig, DEFAULT_RESILIENCE_CONFIG, isRetryableError } from './utils/resilience'
+
+// Error exports
+export { A3ResilienceError, A3TimeoutError } from './errors'
+export type { ResilienceErrorEntry } from './errors'
 
 // Prompts exports
 export * from './prompts/antiHallucination'

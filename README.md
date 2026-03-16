@@ -437,6 +437,7 @@ All three providers support:
 - **Model fallback** (primary model fails → falls back to next in list)
 - **Blocking and streaming** modes
 - **Structured output** via Zod schemas
+- **Resilience** — automatic retries with backoff, timeouts, and model fallback ([docs](./docs/RESILIENCE.md))
 
 See the [`@genui-a3/providers` README](https://www.npmjs.com/package/@genui-a3/providers) for full configuration options.
 To build a provider for an LLM not listed above, see [Creating a Custom Provider](https://github.com/generalui/a3/blob/main/providers/CUSTOM_PROVIDERS.md).

@@ -5,13 +5,16 @@ import {
   ConverseStreamOutput,
   ToolInputSchema,
 } from '@aws-sdk/client-bedrock-runtime'
-import type {
-  Provider,
-  ProviderRequest,
-  ProviderResponse,
-  ProviderMessage,
-  BaseState,
-  StreamEvent,
+import {
+  resolveResilienceConfig,
+  type Provider,
+  type ProviderRequest,
+  type ProviderResponse,
+  type ProviderMessage,
+  type BaseState,
+  type StreamEvent,
+  type ResilienceConfig,
+  type ResolvedResilienceConfig,
 } from '@genui-a3/core'
 import { mergeSequentialMessages } from './messageMerger'
 import { processBedrockStream } from './streamProcessor'
@@ -44,6 +47,8 @@ export interface BedrockProviderConfig {
    * Uses Bedrock model ARNs, e.g. 'us.anthropic.claude-sonnet-4-5-20250929-v1:0'
    */
   models: string[]
+  /** Resilience configuration (retry, backoff, timeout). Uses industry-standard defaults if omitted. */
+  resilience?: ResilienceConfig
 }
 
 type SendWithModelParams = {
@@ -150,6 +155,7 @@ function prepareRequest(request: ProviderRequest) {
 export function createBedrockProvider(config: BedrockProviderConfig): Provider {
   const client = new BedrockRuntimeClient(config.region ? { region: config.region } : {})
   const models = config.models
+  const resilience: ResolvedResilienceConfig = resolveResilienceConfig(config.resilience)
 
   return {
     name: 'bedrock',
@@ -157,13 +163,16 @@ export function createBedrockProvider(config: BedrockProviderConfig): Provider {
     async sendRequest(request: ProviderRequest): Promise<ProviderResponse> {
       const { systemPrompt, inputSchema, mergedMessages } = prepareRequest(request)
 
-      return executeWithFallback(models, (modelId) =>
-        sendWithModel(client, {
-          modelId,
-          systemPrompt,
-          mergedMessages,
-          inputSchema,
-        }),
+      return executeWithFallback(
+        models,
+        (modelId) =>
+          sendWithModel(client, {
+            modelId,
+            systemPrompt,
+            mergedMessages,
+            inputSchema,
+          }),
+        resilience,
       )
     },
 
@@ -172,13 +181,16 @@ export function createBedrockProvider(config: BedrockProviderConfig): Provider {
     ): AsyncGenerator<StreamEvent<TState>> {
       const { systemPrompt, inputSchema, mergedMessages } = prepareRequest(request)
 
-      const rawStream = await executeWithFallback(models, (modelId) =>
-        sendStreamWithModel(client, {
-          modelId,
-          systemPrompt,
-          mergedMessages,
-          inputSchema,
-        }),
+      const rawStream = await executeWithFallback(
+        models,
+        (modelId) =>
+          sendStreamWithModel(client, {
+            modelId,
+            systemPrompt,
+            mergedMessages,
+            inputSchema,
+          }),
+        resilience,
       )
 
       yield* processBedrockStream<TState>(rawStream, 'bedrock', request.responseSchema)

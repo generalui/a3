@@ -1,5 +1,6 @@
 import type { Config } from 'jest'
-import { baseConfig } from './jest.base.config'
+// @ts-expect-error - ts-node ESM loader needs explicit .ts extension
+import { baseConfig } from './jest.base.config.ts'
 
 const integrationConfig: Config = {
   ...baseConfig,

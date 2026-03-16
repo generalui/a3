@@ -1,12 +1,15 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateText, streamText, Output, ModelMessage, jsonSchema } from 'ai'
-import type {
-  Provider,
-  ProviderRequest,
-  ProviderResponse,
-  ProviderMessage,
-  BaseState,
-  StreamEvent,
+import {
+  resolveResilienceConfig,
+  type Provider,
+  type ProviderRequest,
+  type ProviderResponse,
+  type ProviderMessage,
+  type BaseState,
+  type StreamEvent,
+  type ResilienceConfig,
+  type ResolvedResilienceConfig,
 } from '@genui-a3/core'
 import { processOpenAIStream } from './streamProcessor'
 import { executeWithFallback } from '../utils/executeWithFallback'
@@ -26,6 +29,8 @@ export interface OpenAIProviderConfig {
   baseURL?: string
   /** Optional OpenAI organization ID */
   organization?: string
+  /** Resilience configuration (retry, backoff, timeout). Uses industry-standard defaults if omitted. */
+  resilience?: ResilienceConfig
 }
 
 type JsonSchema = Record<string, unknown>
@@ -157,6 +162,7 @@ export function createOpenAIProvider(config: OpenAIProviderConfig): Provider {
     organization: config.organization,
   })
   const models = config.models
+  const resilience: ResolvedResilienceConfig = resolveResilienceConfig(config.resilience)
 
   return {
     name: 'openai',
@@ -164,8 +170,10 @@ export function createOpenAIProvider(config: OpenAIProviderConfig): Provider {
     async sendRequest(request: ProviderRequest): Promise<ProviderResponse> {
       const messages = toAIMessages(request.messages)
 
-      return executeWithFallback(models, (model) =>
-        sendWithModel(openaiProvider, model, request.systemPrompt, messages, request.responseSchema),
+      return executeWithFallback(
+        models,
+        (model) => sendWithModel(openaiProvider, model, request.systemPrompt, messages, request.responseSchema),
+        resilience,
       )
     },
 
@@ -174,8 +182,10 @@ export function createOpenAIProvider(config: OpenAIProviderConfig): Provider {
     ): AsyncGenerator<StreamEvent<TState>> {
       const messages = toAIMessages(request.messages)
 
-      const { result, reader, first } = await executeWithFallback(models, (model) =>
-        sendStreamWithModel(openaiProvider, model, request.systemPrompt, messages, request.responseSchema),
+      const { result, reader, first } = await executeWithFallback(
+        models,
+        (model) => sendStreamWithModel(openaiProvider, model, request.systemPrompt, messages, request.responseSchema),
+        resilience,
       )
 
       yield* processOpenAIStream<TState>(result, reader, first, 'openai', request.responseSchema)

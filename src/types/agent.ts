@@ -18,6 +18,12 @@ export interface FlowInput<TState extends BaseState = BaseState, TContext extend
   stream: boolean
   /** Provider resolved from session config (agent.provider takes precedence) */
   provider: Provider
+  /**
+   * Maximum number of automatic agent transitions allowed.
+   * Passed from `ChatSessionConfig.agentRecursionLimit`.
+   * @default 10
+   */
+  agentRecursionLimit?: number
 }
 
 export type AgentResponseResult<TState extends BaseState = BaseState> = {

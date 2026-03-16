@@ -127,7 +127,8 @@
     "glob": "13.0.6",
     "jsdom": "27.4.0",
     "minimatch": "10.2.4",
-    "rollup": "4.59.0"
+    "rollup": "4.59.0",
+    "flatted": "3.4.0"
   },
   "directories": {
     "doc": "docs",
