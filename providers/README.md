@@ -152,6 +152,7 @@ Both providers implement the `Provider` interface from `@genui-a3/core`:
 | `name` | Human-readable name (`'bedrock'` or `'openai'`) |
 
 To create a custom provider, implement this interface and pass it to `ChatSession` or an individual agent.
+See [Creating a Custom Provider](./CUSTOM_PROVIDERS.md) for a step-by-step guide to building your own.
 
 ## Exports
 
