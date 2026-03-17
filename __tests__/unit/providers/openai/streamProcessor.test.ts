@@ -1,9 +1,7 @@
 import { EventType } from '@ag-ui/client'
 import { z } from 'zod'
-import { processOpenAIStream } from '../../../../providers/openai/streamProcessor'
+import { processOpenAIStream } from '@providers/openai/streamProcessor'
 import type { StreamTextResult, ToolSet } from 'ai'
-
-jest.unmock('../../../../providers/openai/streamProcessor')
 
 /** Helper: collect all events from an async generator */
 async function collectEvents<T>(gen: AsyncGenerator<T>): Promise<T[]> {
@@ -44,9 +42,8 @@ function createMockStreamResult(options: MockStreamOptions) {
   }
 
   // First is the first partial (already consumed)
-  const first: IteratorResult<unknown> = partials.length > 0
-    ? { done: false, value: partials[0] }
-    : { done: true, value: undefined }
+  const first: IteratorResult<unknown> =
+    partials.length > 0 ? { done: false, value: partials[0] } : { done: true, value: undefined }
 
   // Skip first in reader since it's already consumed
   if (partials.length > 0) {
@@ -97,11 +94,7 @@ describe('processOpenAIStream', () => {
       }
 
       const { result, reader, first } = createMockStreamResult({
-        partials: [
-          { chatbotMessage: 'AB' },
-          { chatbotMessage: 'ABCD' },
-          { chatbotMessage: 'ABCDEF' },
-        ],
+        partials: [{ chatbotMessage: 'AB' }, { chatbotMessage: 'ABCD' }, { chatbotMessage: 'ABCDEF' }],
         finalObject,
       })
 
@@ -123,11 +116,7 @@ describe('processOpenAIStream', () => {
       }
 
       const { result, reader, first } = createMockStreamResult({
-        partials: [
-          {},
-          { goalAchieved: false },
-          { chatbotMessage: 'Hello', goalAchieved: false },
-        ],
+        partials: [{}, { goalAchieved: false }, { chatbotMessage: 'Hello', goalAchieved: false }],
         finalObject,
       })
 
@@ -272,10 +261,7 @@ describe('processOpenAIStream', () => {
       }
 
       const { result, reader, first } = createMockStreamResult({
-        partials: [
-          { chatbotMessage: 'H' },
-          { chatbotMessage: 'Hi' },
-        ],
+        partials: [{ chatbotMessage: 'H' }, { chatbotMessage: 'Hi' }],
         finalObject,
       })
 

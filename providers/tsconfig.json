@@ -16,7 +16,8 @@
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@genui-a3/core": ["../dist/index.d.ts"]
+      "@genui-a3/core": ["../dist/index.d.ts"],
+      "@providers/utils/*": ["./utils/*"]
     }
   },
   "include": ["bedrock/**/*.ts", "openai/**/*.ts", "anthropic/**/*.ts", "utils/**/*.ts"],

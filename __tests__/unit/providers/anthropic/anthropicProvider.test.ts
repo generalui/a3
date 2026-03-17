@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { createAnthropicProvider } from '../../../../providers/anthropic/index'
-import type { ProviderRequest } from '../../../../src/types/provider'
+import { createAnthropicProvider } from '@providers/anthropic/index'
+import type { ProviderRequest } from 'src/types/provider'
 import { EventType } from '@ag-ui/client'
 
 // Mock AI SDK

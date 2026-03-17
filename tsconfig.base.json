@@ -21,8 +21,8 @@
       "@core/*": ["./src/core/*"],
       "@prompts": ["./src/prompts"],
       "@prompts/*": ["./src/prompts/*"],
-      "@providers": ["./src/providers"],
-      "@providers/*": ["./src/providers/*"],
+      "@providers": ["./providers"],
+      "@providers/*": ["./providers/*"],
       "@skills": ["./src/skills"],
       "@skills/*": ["./src/skills/*"],
       "@utils": ["./src/utils"],
@@ -30,7 +30,9 @@
       "types": ["./src/types"],
       "types/*": ["./src/types/*"],
       "@stores": ["./src/stores"],
-      "@stores/*": ["./src/stores/*"]
+      "@stores/*": ["./src/stores/*"],
+      "@errors": ["./src/errors"],
+      "@errors/*": ["./src/errors/*"]
     }
   }
 }

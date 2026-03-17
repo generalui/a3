@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { createBedrockProvider } from '../../../providers/bedrock/index'
-import { createOpenAIProvider } from '../../../providers/openai/index'
-import { createAnthropicProvider } from '../../../providers/anthropic/index'
-import { A3ResilienceError } from '../../../src/errors/resilience'
-import type { ProviderRequest } from '../../../src/types/provider'
+import { createBedrockProvider } from '@providers/bedrock/index'
+import { createOpenAIProvider } from '@providers/openai/index'
+import { createAnthropicProvider } from '@providers/anthropic/index'
+import { A3ResilienceError } from '@errors/resilience'
+import type { ProviderRequest } from 'types/provider'
 
 // ---------------------------------------------------------------------------
 // Mock AWS Bedrock SDK
@@ -107,9 +107,7 @@ describe('Bedrock provider — resilience integration', () => {
       $metadata: { httpStatusCode: 429 },
     })
 
-    mockBedrockSend
-      .mockRejectedValueOnce(throttleError)
-      .mockResolvedValueOnce(makeBedrockToolResponse())
+    mockBedrockSend.mockRejectedValueOnce(throttleError).mockResolvedValueOnce(makeBedrockToolResponse())
 
     const provider = createBedrockProvider({
       models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
@@ -217,9 +215,7 @@ describe('OpenAI provider — resilience integration', () => {
   it('should retry on Vercel AI SDK 429 error and succeed', async () => {
     const rateLimitError = Object.assign(new Error('rate_limit_exceeded'), { status: 429 })
 
-    mockGenerateText
-      .mockRejectedValueOnce(rateLimitError)
-      .mockResolvedValueOnce(makeOpenAIResponse())
+    mockGenerateText.mockRejectedValueOnce(rateLimitError).mockResolvedValueOnce(makeOpenAIResponse())
 
     const provider = createOpenAIProvider({
       models: ['gpt-4o'],
@@ -294,9 +290,7 @@ describe('Anthropic provider — resilience integration', () => {
   it('should retry on 529 overloaded error and succeed', async () => {
     const overloadedError = Object.assign(new Error('overloaded'), { status: 529 })
 
-    mockGenerateText
-      .mockRejectedValueOnce(overloadedError)
-      .mockResolvedValueOnce(makeOpenAIResponse())
+    mockGenerateText.mockRejectedValueOnce(overloadedError).mockResolvedValueOnce(makeOpenAIResponse())
 
     const provider = createAnthropicProvider({
       models: ['claude-sonnet-4-5-20250929'],
@@ -343,9 +337,7 @@ describe('Anthropic provider — resilience integration', () => {
   it('should respect resilience: { retry: false } — no retries, just fallback', async () => {
     const error = Object.assign(new Error('overloaded'), { status: 529 })
 
-    mockGenerateText
-      .mockRejectedValueOnce(error)
-      .mockResolvedValueOnce(makeOpenAIResponse('Fallback'))
+    mockGenerateText.mockRejectedValueOnce(error).mockResolvedValueOnce(makeOpenAIResponse('Fallback'))
 
     const provider = createAnthropicProvider({
       models: ['claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001'],

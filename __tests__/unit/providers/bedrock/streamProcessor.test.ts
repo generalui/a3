@@ -1,9 +1,7 @@
 import { EventType } from '@ag-ui/client'
 import { z } from 'zod'
-import { processBedrockStream } from '../../../../providers/bedrock/streamProcessor'
+import { processBedrockStream } from '@providers/bedrock/streamProcessor'
 import type { ConverseStreamOutput } from '@aws-sdk/client-bedrock-runtime'
-
-jest.unmock('../../../../providers/bedrock/streamProcessor')
 
 /** Helper: collect all events from an async generator */
 async function collectEvents<T>(gen: AsyncGenerator<T>): Promise<T[]> {
@@ -15,12 +13,12 @@ async function collectEvents<T>(gen: AsyncGenerator<T>): Promise<T[]> {
 }
 
 /** Helper: create mock async iterable from events */
-function mockStream(events: ConverseStreamOutput[]): AsyncIterable<ConverseStreamOutput> {
+function mockStream(events: unknown[]): AsyncIterable<ConverseStreamOutput> {
   return {
     async *[Symbol.asyncIterator]() {
       await Promise.resolve()
       for (const event of events) {
-        yield event
+        yield event as ConverseStreamOutput
       }
     },
   }
@@ -75,7 +73,12 @@ describe('processBedrockStream', () => {
       })
 
       const stream = mockStream([
-        { contentBlockStart: { start: { toolUse: { name: 'structuredResponse', toolUseId: 't-1' } }, contentBlockIndex: 0 } },
+        {
+          contentBlockStart: {
+            start: { toolUse: { name: 'structuredResponse', toolUseId: 't-1' } },
+            contentBlockIndex: 0,
+          },
+        },
         { contentBlockDelta: { delta: { toolUse: { input: toolInput } }, contentBlockIndex: 0 } },
         { contentBlockStop: { contentBlockIndex: 0 } },
       ])
@@ -101,7 +104,12 @@ describe('processBedrockStream', () => {
       const chunk2 = fullInput.slice(half)
 
       const stream = mockStream([
-        { contentBlockStart: { start: { toolUse: { name: 'structuredResponse', toolUseId: 't-1' } }, contentBlockIndex: 0 } },
+        {
+          contentBlockStart: {
+            start: { toolUse: { name: 'structuredResponse', toolUseId: 't-1' } },
+            contentBlockIndex: 0,
+          },
+        },
         { contentBlockDelta: { delta: { toolUse: { input: chunk1 } }, contentBlockIndex: 0 } },
         { contentBlockDelta: { delta: { toolUse: { input: chunk2 } }, contentBlockIndex: 0 } },
         { contentBlockStop: { contentBlockIndex: 0 } },
@@ -118,7 +126,12 @@ describe('processBedrockStream', () => {
 
     it('should yield RUN_ERROR when tool input JSON is invalid', async () => {
       const stream = mockStream([
-        { contentBlockStart: { start: { toolUse: { name: 'structuredResponse', toolUseId: 't-1' } }, contentBlockIndex: 0 } },
+        {
+          contentBlockStart: {
+            start: { toolUse: { name: 'structuredResponse', toolUseId: 't-1' } },
+            contentBlockIndex: 0,
+          },
+        },
         { contentBlockDelta: { delta: { toolUse: { input: '{"invalid json' } }, contentBlockIndex: 0 } },
         { contentBlockStop: { contentBlockIndex: 0 } },
       ])
@@ -137,7 +150,12 @@ describe('processBedrockStream', () => {
       })
 
       const stream = mockStream([
-        { contentBlockStart: { start: { toolUse: { name: 'structuredResponse', toolUseId: 't-1' } }, contentBlockIndex: 0 } },
+        {
+          contentBlockStart: {
+            start: { toolUse: { name: 'structuredResponse', toolUseId: 't-1' } },
+            contentBlockIndex: 0,
+          },
+        },
         { contentBlockDelta: { delta: { toolUse: { input: toolInput } }, contentBlockIndex: 0 } },
         { contentBlockStop: { contentBlockIndex: 0 } },
       ])
@@ -163,7 +181,12 @@ describe('processBedrockStream', () => {
         { contentBlockStart: { start: {}, contentBlockIndex: 0 } },
         { contentBlockDelta: { delta: { text: 'Streaming text' }, contentBlockIndex: 0 } },
         { contentBlockStop: { contentBlockIndex: 0 } },
-        { contentBlockStart: { start: { toolUse: { name: 'structuredResponse', toolUseId: 't-1' } }, contentBlockIndex: 1 } },
+        {
+          contentBlockStart: {
+            start: { toolUse: { name: 'structuredResponse', toolUseId: 't-1' } },
+            contentBlockIndex: 1,
+          },
+        },
         { contentBlockDelta: { delta: { toolUse: { input: toolInput } }, contentBlockIndex: 1 } },
         { contentBlockStop: { contentBlockIndex: 1 } },
         { metadata: { usage: { inputTokens: 10, outputTokens: 20 } } },
@@ -182,9 +205,7 @@ describe('processBedrockStream', () => {
 
   describe('error handling', () => {
     it('should throw on internalServerException', async () => {
-      const stream = mockStream([
-        { internalServerException: { message: 'Internal error' } },
-      ])
+      const stream = mockStream([{ internalServerException: { message: 'Internal error' } }])
 
       await expect(collectEvents(processBedrockStream(stream, 'test-agent', testSchema))).rejects.toThrow(
         'Bedrock internal error',
@@ -192,9 +213,7 @@ describe('processBedrockStream', () => {
     })
 
     it('should throw on modelStreamErrorException', async () => {
-      const stream = mockStream([
-        { modelStreamErrorException: { message: 'Model error' } },
-      ])
+      const stream = mockStream([{ modelStreamErrorException: { message: 'Model error' } }])
 
       await expect(collectEvents(processBedrockStream(stream, 'test-agent', testSchema))).rejects.toThrow(
         'Bedrock model stream error',
@@ -202,9 +221,7 @@ describe('processBedrockStream', () => {
     })
 
     it('should throw on throttlingException', async () => {
-      const stream = mockStream([
-        { throttlingException: { message: 'Too many requests' } },
-      ])
+      const stream = mockStream([{ throttlingException: { message: 'Too many requests' } }])
 
       await expect(collectEvents(processBedrockStream(stream, 'test-agent', testSchema))).rejects.toThrow(
         'Bedrock throttling',
@@ -212,9 +229,7 @@ describe('processBedrockStream', () => {
     })
 
     it('should throw on validationException', async () => {
-      const stream = mockStream([
-        { validationException: { message: 'Invalid input' } },
-      ])
+      const stream = mockStream([{ validationException: { message: 'Invalid input' } }])
 
       await expect(collectEvents(processBedrockStream(stream, 'test-agent', testSchema))).rejects.toThrow(
         'Bedrock validation error',
@@ -222,9 +237,7 @@ describe('processBedrockStream', () => {
     })
 
     it('should throw on serviceUnavailableException', async () => {
-      const stream = mockStream([
-        { serviceUnavailableException: { message: 'Service down' } },
-      ])
+      const stream = mockStream([{ serviceUnavailableException: { message: 'Service down' } }])
 
       await expect(collectEvents(processBedrockStream(stream, 'test-agent', testSchema))).rejects.toThrow(
         'Bedrock service unavailable',
@@ -234,9 +247,7 @@ describe('processBedrockStream', () => {
 
   describe('metadata events', () => {
     it('should skip metadata events without yielding', async () => {
-      const stream = mockStream([
-        { metadata: { usage: { inputTokens: 50, outputTokens: 25 } } },
-      ])
+      const stream = mockStream([{ metadata: { usage: { inputTokens: 50, outputTokens: 25 } } }])
 
       const events = await collectEvents(processBedrockStream(stream, 'test-agent', testSchema))
       expect(events).toHaveLength(0)
@@ -266,7 +277,12 @@ describe('processBedrockStream', () => {
       })
 
       const stream = mockStream([
-        { contentBlockStart: { start: { toolUse: { name: 'structuredResponse', toolUseId: 't-1' } }, contentBlockIndex: 0 } },
+        {
+          contentBlockStart: {
+            start: { toolUse: { name: 'structuredResponse', toolUseId: 't-1' } },
+            contentBlockIndex: 0,
+          },
+        },
         { contentBlockDelta: { delta: { toolUse: { input: toolInput } }, contentBlockIndex: 0 } },
         { contentBlockStop: { contentBlockIndex: 0 } },
       ])

@@ -1,7 +1,5 @@
-import { mergeSequentialMessages } from '../../../../providers/bedrock/messageMerger'
-import type { ProviderMessage } from '../../../../src/types/provider'
-
-jest.unmock('../../../../providers/bedrock/messageMerger')
+import { mergeSequentialMessages } from '@providers/bedrock/messageMerger'
+import type { ProviderMessage } from 'src/types/provider'
 
 describe('mergeSequentialMessages', () => {
   it('should return empty array for empty input', () => {

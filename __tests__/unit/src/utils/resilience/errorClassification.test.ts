@@ -1,6 +1,4 @@
-import { isRetryableError } from '../../../../../src/utils/resilience/errorClassification'
-
-jest.unmock('../../../../../src/utils/resilience/errorClassification')
+import { isRetryableError } from '@utils/resilience/errorClassification'
 
 describe('isRetryableError', () => {
   describe('retryable errors', () => {
@@ -19,7 +17,10 @@ describe('isRetryableError', () => {
       ['throttling messages', new Error('Request throttled by service')],
       ['rate limit messages', new Error('Rate limit exceeded')],
       ['rate limit messages (Too many requests)', new Error('Too many requests')],
-      ['AWS SDK $metadata.httpStatusCode', Object.assign(new Error('throttling'), { $metadata: { httpStatusCode: 429 } })],
+      [
+        'AWS SDK $metadata.httpStatusCode',
+        Object.assign(new Error('throttling'), { $metadata: { httpStatusCode: 429 } }),
+      ],
       ['statusCode property', Object.assign(new Error('error'), { statusCode: 503 })],
     ])('should classify %s as retryable', (_name, err) => {
       expect(isRetryableError(err)).toBe(true)
