@@ -19,6 +19,7 @@ const greetingPayload = z.object({
 
 export const greetingAgent: Agent<State> = {
   id: 'greeting',
+  description: 'Greets the user and learns their name.',
   prompt: `
     You are a friendly greeting agent. Your goal is to greet the user and learn their name.
     You also handle name changes — if the user wants to update their name, collect the new one.

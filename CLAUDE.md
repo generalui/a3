@@ -5,8 +5,7 @@ A3 is a monorepo for the A3 agentic backend framework ecosystem.
 WORKSPACES & PACKAGES:
 
 - src/           → @genui-a3/core — Core orchestration framework (main npm package)
-- providers/     → @genui-a3/providers — Pluggable LLM provider implementations (Bedrock, OpenAI)
-- agents/        → Temporary agent implementations used by the example app (may become individual npm packages)
+- providers/     → @genui-a3/providers — Pluggable LLM provider implementations (Anthropic, Bedrock, OpenAI)
 - example/       → Example agentic application showcasing A3 usage (see example/CLAUDE.md)
 - create/        → @genui-a3/create — CLI for quickstarting A3 applications
 
@@ -37,7 +36,7 @@ TECH STACK:
 - TypeScript 5.9.3
 - tsup 8.5.1 for building (dual ESM/CJS output)
 - Jest 30.2.0 for testing (with ts-jest, jsdom environment)
-- ESLint 9.39.2 + Prettier 3.7.4 for linting/formatting
+- ESLint 10.0.2 + Prettier 3.8.1 for linting/formatting
 - zod 4.3.6 for schema validation
 - @ag-ui/client — AG-UI protocol for agent-to-app communication and streaming events
 
@@ -45,19 +44,19 @@ PATH ALIASES:
 
 - @core       → src/core
 - @utils      → src/utils
-- @providers  → src/providers
+- @providers  → providers/
 - @constants  → src/constants
 - @prompts    → src/prompts
 - @stores     → src/stores
-- @agents     → agents/ (root — temporary; will be removed when agents become npm packages)
+- @errors     → src/errors
 - types       → src/types (bare module name, no @ prefix — always import as 'types' or 'types/submodule')
 - `types/*`   → src/types/* (sub-module imports, e.g. import { Events } from 'types/events')
-Note: @skills alias exists in config but src/skills/ does not — do not use.
 
 FOLDER STRUCTURE (src/):
 
 - src/
   - core/            → Core framework logic (agent, chatFlow, schemas, registry, streaming)
+  - errors/          → Custom error classes (resilience errors, etc.)
   - providers/       → Provider implementations (awsBedrock example)
   - stores/          → Memory/session store implementations (configurable via API)
   - types/           → TypeScript type definitions
@@ -78,8 +77,10 @@ KEY FILES:
 - src/core/AgentRegistry.ts           → Agent registration and lookup
 - src/core/AGUIAgent.ts               → AG-UI protocol integration
 - src/core/chatSession.ts             → Chat session management
-- src/core/streamProcessor.ts         → Streaming response processing
 - src/stores/memoryStore.ts           → Base memory store interface
+- src/errors/index.ts                 → Error class exports
+- src/errors/resilience.ts            → Resilience-specific error classes
+- providers/anthropic/index.ts        → Anthropic provider implementation (createAnthropicProvider)
 - providers/bedrock/index.ts          → AWS Bedrock provider implementation (createBedrockProvider)
 - providers/openai/index.ts           → OpenAI provider implementation (createOpenAIProvider)
 - src/types/agent.ts                  → Agent interface and types
@@ -97,7 +98,7 @@ ARCHITECTURE:
 - AG-UI protocol (@ag-ui/client) handles agent-to-app communication and streaming events
 - Response schemas use zod for validation
 - Stores provide configurable memory/session persistence
-- Path aliases (@agents, @core, @utils, etc.) for clean imports
+- Path aliases (@core, @utils, @errors, etc.) for clean imports
 
 CODING CONVENTIONS:
 
@@ -145,7 +146,7 @@ CONFIGURATION:
 - Testing: jest.base.config.ts, jest.config.ts, jest.integration.config.ts
 - Linting: eslint.config.mjs, .prettierrc
 - Markdown: .markdownlint.json
-- Node version: .tool-versions (20.19.0)
+- Node version: .tool-versions (25.7.0; engine constraint in package.json remains >=20.19.0)
 - Git commits: .git-commit-template.txt
 
 GIT:

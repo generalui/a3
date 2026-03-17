@@ -1,20 +1,9 @@
-# @genui-a3/providers
+# Providers
 
-[![npm version](https://img.shields.io/npm/v/@genui-a3/providers)](https://www.npmjs.com/package/@genui-a3/providers)
-[![license](https://img.shields.io/npm/l/@genui-a3/providers)](https://github.com/generalui/a3/blob/main/LICENSE)
+LLM provider implementations for the A3 agentic framework.
 
-**LLM provider implementations for the [A3 agentic framework](https://www.npmjs.com/package/@genui-a3/core).**
-
-Ships with **AWS Bedrock**, **Anthropic** and **OpenAI** providers out of the box.
-Both support blocking and streaming modes, model fallback, and structured output via Zod schemas.
-
-## Install
-
-```bash
-npm install @genui-a3/providers @genui-a3/core
-```
-
-`@genui-a3/core` is a **peer dependency** — it must be installed alongside this package.
+A3 ships with **AWS Bedrock**, **Anthropic**, and **OpenAI** providers out of the box.
+All three support blocking and streaming modes, model fallback, and structured output via Zod schemas.
 
 ## Quick Start
 
@@ -26,6 +15,17 @@ import { createBedrockProvider } from '@genui-a3/providers/bedrock'
 const provider = createBedrockProvider({
   models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
   region: 'us-east-1', // optional, defaults to AWS SDK default
+})
+```
+
+### Anthropic
+
+```typescript
+import { createAnthropicProvider } from '@genui-a3/providers/anthropic'
+
+const provider = createAnthropicProvider({
+  models: ['claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001'],
+  apiKey: process.env.ANTHROPIC_API_KEY, // optional, defaults to ANTHROPIC_API_KEY env var
 })
 ```
 
@@ -62,7 +62,7 @@ for await (const event of session.send({ message: 'Hello!', stream: true })) {
 }
 ```
 
-## Providers
+## Provider Reference
 
 ### Bedrock — `createBedrockProvider(config)`
 
@@ -72,6 +72,7 @@ Communicates with AWS Bedrock via the [Converse API](https://docs.aws.amazon.com
 |---|---|---|---|
 | `models` | `string[]` | Yes | Model IDs in preference order (first = primary, rest = fallbacks) |
 | `region` | `string` | No | AWS region. Defaults to AWS SDK default |
+| `resilience` | `ResilienceConfig` | No | Retry, backoff, and timeout settings. Uses defaults if omitted |
 
 **Behaviour:**
 
@@ -81,6 +82,27 @@ Communicates with AWS Bedrock via the [Converse API](https://docs.aws.amazon.com
 - **Prepends an initial user message** (`"Hi"`) so the conversation always starts with a user turn
 
 **Prerequisites:** AWS credentials configured via environment variables, IAM role, or AWS profile — the same setup the AWS SDK expects.
+
+---
+
+### Anthropic — `createAnthropicProvider(config)`
+
+Communicates with the Anthropic Messages API using the [Vercel AI SDK](https://sdk.vercel.ai/providers/ai-sdk-providers/anthropic) (`@ai-sdk/anthropic`) for structured output.
+
+| Option | Type | Required | Description |
+|---|---|---|---|
+| `models` | `string[]` | Yes | Model IDs in preference order (first = primary, rest = fallbacks) |
+| `apiKey` | `string` | No | API key. Defaults to `ANTHROPIC_API_KEY` env var |
+| `baseURL` | `string` | No | Custom base URL for the Anthropic API |
+| `resilience` | `ResilienceConfig` | No | Retry, backoff, and timeout settings. Uses defaults if omitted |
+
+**Behaviour:**
+
+- Uses the Vercel AI SDK's `Output.object()` for structured output — Zod schema conversion and partial JSON parsing handled internally
+- **Streaming** yields text deltas in real-time via partial object tracking, then emits a validated tool-call result at the end
+- **Appends a `"Continue"` user message** if the last message has an assistant role, to satisfy the alternating-role requirement
+
+**Prerequisites:** An Anthropic API key, either passed directly or set as `ANTHROPIC_API_KEY`.
 
 ---
 
@@ -94,6 +116,7 @@ Communicates with the OpenAI Chat Completions API using [structured output](http
 | `apiKey` | `string` | No | API key. Defaults to `OPENAI_API_KEY` env var |
 | `baseURL` | `string` | No | Custom base URL for Azure OpenAI or compatible endpoints |
 | `organization` | `string` | No | OpenAI organization ID |
+| `resilience` | `ResilienceConfig` | No | Retry, backoff, and timeout settings. Uses defaults if omitted |
 
 **Behaviour:**
 
@@ -106,7 +129,8 @@ Communicates with the OpenAI Chat Completions API using [structured output](http
 
 ## Model Fallback
 
-Both providers support automatic model fallback. List models in order of preference:
+All providers support automatic model fallback.
+List models in order of preference:
 
 ```typescript
 const provider = createBedrockProvider({
@@ -117,10 +141,11 @@ const provider = createBedrockProvider({
 })
 ```
 
-If the primary model fails, the provider automatically retries with the next model in the list. If all models fail, the last error is thrown.
+If the primary model fails, the provider automatically retries with the next model in the list.
+If all models fail, the last error is thrown.
 
 All providers include built-in resilience: automatic retries with exponential backoff, per-request and total timeouts, and model fallback.
-See the [Resilience documentation](../docs/RESILIENCE.md) for configuration options and defaults.
+See the [Resilience documentation](./RESILIENCE.md) for configuration options and defaults.
 
 ## Per-Agent Provider Override
 
@@ -147,27 +172,29 @@ const premiumAgent = {
 
 ## Provider Interface
 
-Both providers implement the `Provider` interface from `@genui-a3/core`:
+All providers implement the `Provider` interface from `@genui-a3`:
 
 | Member | Description |
 |---|---|
 | `sendRequest(request)` | Blocking request → `Promise<ProviderResponse>` |
 | `sendRequestStream(request)` | Streaming request → `AsyncGenerator<StreamEvent>` |
-| `name` | Human-readable name (`'bedrock'` or `'openai'`) |
+| `name` | Human-readable name (`'bedrock'`, `'anthropic'`, or `'openai'`) |
 
 To create a custom provider, implement this interface and pass it to `ChatSession` or an individual agent.
-See [Creating a Custom Provider](./CUSTOM_PROVIDERS.md) for a step-by-step guide to building your own.
+See [Creating a Custom Provider](./CUSTOM_PROVIDERS.md) for a step-by-step guide.
 
 ## Exports
 
-This package uses [subpath exports](https://nodejs.org/api/packages.html#subpath-exports). Import from the specific provider entry point:
+This package uses [subpath exports](https://nodejs.org/api/packages.html#subpath-exports).
+Import from the specific provider entry point:
 
 ```typescript
-// ✅ Correct
+// Correct
 import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+import { createAnthropicProvider } from '@genui-a3/providers/anthropic'
 import { createOpenAIProvider } from '@genui-a3/providers/openai'
 
-// ❌ No bare import
+// No bare import
 import { ... } from '@genui-a3/providers'
 ```
 
@@ -175,6 +202,8 @@ import { ... } from '@genui-a3/providers'
 |---|---|---|
 | `@genui-a3/providers/bedrock` | `createBedrockProvider` | Factory function returning a Bedrock `Provider` |
 | `@genui-a3/providers/bedrock` | `BedrockProviderConfig` | TypeScript config interface |
+| `@genui-a3/providers/anthropic` | `createAnthropicProvider` | Factory function returning an Anthropic `Provider` |
+| `@genui-a3/providers/anthropic` | `AnthropicProviderConfig` | TypeScript config interface |
 | `@genui-a3/providers/openai` | `createOpenAIProvider` | Factory function returning an OpenAI `Provider` |
 | `@genui-a3/providers/openai` | `OpenAIProviderConfig` | TypeScript config interface |
 
@@ -182,10 +211,7 @@ import { ... } from '@genui-a3/providers'
 
 - Node.js 20.19.0+
 - TypeScript 5.9+
-- `@genui-a3/core` ≥ 0.1.5 (peer dependency)
+- `@genui-a3/core` (peer dependency)
 - **Bedrock**: AWS credentials configured in the environment
+- **Anthropic**: `ANTHROPIC_API_KEY` environment variable or `apiKey` config option
 - **OpenAI**: `OPENAI_API_KEY` environment variable or `apiKey` config option
-
-## License
-
-ISC

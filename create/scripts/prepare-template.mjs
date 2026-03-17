@@ -6,22 +6,12 @@ import { fileURLToPath } from 'node:url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const rootDir = path.resolve(__dirname, '..')
-const exampleDir = path.resolve(rootDir, '..', 'example')
+const monorepoRoot = path.resolve(rootDir, '..')
+const exampleDir = path.resolve(monorepoRoot, 'example')
+const docsDir = path.resolve(monorepoRoot, 'docs')
 const templateDir = path.resolve(rootDir, 'template')
 
-const INCLUDE = ['app', 'public', 'package.json', 'next.config.mjs', 'tsconfig.json', '.gitignore']
-
-const EXCLUDE = [
-  'node_modules',
-  '.next',
-  'tsconfig.tsbuildinfo',
-  '.cursor',
-  'next-env.d.ts',
-  '.cursorrules',
-  'CLAUDE.md',
-  'README.md',
-  '.env.example',
-]
+const EXCLUDE = ['node_modules', '.next', 'tsconfig.tsbuildinfo', '.env', '.env.example', 'README.md']
 
 const GENUI_PACKAGES = ['@genui-a3/core', '@genui-a3/providers']
 
@@ -72,24 +62,9 @@ if (fs.existsSync(templateDir)) {
 }
 fs.mkdirSync(templateDir, { recursive: true })
 
-// Copy included items from example/
-for (const item of INCLUDE) {
-  const src = path.join(exampleDir, item)
-  const dest = path.join(templateDir, item)
-
-  if (!fs.existsSync(src)) {
-    console.warn(`Warning: ${item} not found in example/, skipping.`)
-    continue
-  }
-
-  const stat = fs.statSync(src)
-  if (stat.isDirectory()) {
-    copyDirFiltered(src, dest)
-  } else {
-    fs.copyFileSync(src, dest)
-  }
-  console.log(`Copied: ${item}`)
-}
+// Copy everything from example/ except EXCLUDE
+copyDirFiltered(exampleDir, templateDir)
+console.log('Copied example/ to template/ (excluding specified files)')
 
 // Resolve package versions and update template package.json
 const pkgPath = path.join(templateDir, 'package.json')
@@ -118,10 +93,29 @@ if (fs.existsSync(gitignoreSrc)) {
   console.log('Renamed .gitignore → _gitignore')
 }
 
+// Copy documentation files from monorepo docs/
+const templateDocsDir = path.join(templateDir, 'docs')
+if (fs.existsSync(docsDir)) {
+  fs.mkdirSync(templateDocsDir, { recursive: true })
+
+  for (const entry of fs.readdirSync(docsDir, { withFileTypes: true })) {
+    if (!entry.isFile()) continue
+
+    fs.copyFileSync(path.join(docsDir, entry.name), path.join(templateDocsDir, entry.name))
+    console.log(`Copied doc: ${entry.name}`)
+  }
+} else {
+  console.warn('Warning: docs/ directory not found, skipping documentation copy.')
+}
+
 // Write a simple README.md
 const readme = `# A3 App
 
 Built with [GenUI A3](https://www.npmjs.com/package/@genui-a3/core).
+
+## Documentation
+
+Local documentation is available in the [\`./docs\`](./docs) folder. Check there for concepts, recipes, and API reference!
 
 ## Getting Started
 
