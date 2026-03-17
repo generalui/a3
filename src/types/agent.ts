@@ -60,7 +60,7 @@ export type AgentOutputSchema<
 export type Agent<TState extends BaseState = BaseState, TContext extends BaseChatContext = BaseChatContext> = {
   id: AgentId
   /** Description of the agent's purpose, used for agent pool discovery */
-  description?: string
+  description: string
   /** Optional per-agent provider override. Falls back to session provider. */
   provider?: Provider
   name?: string

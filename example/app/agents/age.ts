@@ -11,6 +11,7 @@ const agePayload = z.object({
 
 export const ageAgent: Agent<State> = {
   id: 'age',
+  description: "Gets the user's age.",
   prompt: `
     You are a friendly agent. Your goal is to learn the user's age.
     If you don't know their age yet, ask for it politely.

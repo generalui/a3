@@ -218,7 +218,7 @@ const greetingAgent: Agent<MyState> = {
 |---|---|---|
 | `id` | Yes | Unique identifier for the agent |
 | `name` | No | Human-readable display name |
-| `description` | No | What this agent does (used in agent pool prompts) |
+| `description` | Yes | What this agent does (used in agent pool prompts) |
 | `prompt` | Yes | System prompt string, or async function returning the system prompt |
 | `outputSchema` | Yes | Zod schema defining structured data to extract from LLM responses |
 | `provider` | No | Per-agent provider override; falls back to the session-level provider |
@@ -349,6 +349,7 @@ When `transition` is a function, `redirectToAgent` is **not exposed to the LLM**
 ```typescript
 const agent: Agent<MyState> = {
   id: 'triage',
+  description: 'Routes users to the appropriate department',
   transition: ['billing', 'support', 'account'],
   // LLM can redirect to any of these agents via redirectToAgent
   // ...
@@ -449,6 +450,7 @@ Each agent can optionally specify its own `provider` to override the session-lev
 ```typescript
 const agent: Agent<MyState> = {
   id: 'premium',
+  description: 'Handles premium tier requests using GPT-4o',
   provider: createOpenAIProvider({ models: ['gpt-4o'] }),
   // ...
 }
@@ -513,6 +515,7 @@ import { simpleAgentResponse, simpleAgentResponseStream } from '@genui-a3/core'
 
 const agent: Agent<MyState> = {
   id: 'custom',
+  description: 'A helpful assistant with custom response handling',
   prompt: 'You are a helpful assistant.',
   outputSchema: z.object({ sentiment: z.string() }),
   generateResponse(input) {

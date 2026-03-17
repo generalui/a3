@@ -139,6 +139,7 @@ const session = new ChatSession({
 // This agent uses OpenAI instead
 const premiumAgent = {
   id: 'premium',
+  description: 'Handles premium tier requests using GPT-4o',
   provider: createOpenAIProvider({ models: ['gpt-4o'] }),
   // ...
 }
