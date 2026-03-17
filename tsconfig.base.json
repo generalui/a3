@@ -13,8 +13,6 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "@agents": ["./agents"],
-      "@agents/*": ["./agents/*"],
       "@constants": ["./src/constants"],
       "@constants/*": ["./src/constants/*"],
       "@core": ["./src/core"],
@@ -23,8 +21,6 @@
       "@prompts/*": ["./src/prompts/*"],
       "@providers": ["./providers"],
       "@providers/*": ["./providers/*"],
-      "@skills": ["./src/skills"],
-      "@skills/*": ["./src/skills/*"],
       "@utils": ["./src/utils"],
       "@utils/*": ["./src/utils/*"],
       "types": ["./src/types"],

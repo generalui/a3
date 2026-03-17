@@ -47,8 +47,6 @@ export const baseConfig: Config = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^jest\\.setup$': '<rootDir>/jest.setup.ts',
-    '^@agents$': '<rootDir>/agents',
-    '^@agents/(.*)$': '<rootDir>/agents/$1',
     '^@constants$': '<rootDir>/src/constants',
     '^@constants/(.*)$': '<rootDir>/src/constants/$1',
     '^@core$': '<rootDir>/src/core',
@@ -59,8 +57,6 @@ export const baseConfig: Config = {
     '^@providers/(.*)$': '<rootDir>/providers/$1',
     '^@stores$': '<rootDir>/src/stores',
     '^@stores/(.*)$': '<rootDir>/src/stores/$1',
-    '^@skills$': '<rootDir>/src/skills',
-    '^@skills/(.*)$': '<rootDir>/src/skills/$1',
     '^@errors$': '<rootDir>/src/errors',
     '^@errors/(.*)$': '<rootDir>/src/errors/$1',
     '^@utils$': '<rootDir>/src/utils',

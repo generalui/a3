@@ -18,7 +18,7 @@ No state machines.
 - **Structured output** -- Zod schemas validate every LLM response at runtime
 - **Streaming** -- real-time token streaming via `send({ message, stream: true })` with AG-UI-compatible event types
 - **Pluggable session stores** -- swap in-memory, AWS AgentCore, Redis, or your own store
-- **Pluggable providers** -- ships with AWS Bedrock, OpenAI, and Anthropic; [build your own](./providers/CUSTOM_PROVIDERS.md) for any LLM
+- **Pluggable providers** -- ships with AWS Bedrock, OpenAI, and Anthropic; [build your own](./docs/CUSTOM_PROVIDERS.md) for any LLM
 - **TypeScript-native** -- full type safety from agent definitions to response handling
 - **Dual ESM/CJS** -- works in any Node.js environment
 
@@ -83,11 +83,11 @@ A3 optimizes for **simplicity and speed-to-value**.
 - [Contributing](#contributing)
 - [License](#license)
 
-## [Quick Start](./docs/quick-start-examples.md)
+## [Quick Start](./docs/QUICK-START-EXAMPLES.md)
 
 Install, define a simple agent, register it, and send a message. All in ~20 lines of code.
 
-See the complete [Quick Start Code Example](./docs/quick-start-examples.md#quick-start).
+See the complete [Quick Start Code Example](./docs/QUICK-START-EXAMPLES.md#quick-start).
 
 ## Architecture at a Glance
 
@@ -387,7 +387,7 @@ Custom stores are straightforward to implement for Redis, DynamoDB, PostgreSQL, 
 
 Providers handle communication with LLM backends.
 A3 uses a pluggable `Provider` interface.
-Providers are separate packages ([`@genui-a3/providers`](https://www.npmjs.com/package/@genui-a3/providers)).
+Providers are separate packages — see the [Providers documentation](./docs/PROVIDERS.md).
 
 ```typescript
 import { Provider } from '@genui-a3/core'
@@ -440,8 +440,8 @@ All three providers support:
 - **Structured output** via Zod schemas
 - **Resilience** — automatic retries with backoff, timeouts, and model fallback ([docs](./docs/RESILIENCE.md))
 
-See the [`@genui-a3/providers` README](https://www.npmjs.com/package/@genui-a3/providers) for full configuration options.
-To build a provider for an LLM not listed above, see [Creating a Custom Provider](https://github.com/generalui/a3/blob/main/providers/CUSTOM_PROVIDERS.md).
+See the [Providers documentation](./docs/PROVIDERS.md) for full configuration options.
+To build a provider for an LLM not listed above, see [Creating a Custom Provider](./docs/CUSTOM_PROVIDERS.md).
 
 **Per-agent provider override:**
 
@@ -529,11 +529,11 @@ const agent: Agent<MyState> = {
 }
 ```
 
-## [Multi-Agent Example](./docs/quick-start-examples.md#multi-agent-example)
+## [Multi-Agent Example](./docs/QUICK-START-EXAMPLES.md#multi-agent-example)
 
 Three agents routing between each other, demonstrating state flowing across agent boundaries and automatic agent chaining.
 
-See the complete [Multi-Agent Code Example](./docs/quick-start-examples.md#multi-agent-example).
+See the complete [Multi-Agent Code Example](./docs/QUICK-START-EXAMPLES.md#multi-agent-example).
 
 ## API Reference
 
@@ -601,7 +601,7 @@ See the complete [Multi-Agent Code Example](./docs/quick-start-examples.md#multi
 - Node.js 20.19.0+
 - TypeScript 5.9+
 - `zod` 4.x (included as a dependency)
-- A configured LLM provider (AWS Bedrock, OpenAI, and Anthropic providers included via [`@genui-a3/providers`](https://www.npmjs.com/package/@genui-a3/providers))
+- A configured LLM provider (AWS Bedrock, OpenAI, and Anthropic providers included via [`@genui-a3/providers`](./docs/PROVIDERS.md))
 
 ## Contributing
 

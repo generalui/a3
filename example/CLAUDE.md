@@ -5,8 +5,8 @@ Next.js example for @genui-a3/core. AI rules for this app (Claude Code and Curso
 ## Stack
 
 - Next.js 16.1.6 (App Router), React 19, TypeScript 5.9+
-- Playwright (to be implemented), Jest for tests
-- Styled components for styling (base theme TBD)
+- Testing infrastructure planned (not yet configured)
+- MUI 7 (@mui/material) + styled-components for styling (`app/theme.ts`, `app/ThemeProvider.tsx`)
 
 ## Dependencies
 
@@ -18,7 +18,19 @@ Next.js example for @genui-a3/core. AI rules for this app (Claude Code and Curso
 - Named functions over arrow function assignments
 - Proper types and interfaces; follow React hooks rules and lifecycle
 - Error boundaries and handling where appropriate
-- See repo `tsconfig.base.json` for path aliases; example uses `@/*` → `./*`
+- Path aliases (from `tsconfig.json`):
+  - `@atoms` → `./app/components/atoms`
+  - `@molecules` → `./app/components/molecules`
+  - `@organisms` → `./app/components/organisms`
+  - `@components` → `./app/components`
+  - `@constants` → `./app/constants`
+  - `types` → `./app/types` (bare module, no @ prefix)
+
+## Dev Commands
+
+- `npm run dev` — Start Next.js dev server
+- `npm run build` — Build for production
+- `npm run start` — Start production server
 
 ## Next.js
 
@@ -29,6 +41,10 @@ Next.js example for @genui-a3/core. AI rules for this app (Claude Code and Curso
 - Single-responsibility components; separation of concerns
 - Constants for config and string literals; clean folder structure; DRY
 - Use Atomic Design for component hierarchy (see below)
+- `app/api/` — API routes (agui, chat, stream endpoints)
+- `app/(pages)/` — Route groups (agui, chat, stream pages)
+- `app/agents/` — Agent implementations (e.g. age.ts, greeting.ts)
+- `app/lib/providers/` — Provider factory functions (Anthropic, Bedrock, OpenAI)
 
 ## Component hierarchy (Atomic Design)
 
@@ -47,9 +63,14 @@ Next.js example for @genui-a3/core. AI rules for this app (Claude Code and Curso
 
 ## Testing
 
-- Unit tests comprehensive; runnable in isolation; test the right behavior
-- Include error cases; mock externals appropriately
-- Playwright for E2E (when implemented)
+Testing infrastructure is not yet configured for the example app.
+When added, tests should be comprehensive, runnable in isolation, and cover error cases.
+
+## Naming Conventions
+
+- camelCase for variables, functions, and file names
+- PascalCase for React components, interfaces, and type aliases
+- SCREAMING_SNAKE_CASE for module-level constants
 
 ## API & UX
 
@@ -63,7 +84,7 @@ Next.js example for @genui-a3/core. AI rules for this app (Claude Code and Curso
 
 ## Docs
 
-- Markdown per markdownlint (new line per sentence, "1." for lists, .markdownlint.json)
+- Markdown per markdownlint (new line per sentence, "1." for lists; config inherited from root `.markdownlint.json`)
 
 ## Workflow
 
@@ -73,3 +94,19 @@ Next.js example for @genui-a3/core. AI rules for this app (Claude Code and Curso
 4. Document decisions; review for best practices
 
 Use latest React and TypeScript syntax. Code should be clean, readable, maintainable, efficient, and DRY.
+
+## A3 Framework Documentation
+
+The `docs/` directory contains essential A3 framework documentation.
+**You MUST read the relevant files below** before implementing or modifying any feature that touches A3 agents, providers, sessions, resilience, or logging.
+
+| File | Topic |
+|---|---|
+| `docs/QUICK-START-EXAMPLES.md` | Agent definitions, registration, multi-agent flows, ChatSession usage |
+| `docs/PROVIDERS.md` | Provider setup (Bedrock, OpenAI, Anthropic), config options, model fallback, per-agent overrides |
+| `docs/RESILIENCE.md` | Retry, backoff, timeout config, error classification, resilience error handling |
+| `docs/LOGGING.md` | Internal logging architecture, `log` singleton, log levels |
+| `docs/CUSTOM_LOGGING.md` | Supplying a custom logger via `configureLogger()` |
+
+When in doubt about A3 API usage, patterns, or configuration — **read the relevant doc file first**.
+Any new `.md` files added to `docs/` are part of this documentation set and should be consulted as needed.
