@@ -13,12 +13,12 @@ async function collectEvents<T>(gen: AsyncGenerator<T>): Promise<T[]> {
 }
 
 /** Helper: create mock async iterable from events */
-function mockStream(events: ConverseStreamOutput[]): AsyncIterable<ConverseStreamOutput> {
+function mockStream(events: unknown[]): AsyncIterable<ConverseStreamOutput> {
   return {
     async *[Symbol.asyncIterator]() {
       await Promise.resolve()
       for (const event of events) {
-        yield event
+        yield event as ConverseStreamOutput
       }
     },
   }
