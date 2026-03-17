@@ -1,12 +1,15 @@
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { generateText, streamText, Output, ModelMessage } from 'ai'
-import type {
-  Provider,
-  ProviderRequest,
-  ProviderResponse,
-  ProviderMessage,
-  BaseState,
-  StreamEvent,
+import {
+  resolveResilienceConfig,
+  type Provider,
+  type ProviderRequest,
+  type ProviderResponse,
+  type ProviderMessage,
+  type BaseState,
+  type StreamEvent,
+  type ResilienceConfig,
+  type ResolvedResilienceConfig,
 } from '@genui-a3/core'
 import { processAnthropicStream } from './streamProcessor'
 import { executeWithFallback } from '../utils/executeWithFallback'
@@ -24,6 +27,8 @@ export interface AnthropicProviderConfig {
   models: string[]
   /** Optional custom base URL for the Anthropic API */
   baseURL?: string
+  /** Resilience configuration (retry, backoff, timeout). Uses industry-standard defaults if omitted. */
+  resilience?: ResilienceConfig
 }
 
 function toAIMessages(messages: ProviderMessage[]): ModelMessage[] {
@@ -114,6 +119,7 @@ export function createAnthropicProvider(config: AnthropicProviderConfig): Provid
     baseURL: config.baseURL,
   })
   const models = config.models
+  const resilience: ResolvedResilienceConfig = resolveResilienceConfig(config.resilience)
 
   return {
     name: 'anthropic',
@@ -121,8 +127,10 @@ export function createAnthropicProvider(config: AnthropicProviderConfig): Provid
     async sendRequest(request: ProviderRequest): Promise<ProviderResponse> {
       const messages = toAIMessages(request.messages)
 
-      return executeWithFallback(models, (model) =>
-        sendWithModel(anthropicProvider, model, request.systemPrompt, messages, request.responseSchema),
+      return executeWithFallback(
+        models,
+        (model) => sendWithModel(anthropicProvider, model, request.systemPrompt, messages, request.responseSchema),
+        resilience,
       )
     },
 
@@ -131,8 +139,10 @@ export function createAnthropicProvider(config: AnthropicProviderConfig): Provid
     ): AsyncGenerator<StreamEvent<TState>> {
       const messages = toAIMessages(request.messages)
 
-      const { result, reader, first } = await executeWithFallback(models, (model) =>
-        sendStreamWithModel(anthropicProvider, model, request.systemPrompt, messages, request.responseSchema),
+      const { result, reader, first } = await executeWithFallback(
+        models,
+        (model) => sendStreamWithModel(anthropicProvider, model, request.systemPrompt, messages, request.responseSchema),
+        resilience,
       )
 
       yield* processAnthropicStream<TState>(result, reader, first, 'anthropic', request.responseSchema)

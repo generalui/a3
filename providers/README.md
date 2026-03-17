@@ -119,6 +119,9 @@ const provider = createBedrockProvider({
 
 If the primary model fails, the provider automatically retries with the next model in the list. If all models fail, the last error is thrown.
 
+All providers include built-in resilience: automatic retries with exponential backoff, per-request and total timeouts, and model fallback.
+See the [Resilience documentation](../docs/RESILIENCE.md) for configuration options and defaults.
+
 ## Per-Agent Provider Override
 
 Each agent can override the session-level provider:

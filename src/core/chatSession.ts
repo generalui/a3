@@ -50,6 +50,7 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
   private readonly initialChatContext: TContext
   private readonly initialMessages?: Message[]
   private readonly provider: Provider
+  private readonly agentRecursionLimit: number
 
   constructor(config: ChatSessionConfig<TState, TContext>) {
     this.sessionId = config.sessionId
@@ -59,6 +60,7 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
     this.initialChatContext = config.initialChatContext ?? ({} as TContext)
     this.initialMessages = config.initialMessages
     this.provider = config.provider
+    this.agentRecursionLimit = config.agentRecursionLimit ?? 10
   }
 
   /**
@@ -177,6 +179,7 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
       ...context,
       stream: false,
       provider: this.provider,
+      agentRecursionLimit: this.agentRecursionLimit,
     })
   }
 
@@ -191,6 +194,7 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
       ...context,
       stream: true,
       provider: this.provider,
+      agentRecursionLimit: this.agentRecursionLimit,
     })
   }
 

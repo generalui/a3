@@ -1,6 +1,6 @@
 {
   "name": "@genui-a3/providers",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Provider implementations for the A3 agentic framework",
   "type": "module",
   "exports": {

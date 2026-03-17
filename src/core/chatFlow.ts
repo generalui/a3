@@ -16,7 +16,7 @@ import { Events } from 'types/events'
 import { logEvent } from '@utils/eventLogger'
 import { log } from '@utils/logger'
 
-const MAX_AUTO_TRANSITIONS = 10
+const DEFAULT_AGENT_RECURSION_LIMIT = 10
 
 function isAsyncIterable(value: unknown): boolean {
   return Symbol.asyncIterator in Object(value)
@@ -56,22 +56,24 @@ function resolveTransition<TState extends BaseState, TContext extends BaseChatCo
   agentResult,
   sessionData,
   _depth,
+  agentRecursionLimit,
 }: {
   agents: Agent<TState, TContext>[]
   activeAgent: Agent<TState, TContext>
   agentResult: AgentResponseResult<TState>
   sessionData: SessionData<TState, TContext>
   _depth: number
+  agentRecursionLimit: number
 }): TransitionDecision<TState, TContext> {
   const { newState, chatbotMessage, goalAchieved, nextAgentId, widgets, ...rest } = agentResult
   const nextAgent = agents.find((a) => a.id === nextAgentId)
   const shouldTransition = nextAgent?.id !== activeAgent.id && nextAgent !== undefined
 
   if (shouldTransition) {
-    if (_depth >= MAX_AUTO_TRANSITIONS) {
+    if (_depth >= agentRecursionLimit) {
       log
         .withMetadata({ activeAgentId: activeAgent.id, nextAgentId: nextAgent.id, depth: _depth })
-        .warn(`Max auto-transitions (${MAX_AUTO_TRANSITIONS}) reached. Stopping to prevent infinite loop.`)
+        .warn(`Max auto-transitions (${agentRecursionLimit}) reached. Stopping to prevent infinite loop.`)
       return {
         action: 'respond',
         response: {
@@ -125,8 +127,10 @@ export async function manageFlow<TState extends BaseState, TContext extends Base
   lastAgentUnsentMessage,
   stream,
   provider,
+  agentRecursionLimit: configuredLimit,
   _depth = 0,
 }: FlowInput<TState, TContext> & { _depth?: number }): Promise<ChatResponse<TState>> {
+  const agentRecursionLimit = configuredLimit ?? DEFAULT_AGENT_RECURSION_LIMIT
   const { activeAgentId } = sessionData
   const agents = AgentRegistry.getInstance<TState, TContext>().getAll()
   const activeAgent = agents.find((a) => a.id === activeAgentId)
@@ -155,7 +159,7 @@ export async function manageFlow<TState extends BaseState, TContext extends Base
     agentResult = await simpleAgentResponse(flowInput)
   }
 
-  const decision = resolveTransition({ agents, activeAgent, agentResult, sessionData, _depth })
+  const decision = resolveTransition({ agents, activeAgent, agentResult, sessionData, _depth, agentRecursionLimit })
 
   if (decision.action === 'transition') {
     return manageFlow({
@@ -164,6 +168,7 @@ export async function manageFlow<TState extends BaseState, TContext extends Base
       lastAgentUnsentMessage: decision.chatbotMessage,
       stream,
       provider,
+      agentRecursionLimit,
       _depth: decision.newDepth,
     })
   }
@@ -176,8 +181,10 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
   lastAgentUnsentMessage,
   stream,
   provider,
+  agentRecursionLimit: configuredLimit,
   _depth = 0,
 }: FlowInput<TState, TContext> & { _depth?: number }): AsyncGenerator<StreamEvent<TState>> {
+  const agentRecursionLimit = configuredLimit ?? DEFAULT_AGENT_RECURSION_LIMIT
   const { activeAgentId } = sessionData
   const agents = AgentRegistry.getInstance<TState, TContext>().getAll()
   const activeAgent = agents.find((a) => a.id === activeAgentId)
@@ -214,7 +221,7 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
     agentResult = yield* simpleAgentResponseStream(flowInput)
   }
 
-  const decision = resolveTransition({ agents, activeAgent, agentResult, sessionData, _depth })
+  const decision = resolveTransition({ agents, activeAgent, agentResult, sessionData, _depth, agentRecursionLimit })
 
   if (decision.action === 'transition') {
     decision.updatedSessionData.messages.push({
@@ -235,6 +242,7 @@ export async function* manageFlowStream<TState extends BaseState, TContext exten
       lastAgentUnsentMessage: decision.chatbotMessage,
       stream,
       provider,
+      agentRecursionLimit,
       _depth: decision.newDepth,
     })
     return

@@ -71,4 +71,11 @@ export interface ChatSessionConfig<
 
   /** LLM provider instance for this session. Required unless all agents have their own provider. */
   provider: Provider
+
+  /**
+   * Maximum number of automatic agent transitions allowed per user message.
+   * Guards against infinite agent recursion loops.
+   * @default 10
+   */
+  agentRecursionLimit?: number
 }
