@@ -11,7 +11,7 @@ const exampleDir = path.resolve(monorepoRoot, 'example')
 const docsDir = path.resolve(monorepoRoot, 'docs')
 const templateDir = path.resolve(rootDir, 'template')
 
-const EXCLUDE = ['node_modules', '.next', 'tsconfig.tsbuildinfo', '.env', '.env.example', 'README.md']
+const EXCLUDE = ['node_modules', '.next', 'tsconfig.tsbuildinfo', '.env', '.env.example', 'README.md', '.cursorrules']
 
 const GENUI_PACKAGES = ['@genui-a3/core', '@genui-a3/providers']
 

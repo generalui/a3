@@ -67,4 +67,20 @@ export function scaffoldProject(templateDir: string, targetDir: string, projectN
   if (fs.existsSync(gitignoreSrc)) {
     fs.renameSync(gitignoreSrc, path.join(targetDir, '.gitignore'))
   }
+
+  // Create .cursorrules symlink pointing to CLAUDE.md
+  // Using a fallback to copy if symlinks are not supported (e.g. Windows without admin)
+  try {
+    const cursorrulesPath = path.join(targetDir, '.cursorrules')
+    const claudeMdPath = path.join(targetDir, 'CLAUDE.md')
+    if (fs.existsSync(claudeMdPath)) {
+      fs.symlinkSync('CLAUDE.md', cursorrulesPath, 'file')
+    }
+  } catch {
+    try {
+      fs.copyFileSync(path.join(targetDir, 'CLAUDE.md'), path.join(targetDir, '.cursorrules'))
+    } catch {
+      // Ignore fallback errors
+    }
+  }
 }
