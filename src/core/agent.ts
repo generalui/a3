@@ -1,5 +1,5 @@
-import { basePrompt } from '../../agents/basePrompt'
-import { widgetPrompt } from '../../agents/widgetPrompt'
+import { basePrompt } from '@prompts/basePrompt'
+import { widgetPrompt } from '@prompts/widgetPrompt'
 import { createFullOutputSchema } from '@core/schemas'
 import { EventType } from '@ag-ui/client'
 import {

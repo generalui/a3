@@ -12,7 +12,7 @@ const createMockAgent = (id: string, description: string = `Description for ${id
   prompt: jest.fn().mockResolvedValue('test prompt'),
   outputSchema: z.object({}),
   generateResponse: jest.fn().mockResolvedValue({
-    newChatState: {},
+    newState: {},
     chatbotMessage: 'test',
     goalAchieved: false,
     nextAgentId: '',
@@ -78,6 +78,19 @@ describe('AgentRegistry', () => {
       expect(registry.has('agent-1')).toBe(true)
       expect(registry.has('agent-2')).toBe(true)
       expect(registry.has('agent-3')).toBe(true)
+    })
+
+    it('should throw and register no agents when the array contains a duplicate ID', () => {
+      const registry = AgentRegistry.getInstance()
+      registry.register(createMockAgent('existing'))
+
+      expect(() =>
+        registry.register([createMockAgent('new-agent'), createMockAgent('existing')]),
+      ).toThrow("Agent with ID 'existing' is already registered.")
+
+      // Fail-fast: no partial registration — new-agent must not have been added
+      expect(registry.count).toBe(1)
+      expect(registry.has('new-agent')).toBe(false)
     })
   })
 
@@ -173,6 +186,17 @@ describe('AgentRegistry', () => {
       const registry = AgentRegistry.getInstance()
 
       expect(registry.getDescriptions()).toEqual({})
+    })
+
+    it('should omit agents that have no description', () => {
+      const registry = AgentRegistry.getInstance()
+      registry.register(createMockAgent('with-desc', 'Has a description'))
+      registry.register({ ...createMockAgent('no-desc'), description: undefined })
+
+      const descriptions = registry.getDescriptions()
+
+      expect(descriptions).toEqual({ 'with-desc': 'Has a description' })
+      expect('no-desc' in descriptions).toBe(false)
     })
   })
 

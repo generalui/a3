@@ -93,6 +93,15 @@ describe('log proxy', () => {
     expect(mock.info).toHaveBeenCalledWith('hello from proxy')
   })
 
+  it('correctly binds this so chained calls (withMetadata, withError) reach the underlying logger', () => {
+    const { configureLogger, log } = freshModule()
+    const mock = createMockLogger()
+    configureLogger(mock)
+    log.withMetadata({ key: 'val' }).info('chained call')
+    expect(mock.withMetadata).toHaveBeenCalledWith({ key: 'val' })
+    expect(mock.info).toHaveBeenCalledWith('chained call')
+  })
+
   it('reflects a logger replacement mid-run after configureLogger() is called', () => {
     const { configureLogger, log } = freshModule()
     const first = createMockLogger()

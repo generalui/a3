@@ -55,6 +55,8 @@ export const baseConfig: Config = {
     '^@prompts/(.*)$': '<rootDir>/src/prompts/$1',
     '^@providers$': '<rootDir>/src/providers',
     '^@providers/(.*)$': '<rootDir>/src/providers/$1',
+    '^@stores$': '<rootDir>/src/stores',
+    '^@stores/(.*)$': '<rootDir>/src/stores/$1',
     '^@skills$': '<rootDir>/src/skills',
     '^@skills/(.*)$': '<rootDir>/src/skills/$1',
     '^@stores$': '<rootDir>/src/stores',

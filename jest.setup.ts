@@ -61,28 +61,3 @@ if (typeof globalThis !== 'undefined') {
     })
   }
 }
-
-export const mockStoreData: { current: Record<string, unknown> } = { current: {} }
-
-export const mockGetAsyncLocalStore = jest.fn(() => {
-  if (Object.keys(mockStoreData.current).length === 0) {
-    throw new Error('No async local store')
-  }
-  return mockStoreData.current
-})
-
-export const mockWithAsyncLocalStore = jest.fn(<T>(fn: () => T, store: Record<string, unknown>) => {
-  const previousStore = mockStoreData.current
-  mockStoreData.current = store
-  try {
-    return fn()
-  } finally {
-    mockStoreData.current = previousStore
-  }
-})
-
-// Mock the asyncLocalStore module globally
-jest.mock('@utils/asyncLocalStore', () => ({
-  getAsyncLocalStore: mockGetAsyncLocalStore,
-  withAsyncLocalStore: mockWithAsyncLocalStore,
-}))

@@ -52,9 +52,17 @@ const createMockAgent = (
   generateResponse,
 })
 
-// ── tests ────────────────────────────────────────────────────────────────────
+// ── shared helpers ────────────────────────────────────────────────────────────
 
-describe('validateGenerateResponseResult', () => {
+async function collectStream<T>(gen: AsyncGenerator<T>): Promise<T[]> {
+  const events: T[] = []
+  for await (const event of gen) {
+    events.push(event)
+  }
+  return events
+}
+
+describe('manageFlow / manageFlowStream — stream mode validation', () => {
   beforeEach(() => {
     AgentRegistry.resetInstance()
   })
@@ -118,15 +126,6 @@ describe('validateGenerateResponseResult', () => {
   // ── manageFlowStream (streaming path) ───────────────────────────────────
 
   describe('manageFlowStream (streaming, stream = true)', () => {
-    /** Helper to drain the async generator and collect all events. */
-    async function collectStream<T>(gen: AsyncGenerator<T>): Promise<T[]> {
-      const events: T[] = []
-      for await (const event of gen) {
-        events.push(event)
-      }
-      return events
-    }
-
     it('should throw when generateResponse returns a Promise but stream = true', async () => {
       // eslint-disable-next-line @typescript-eslint/require-await
       const agent = createMockAgent(async () => mockAgentResult)
@@ -185,5 +184,222 @@ describe('validateGenerateResponseResult', () => {
       expect(events[0]).toEqual(expect.objectContaining({ type: EventType.RUN_STARTED }))
       expect(events[events.length - 1]).toEqual(expect.objectContaining({ type: EventType.RUN_FINISHED }))
     })
+  })
+})
+
+// ── manageFlow — agent routing ────────────────────────────────────────────────
+
+describe('manageFlow — agent routing', () => {
+  beforeEach(() => {
+    AgentRegistry.resetInstance()
+  })
+
+  it('returns No active agent when activeAgentId is not in the registry', async () => {
+    const sessionData = {
+      ...createMockSessionData(),
+      activeAgentId: 'unknown-agent',
+    } as SessionData<TestState, BaseChatContext>
+
+    const result = await manageFlow({
+      // eslint-disable-next-line @typescript-eslint/require-await
+      agent: createMockAgent(async () => mockAgentResult),
+      sessionData,
+      stream: false,
+      provider: createMockProvider(),
+    })
+
+    expect(result.responseMessage).toBe('No active agent')
+    expect(result.activeAgentId).toBeNull()
+    expect(result.goalAchieved).toBe(false)
+  })
+
+  it('transitions to the next agent and returns its response', async () => {
+    const agentA: Agent<TestState> = {
+      id: 'agent-a',
+      prompt: 'Agent A',
+      outputSchema: z.object({}),
+      // eslint-disable-next-line @typescript-eslint/require-await
+      generateResponse: async () => ({
+        newState: {} as TestState,
+        chatbotMessage: 'From A',
+        goalAchieved: false,
+        nextAgentId: 'agent-b',
+      }),
+    }
+    const agentB: Agent<TestState> = {
+      id: 'agent-b',
+      prompt: 'Agent B',
+      outputSchema: z.object({}),
+      // eslint-disable-next-line @typescript-eslint/require-await
+      generateResponse: async () => ({
+        newState: {} as TestState,
+        chatbotMessage: 'From B',
+        goalAchieved: true,
+        nextAgentId: 'agent-b',
+      }),
+    }
+    AgentRegistry.getInstance<TestState>().register([agentA, agentB])
+
+    const result = await manageFlow({
+      agent: agentA,
+      sessionData: { ...createMockSessionData(), activeAgentId: 'agent-a' } as SessionData<TestState, BaseChatContext>,
+      stream: false,
+      provider: createMockProvider(),
+    })
+
+    expect(result.responseMessage).toBe('From B')
+    expect(result.activeAgentId).toBe('agent-b')
+  })
+
+  it('stops at MAX_AUTO_TRANSITIONS depth and returns from the current agent', async () => {
+    const agentA: Agent<TestState> = {
+      id: 'agent-a',
+      prompt: 'Agent A',
+      outputSchema: z.object({}),
+      // eslint-disable-next-line @typescript-eslint/require-await
+      generateResponse: async () => ({
+        newState: {} as TestState,
+        chatbotMessage: 'Capped at A',
+        goalAchieved: false,
+        nextAgentId: 'agent-b',
+      }),
+    }
+    const agentB: Agent<TestState> = {
+      id: 'agent-b',
+      prompt: 'Agent B',
+      outputSchema: z.object({}),
+      // eslint-disable-next-line @typescript-eslint/require-await
+      generateResponse: async () => ({
+        newState: {} as TestState,
+        chatbotMessage: 'From B',
+        goalAchieved: false,
+        nextAgentId: 'agent-a',
+      }),
+    }
+    AgentRegistry.getInstance<TestState>().register([agentA, agentB])
+
+    const result = await manageFlow({
+      agent: agentA,
+      sessionData: { ...createMockSessionData(), activeAgentId: 'agent-a' } as SessionData<TestState, BaseChatContext>,
+      stream: false,
+      provider: createMockProvider(),
+      _depth: 10,
+    })
+
+    // Transition blocked — response from agent-a, nextAgentId still points to agent-b
+    expect(result.responseMessage).toBe('Capped at A')
+    expect(result.activeAgentId).toBe('agent-a')
+    expect(result.nextAgentId).toBe('agent-b')
+  })
+})
+
+// ── manageFlowStream — agent routing ──────────────────────────────────────────
+
+describe('manageFlowStream — agent routing', () => {
+  beforeEach(() => {
+    AgentRegistry.resetInstance()
+  })
+
+  it('yields a single RUN_FINISHED with No active agent when activeAgentId is not in the registry', async () => {
+    const sessionData = {
+      ...createMockSessionData(),
+      activeAgentId: 'unknown-agent',
+    } as SessionData<TestState, BaseChatContext>
+
+    const events = await collectStream(
+      manageFlowStream<TestState>({
+        // eslint-disable-next-line @typescript-eslint/require-await, require-yield
+        agent: createMockAgent(async function* () {
+          return mockAgentResult
+        }),
+        sessionData,
+        stream: true,
+        provider: createMockProvider(),
+      }),
+    )
+
+    expect(events).toHaveLength(1)
+    const finished = events[0] as { type: EventType; result?: { responseMessage: string } }
+    expect(finished.type).toBe(EventType.RUN_FINISHED)
+    expect(finished.result?.responseMessage).toBe('No active agent')
+  })
+
+  it('yields a CUSTOM AgentTransition event when handing off between agents', async () => {
+    const agentA: Agent<TestState> = {
+      id: 'agent-a',
+      prompt: 'Agent A',
+      outputSchema: z.object({}),
+      // eslint-disable-next-line @typescript-eslint/require-await, require-yield, object-shorthand
+      generateResponse: async function* () {
+        return { newState: {} as TestState, chatbotMessage: 'Handing off', goalAchieved: false, nextAgentId: 'agent-b' }
+      },
+    }
+    const agentB: Agent<TestState> = {
+      id: 'agent-b',
+      prompt: 'Agent B',
+      outputSchema: z.object({}),
+      // eslint-disable-next-line @typescript-eslint/require-await, require-yield, object-shorthand
+      generateResponse: async function* () {
+        return { newState: {} as TestState, chatbotMessage: 'Handled', goalAchieved: true, nextAgentId: 'agent-b' }
+      },
+    }
+    AgentRegistry.getInstance<TestState>().register([agentA, agentB])
+
+    const events = await collectStream(
+      manageFlowStream<TestState>({
+        agent: agentA,
+        sessionData: { ...createMockSessionData(), activeAgentId: 'agent-a' } as SessionData<TestState, BaseChatContext>,
+        stream: true,
+        provider: createMockProvider(),
+      }),
+    )
+
+    const transition = events.find(
+      (e) => (e as { type: EventType }).type === EventType.CUSTOM,
+    ) as { type: EventType; name: string; value: { fromAgentId: string; toAgentId: string } } | undefined
+
+    expect(transition).toBeDefined()
+    expect(transition?.name).toBe('AgentTransition')
+    expect(transition?.value.fromAgentId).toBe('agent-a')
+    expect(transition?.value.toAgentId).toBe('agent-b')
+  })
+
+  it('ends with RUN_FINISHED carrying the final transitioned-to agent response', async () => {
+    const agentA: Agent<TestState> = {
+      id: 'agent-a',
+      prompt: 'Agent A',
+      outputSchema: z.object({}),
+      // eslint-disable-next-line @typescript-eslint/require-await, require-yield, object-shorthand
+      generateResponse: async function* () {
+        return { newState: {} as TestState, chatbotMessage: 'From A', goalAchieved: false, nextAgentId: 'agent-b' }
+      },
+    }
+    const agentB: Agent<TestState> = {
+      id: 'agent-b',
+      prompt: 'Agent B',
+      outputSchema: z.object({}),
+      // eslint-disable-next-line @typescript-eslint/require-await, require-yield, object-shorthand
+      generateResponse: async function* () {
+        return { newState: {} as TestState, chatbotMessage: 'Final from B', goalAchieved: true, nextAgentId: 'agent-b' }
+      },
+    }
+    AgentRegistry.getInstance<TestState>().register([agentA, agentB])
+
+    const events = await collectStream(
+      manageFlowStream<TestState>({
+        agent: agentA,
+        sessionData: { ...createMockSessionData(), activeAgentId: 'agent-a' } as SessionData<TestState, BaseChatContext>,
+        stream: true,
+        provider: createMockProvider(),
+      }),
+    )
+
+    const last = events[events.length - 1] as {
+      type: EventType
+      result?: { responseMessage: string; activeAgentId: string }
+    }
+    expect(last.type).toBe(EventType.RUN_FINISHED)
+    expect(last.result?.responseMessage).toBe('Final from B')
+    expect(last.result?.activeAgentId).toBe('agent-b')
   })
 })
