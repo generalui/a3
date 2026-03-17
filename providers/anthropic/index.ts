@@ -12,7 +12,7 @@ import {
   type ResolvedResilienceConfig,
 } from '@genui-a3/core'
 import { processAnthropicStream } from './streamProcessor'
-import { executeWithFallback } from '../utils/executeWithFallback'
+import { executeWithFallback } from '@providers/utils/executeWithFallback'
 
 /**
  * Configuration for creating an Anthropic provider.
@@ -141,7 +141,8 @@ export function createAnthropicProvider(config: AnthropicProviderConfig): Provid
 
       const { result, reader, first } = await executeWithFallback(
         models,
-        (model) => sendStreamWithModel(anthropicProvider, model, request.systemPrompt, messages, request.responseSchema),
+        (model) =>
+          sendStreamWithModel(anthropicProvider, model, request.systemPrompt, messages, request.responseSchema),
         resilience,
       )
 

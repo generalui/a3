@@ -1,7 +1,5 @@
-import { calculateBackoff, sleep } from '../../../../providers/utils/backoff'
-import type { BackoffConfig } from '../../../../src/types/resilience'
-
-jest.unmock('../../../../providers/utils/backoff')
+import { calculateBackoff, sleep } from '@providers/utils/backoff'
+import type { BackoffConfig } from 'types/resilience'
 
 describe('calculateBackoff', () => {
   describe('exponential strategy', () => {
@@ -13,10 +11,10 @@ describe('calculateBackoff', () => {
     }
 
     it('should return baseDelay * 2^attempt', () => {
-      expect(calculateBackoff(0, config)).toBe(500)   // 500 * 2^0 = 500
-      expect(calculateBackoff(1, config)).toBe(1000)  // 500 * 2^1 = 1000
-      expect(calculateBackoff(2, config)).toBe(2000)  // 500 * 2^2 = 2000
-      expect(calculateBackoff(3, config)).toBe(4000)  // 500 * 2^3 = 4000
+      expect(calculateBackoff(0, config)).toBe(500) // 500 * 2^0 = 500
+      expect(calculateBackoff(1, config)).toBe(1000) // 500 * 2^1 = 1000
+      expect(calculateBackoff(2, config)).toBe(2000) // 500 * 2^2 = 2000
+      expect(calculateBackoff(3, config)).toBe(4000) // 500 * 2^3 = 4000
     })
 
     it('should cap at maxDelayMs', () => {
@@ -33,9 +31,9 @@ describe('calculateBackoff', () => {
     }
 
     it('should return baseDelay * (attempt + 1)', () => {
-      expect(calculateBackoff(0, config)).toBe(500)   // 500 * 1
-      expect(calculateBackoff(1, config)).toBe(1000)  // 500 * 2
-      expect(calculateBackoff(2, config)).toBe(1500)  // 500 * 3
+      expect(calculateBackoff(0, config)).toBe(500) // 500 * 1
+      expect(calculateBackoff(1, config)).toBe(1000) // 500 * 2
+      expect(calculateBackoff(2, config)).toBe(1500) // 500 * 3
     })
 
     it('should cap at maxDelayMs', () => {

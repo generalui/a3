@@ -12,7 +12,7 @@ import {
   type ResolvedResilienceConfig,
 } from '@genui-a3/core'
 import { processOpenAIStream } from './streamProcessor'
-import { executeWithFallback } from '../utils/executeWithFallback'
+import { executeWithFallback } from '@providers/utils/executeWithFallback'
 
 /**
  * Configuration for creating an OpenAI provider.

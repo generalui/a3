@@ -1,7 +1,7 @@
-import { executeWithFallback } from '../../../providers/utils/executeWithFallback'
-import { A3ResilienceError, A3TimeoutError } from '../../../src/errors/resilience'
-import { resolveResilienceConfig } from '../../../src/utils/resilience/defaults'
-import type { ResolvedResilienceConfig } from '../../../src/types/resilience'
+import { executeWithFallback } from '@providers/utils/executeWithFallback'
+import { A3ResilienceError, A3TimeoutError } from '@errors/resilience'
+import { resolveResilienceConfig } from '@utils/resilience/defaults'
+import type { ResolvedResilienceConfig } from 'types/resilience'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -94,10 +94,7 @@ describe('executeWithFallback — integration (realistic SDK errors)', () => {
     })
 
     it('should retry on Vercel AI SDK 429 rate_limit_exceeded', async () => {
-      const action = jest
-        .fn()
-        .mockRejectedValueOnce(makeApiError(429, 'rate_limit_exceeded'))
-        .mockResolvedValue('ok')
+      const action = jest.fn().mockRejectedValueOnce(makeApiError(429, 'rate_limit_exceeded')).mockResolvedValue('ok')
 
       const config = makeConfig({ retry: { maxAttempts: 2, retryOn: 'transient' } })
       const result = await executeWithFallback(['claude-sonnet-4-5-20250929'], action, config)
@@ -337,10 +334,7 @@ describe('executeWithFallback — integration (realistic SDK errors)', () => {
 
   describe('Vercel AI SDK error shape classification', () => {
     it('should classify status 429 as retryable', async () => {
-      const action = jest
-        .fn()
-        .mockRejectedValueOnce(makeApiError(429, 'rate_limit_exceeded'))
-        .mockResolvedValue('ok')
+      const action = jest.fn().mockRejectedValueOnce(makeApiError(429, 'rate_limit_exceeded')).mockResolvedValue('ok')
 
       const config = makeConfig({ retry: { maxAttempts: 1, retryOn: 'transient' } })
       const result = await executeWithFallback(['model-1'], action, config)
@@ -350,10 +344,7 @@ describe('executeWithFallback — integration (realistic SDK errors)', () => {
     })
 
     it('should classify status 529 (overloaded) as retryable', async () => {
-      const action = jest
-        .fn()
-        .mockRejectedValueOnce(makeApiError(529, 'overloaded'))
-        .mockResolvedValue('ok')
+      const action = jest.fn().mockRejectedValueOnce(makeApiError(529, 'overloaded')).mockResolvedValue('ok')
 
       const config = makeConfig({ retry: { maxAttempts: 1, retryOn: 'transient' } })
       const result = await executeWithFallback(['model-1'], action, config)
@@ -377,10 +368,7 @@ describe('executeWithFallback — integration (realistic SDK errors)', () => {
       // Custom classifier: only retry errors with "CUSTOM_RETRY" in the message
       const customClassifier = (error: Error): boolean => error.message.includes('CUSTOM_RETRY')
 
-      const action = jest
-        .fn()
-        .mockRejectedValueOnce(new Error('CUSTOM_RETRY: temporary'))
-        .mockResolvedValue('ok')
+      const action = jest.fn().mockRejectedValueOnce(new Error('CUSTOM_RETRY: temporary')).mockResolvedValue('ok')
 
       const config = makeConfig({
         retry: { maxAttempts: 1, retryOn: 'transient' },

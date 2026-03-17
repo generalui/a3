@@ -1,8 +1,5 @@
 import { resolveResilienceConfig, DEFAULT_RESILIENCE_CONFIG } from '@utils/resilience'
 
-jest.unmock('@utils/resilience')
-jest.unmock('@utils/resilience/defaults')
-
 describe('resolveResilienceConfig', () => {
   it('should return DEFAULT_RESILIENCE_CONFIG when called with no arguments', () => {
     const result = resolveResilienceConfig()

@@ -1,7 +1,7 @@
-import { executeWithFallback } from '../../../../providers/utils/executeWithFallback'
-import { A3ResilienceError, A3TimeoutError } from '../../../../src/errors/resilience'
-import { resolveResilienceConfig } from '../../../../src/utils/resilience/defaults'
-import type { ResolvedResilienceConfig } from '../../../../src/types/resilience'
+import { executeWithFallback } from '@providers/utils/executeWithFallback'
+import { A3ResilienceError, A3TimeoutError } from '@errors/resilience'
+import { resolveResilienceConfig } from '@utils/resilience/defaults'
+import type { ResolvedResilienceConfig } from 'types/resilience'
 
 function makeTransientError(message = 'Service unavailable'): Error {
   return Object.assign(new Error(message), { status: 503 })
