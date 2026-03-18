@@ -1,14 +1,12 @@
 import { execSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-
 import * as p from '@clack/prompts'
 import chalk from 'chalk'
 import fs from 'fs-extra'
-
-import { generateEnvFile, generateProviderFiles, scaffoldProject } from './utils/generators'
-import { promptProjectName, promptProviders } from './utils/prompts'
-import { PROVIDER_META, type ProviderConfig } from './utils/providers'
+import { generateEnvFile, generateProviderFiles, scaffoldProject } from '@create-utils/generators'
+import { promptProjectName, promptProviders } from '@create-utils/prompts'
+import { PROVIDER_META, type ProviderConfig } from '@create-utils/providers'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 

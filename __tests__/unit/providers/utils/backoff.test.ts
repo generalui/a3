@@ -1,4 +1,4 @@
-import { calculateBackoff, sleep } from '@providers/utils/backoff'
+import { calculateBackoff, sleep } from '@providers-utils/backoff'
 import type { BackoffConfig } from 'types/resilience'
 
 describe('calculateBackoff', () => {
@@ -53,6 +53,19 @@ describe('calculateBackoff', () => {
       expect(calculateBackoff(0, config)).toBe(500)
       expect(calculateBackoff(1, config)).toBe(500)
       expect(calculateBackoff(5, config)).toBe(500)
+    })
+  })
+
+  describe('default strategy (unknown/undefined strategy falls back to exponential)', () => {
+    it('should apply exponential backoff when strategy is not a recognized value', () => {
+      const config = {
+        strategy: 'unknown' as Required<BackoffConfig>['strategy'],
+        baseDelayMs: 500,
+        maxDelayMs: 30_000,
+        jitter: false,
+      }
+      expect(calculateBackoff(0, config)).toBe(500) // 500 * 2^0
+      expect(calculateBackoff(2, config)).toBe(2000) // 500 * 2^2
     })
   })
 

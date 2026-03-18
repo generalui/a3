@@ -5,7 +5,7 @@ import {
   type ResilienceErrorEntry,
   type ResolvedResilienceConfig,
 } from '@genui-a3/a3'
-import { calculateBackoff, sleep } from './backoff'
+import { calculateBackoff, sleep } from '@providers-utils/backoff'
 
 /**
  * Builds an AbortSignal that fires when either the per-request timeout or total timeout expires.

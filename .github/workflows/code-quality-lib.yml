@@ -67,10 +67,15 @@ jobs:
             tsconfig.json
             vitest.config.ts
             vitest.shims.d.ts
-            src/**
+            create/**
+            example/**
             providers/**
+            src/**
           files_ignore: |
+            **/.gitignore
             **/*.md
+            **/*.mdc
+            .cursorrules
 
       - name: Should lint Documentation
         id: lint-docs

@@ -11,14 +11,15 @@ export function calculateBackoff(attempt: number, config: Required<BackoffConfig
   let delay: number
 
   switch (config.strategy) {
-    case 'exponential':
-      delay = config.baseDelayMs * Math.pow(2, attempt)
-      break
     case 'linear':
       delay = config.baseDelayMs * (attempt + 1)
       break
     case 'fixed':
       delay = config.baseDelayMs
+      break
+    case 'exponential':
+    default:
+      delay = config.baseDelayMs * Math.pow(2, attempt)
       break
   }
 

@@ -20,6 +20,8 @@
       }
     ],
     "paths": {
+      "@agents": ["./app/agents"],
+      "@agents/*": ["./app/agents/*"],
       "@atoms": ["./app/components/atoms"],
       "@atoms/*": ["./app/components/atoms/*"],
       "@components": ["./app/components"],
@@ -30,6 +32,8 @@
       "@molecules/*": ["./app/components/molecules/*"],
       "@organisms": ["./app/components/organisms"],
       "@organisms/*": ["./app/components/organisms/*"],
+      "@providers": ["./app/lib/providers"],
+      "@providers/*": ["./app/lib/providers/*"],
       "types": ["./app/types"],
       "types/*": ["./app/types/*"],
       "@utils": ["./app/utils"],

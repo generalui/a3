@@ -8,6 +8,11 @@
     "skipLibCheck": true,
     "outDir": "dist",
     "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "@create-utils": ["src/utils"],
+      "@create-utils/*": ["src/utils/*"]
+    },
     "declaration": true,
     "resolveJsonModule": true
   },

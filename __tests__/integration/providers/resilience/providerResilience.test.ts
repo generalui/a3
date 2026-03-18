@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import { createBedrockProvider } from '@providers/bedrock/index'
-import { createOpenAIProvider } from '@providers/openai/index'
-import { createAnthropicProvider } from '@providers/anthropic/index'
+import { createBedrockProvider } from '@providers-bedrock/index'
+import { createOpenAIProvider } from '@providers-openai/index'
+import { createAnthropicProvider } from '@providers-anthropic/index'
 import { A3ResilienceError } from '@errors/resilience'
 import type { ProviderRequest } from 'types/provider'
 

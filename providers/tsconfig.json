@@ -11,7 +11,16 @@
     "types": ["node"],
     "paths": {
       "@genui-a3/a3": ["../dist/index.d.ts"],
-      "@providers/utils/*": ["./utils/*"]
+      "@providers": ["./src"],
+      "@providers/*": ["./src/*"],
+      "@providers-anthropic": ["./anthropic"],
+      "@providers-anthropic/*": ["./anthropic/*"],
+      "@providers-bedrock": ["./bedrock"],
+      "@providers-bedrock/*": ["./bedrock/*"],
+      "@providers-openai": ["./openai"],
+      "@providers-openai/*": ["./openai/*"],
+      "@providers-utils": ["./utils"],
+      "@providers-utils/*": ["./utils/*"]
     }
   }
 }

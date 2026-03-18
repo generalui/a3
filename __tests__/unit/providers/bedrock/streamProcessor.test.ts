@@ -1,6 +1,6 @@
 import { EventType } from '@ag-ui/client'
 import { z } from 'zod'
-import { processBedrockStream } from '@providers/bedrock/streamProcessor'
+import { processBedrockStream } from '@providers-bedrock/streamProcessor'
 import type { ConverseStreamOutput } from '@aws-sdk/client-bedrock-runtime'
 
 /** Helper: collect all events from an async generator */

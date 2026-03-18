@@ -1,6 +1,6 @@
 {
   "name": "@genui-a3/a3-anthropic",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Anthropic provider for the A3 agentic framework",
   "type": "module",
   "main": "./dist/index.cjs",

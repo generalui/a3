@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { Typography } from '@mui/material'
-import { ChatMessageList } from './ChatMessageList'
+import { ChatMessageList } from '@organisms/ChatMessageList'
 import { ChatContainer, ChatHeader } from '@atoms'
 import { ChatInput } from '@molecules'
 import type { ChatMessage as ChatMessageType } from 'types'

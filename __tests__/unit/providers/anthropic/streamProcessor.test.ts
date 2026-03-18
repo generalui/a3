@@ -1,6 +1,6 @@
 import { EventType } from '@ag-ui/client'
 import { z } from 'zod'
-import { processAnthropicStream } from '@providers/anthropic/streamProcessor'
+import { processAnthropicStream } from '@providers-anthropic/streamProcessor'
 import type { StreamTextResult, ToolSet } from 'ai'
 
 /** Helper: collect all events from an async generator */
