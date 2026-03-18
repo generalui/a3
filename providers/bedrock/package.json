@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@ag-ui/client": "0.0.47",
-    "@aws-sdk/client-bedrock-runtime": "3.975.0",
+    "@aws-sdk/client-bedrock-runtime": "3.1011.0",
     "zod": "4.3.6"
   }
 }
