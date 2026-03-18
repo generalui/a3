@@ -16,7 +16,7 @@ Its job is to:
 
 ## The Provider Interface
 
-Every provider implements the `Provider` interface from `@genui-a3/core`:
+Every provider implements the `Provider` interface from `@genui/a3`:
 
 ```typescript
 import { ZodType } from 'zod'
@@ -211,7 +211,7 @@ The pattern (used by the OpenAI and Anthropic providers):
 import { streamText, Output, jsonSchema } from 'ai'
 import { createMyLLM } from '@ai-sdk/my-llm' // hypothetical
 import { EventType } from '@ag-ui/client'
-import type { StreamEvent, BaseState } from '@genui-a3/core'
+import type { StreamEvent, BaseState } from '@genui/a3'
 
 async *sendRequestStream<TState extends BaseState>(
   request: ProviderRequest,
@@ -417,8 +417,8 @@ import type {
   ProviderResponse,
   BaseState,
   StreamEvent,
-} from '@genui-a3/core'
-import { executeWithFallback } from '@genui-a3/providers/utils'
+} from '@genui/a3'
+import { executeWithFallback } from '../utils/executeWithFallback'
 
 // --- Hypothetical LLM SDK ---
 import { MyLLMClient } from 'my-llm-sdk'
@@ -554,7 +554,7 @@ export function createMyProvider(config: MyProviderConfig): Provider {
 ### Using Your Provider
 
 ```typescript
-import { ChatSession, MemorySessionStore } from '@genui-a3/core'
+import { ChatSession, MemorySessionStore } from '@genui/a3'
 import { createMyProvider } from './myProvider'
 
 const provider = createMyProvider({

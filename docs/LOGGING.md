@@ -32,7 +32,7 @@ This means:
 - `configureLogger(logger: ILogLayer)` — replaces the active logger.
   Should be called once at application startup, before any `ChatSession` is created.
 
-Both are exported from `@genui-a3/core` as part of the public API.
+Both are exported from `@genui/a3` as part of the public API.
 
 ### Default logger
 

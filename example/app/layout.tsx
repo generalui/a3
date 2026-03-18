@@ -3,7 +3,7 @@ import { ThemeProvider } from './ThemeProvider'
 
 export const metadata: Metadata = {
   title: 'A3 Core Example',
-  description: 'Example application for @genui-a3/core',
+  description: 'Example application for @genui/a3',
   icons: [
     { rel: 'icon', url: '/favicon.ico', type: 'image/x-icon', sizes: '32x32', media: '(prefers-color-scheme: light)' },
     {

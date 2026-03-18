@@ -1,1 +1,1 @@
-export { isRetryableError } from '@genui-a3/core'
+export { isRetryableError } from '@genui-a3/a3'

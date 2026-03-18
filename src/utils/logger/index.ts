@@ -46,7 +46,7 @@ export const log: ILogLayer = new Proxy({} as ILogLayer, {
  *
  * @example
  * ```typescript
- * import { configureLogger } from '@genui-a3/core'
+ * import { configureLogger } from '@genui/a3'
  * import { LogLayer } from 'loglayer'
  * import { PinoTransport } from '@loglayer/transport-pino'
  * import { pino } from 'pino'

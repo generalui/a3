@@ -4,24 +4,25 @@ A3 is a monorepo for the A3 agentic backend framework ecosystem.
 
 WORKSPACES & PACKAGES:
 
-- src/           → @genui-a3/core — Core orchestration framework (main npm package)
-- providers/     → @genui-a3/providers — Pluggable LLM provider implementations (Anthropic, Bedrock, OpenAI)
-- example/       → Example agentic application showcasing A3 usage (see example/CLAUDE.md)
-- create/        → @genui-a3/create — CLI for quickstarting A3 applications
+- src/                    → @genui/a3 — Core orchestration framework (main npm package)
+- providers/bedrock/      → @genui/a3-bedrock — AWS Bedrock provider
+- providers/openai/       → @genui/a3-openai — OpenAI provider
+- providers/anthropic/    → @genui/a3-anthropic — Anthropic provider
+- example/                → Example agentic application showcasing A3 usage (see example/CLAUDE.md)
+- create/                 → @genui/a3-create — CLI for quickstarting A3 applications
 
 FUTURE DIRECTION:
 
-- Providers will be extracted into individual npm packages (e.g., @genui-a3/bedrock, @genui-a3/openai, @genui-a3/anthropic)
-- Agents will become individual npm packages (e.g., @genui-a3/agent-auth)
+- Agents will become individual npm packages (e.g., @genui/agent-auth)
 
 ---
 
-PACKAGE: @genui-a3/core
+PACKAGE: @genui/a3
 
 Core orchestration framework for agentic applications.
 A developer-installable npm package that provides agent orchestration patterns.
 Agents are separate entities that connect to the orchestration — created green-field by a developer or installed as npm packages.
-Providers (OpenAI, Bedrock, Anthropic, etc.) are pluggable; a future goal is individual provider npm packages.
+Providers (OpenAI, Bedrock, Anthropic) are pluggable and published as separate packages (@genui/a3-bedrock, @genui/a3-openai, @genui/a3-anthropic).
 
 CONSTRAINTS:
 
@@ -155,7 +156,7 @@ GIT:
 - No direct commits to `main`
 - Merges to `main` should trigger:
   1. Package build
-  2. NPM publish (@genui-a3/core)
+  2. NPM publish (@genui/a3)
   3. Git tag with version number
 
 SECRETS:
@@ -175,7 +176,7 @@ Internal logging — use the module-level `log` singleton:
 - `log` is a Proxy over `getLogger()`, so it always routes to the currently configured logger.
   Do NOT call `getLogger()` at individual log sites — just use `log` directly.
 
-Public API (exported from `@genui-a3/core`):
+Public API (exported from `@genui/a3`):
 
 - `configureLogger(logger: ILogLayer)` — replace the default logger (call once at app startup)
 - `getLogger(): ILogLayer` — returns the active logger instance
@@ -220,7 +221,7 @@ BUILD & PUBLISH:
 - Clean: `npm run clean` (removes dist/)
 - Dev: `npm run dev` (watch mode for core + example in parallel)
 - Publish: `npm publish` (runs prepublishOnly: clean + build)
-- Package name: @genui-a3/core
+- Package name: @genui/a3
 - Organization: genui-a3 (npm)
 
 CI/CD:

@@ -10,7 +10,7 @@ import { Agent, AgentId, BaseState, BaseChatContext } from 'types'
  *
  * @example
  * ```typescript
- * import { AgentRegistry } from '@genui-a3/core'
+ * import { AgentRegistry } from '@genui/a3'
  *
  * interface State extends BaseState {
  *   userName?: string

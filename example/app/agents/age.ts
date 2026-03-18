@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { Agent } from '@genui-a3/core'
+import { Agent } from '@genui-a3/a3'
 import { State } from './greeting'
 
 /**

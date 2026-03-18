@@ -1,7 +1,7 @@
-# @genui-a3/core
+# @genui/a3
 
-[![npm version](https://img.shields.io/npm/v/@genui-a3/core)](https://www.npmjs.com/package/@genui-a3/core)
-[![license](https://img.shields.io/npm/l/@genui-a3/core)](https://github.com/generalui/a3/blob/main/LICENSE)
+[![npm version](https://img.shields.io/npm/v/@genui/a3)](https://www.npmjs.com/package/@genui/a3)
+[![license](https://img.shields.io/npm/l/@genui/a3)](https://github.com/generalui/a3/blob/main/LICENSE)
 
 **A TypeScript framework for building multi-agent chat applications.**
 
@@ -181,7 +181,7 @@ Each agent has a focused responsibility and defines how it generates responses, 
 
 ```typescript
 import { z } from 'zod'
-import { Agent, BaseState } from '@genui-a3/core'
+import { Agent, BaseState } from '@genui/a3'
 
 interface MyState extends BaseState {
   userName?: string
@@ -233,7 +233,7 @@ const greetingAgent: Agent<MyState> = {
 A singleton registry where all agents are registered before use.
 
 ```typescript
-import { AgentRegistry } from '@genui-a3/core'
+import { AgentRegistry } from '@genui/a3'
 
 const registry = AgentRegistry.getInstance<MyState>()
 
@@ -255,8 +255,8 @@ The primary interface your application uses to interact with A3.
 Create a session, send messages, get responses.
 
 ```typescript
-import { ChatSession, MemorySessionStore } from '@genui-a3/core'
-import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+import { ChatSession, MemorySessionStore } from '@genui/a3'
+import { createBedrockProvider } from '@genui/a3-bedrock'
 
 const provider = createBedrockProvider({
   models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
@@ -292,7 +292,7 @@ A3 uses a shared global state object that flows across all agents in a session.
 Define your state by extending `BaseState`.
 
 ```typescript
-import { BaseState } from '@genui-a3/core'
+import { BaseState } from '@genui/a3'
 
 interface AppState extends BaseState {
   userName?: string
@@ -390,7 +390,7 @@ A3 uses a pluggable `Provider` interface.
 Providers are separate packages — see the [Providers documentation](./docs/PROVIDERS.md).
 
 ```typescript
-import { Provider } from '@genui-a3/core'
+import { Provider } from '@genui/a3'
 ```
 
 The `Provider` interface requires three members:
@@ -404,7 +404,7 @@ The `Provider` interface requires three members:
 **Built-in providers:**
 
 ```typescript
-import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+import { createBedrockProvider } from '@genui/a3-bedrock'
 
 const provider = createBedrockProvider({
   models: [
@@ -416,7 +416,7 @@ const provider = createBedrockProvider({
 ```
 
 ```typescript
-import { createOpenAIProvider } from '@genui-a3/providers/openai'
+import { createOpenAIProvider } from '@genui/a3-openai'
 
 const provider = createOpenAIProvider({
   models: ['gpt-4o', 'gpt-4o-mini'],
@@ -425,7 +425,7 @@ const provider = createOpenAIProvider({
 ```
 
 ```typescript
-import { createAnthropicProvider } from '@genui-a3/providers/anthropic'
+import { createAnthropicProvider } from '@genui/a3-anthropic'
 
 const provider = createAnthropicProvider({
   models: ['claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001'],
@@ -511,7 +511,7 @@ If you return a `Promise` when streaming was requested (or vice-versa), you will
 > Return an AsyncGenerator instead, or check input.stream to branch behavior.
 
 ```typescript
-import { simpleAgentResponse, simpleAgentResponseStream } from '@genui-a3/core'
+import { simpleAgentResponse, simpleAgentResponseStream } from '@genui/a3'
 
 const agent: Agent<MyState> = {
   id: 'custom',
@@ -601,7 +601,7 @@ See the complete [Multi-Agent Code Example](./docs/QUICK-START-EXAMPLES.md#multi
 - Node.js 20.19.0+
 - TypeScript 5.9+
 - `zod` 4.x (included as a dependency)
-- A configured LLM provider (AWS Bedrock, OpenAI, and Anthropic providers included via [`@genui-a3/providers`](./docs/PROVIDERS.md))
+- A configured LLM provider (AWS Bedrock, OpenAI, and Anthropic providers included via [`@genui/a3-bedrock`](./docs/PROVIDERS.md))
 
 ## Contributing
 

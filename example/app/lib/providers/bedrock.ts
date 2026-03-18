@@ -1,4 +1,4 @@
-import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+import { createBedrockProvider } from '@genui-a3/a3-bedrock'
 
 let _instance: ReturnType<typeof createBedrockProvider> | null = null
 

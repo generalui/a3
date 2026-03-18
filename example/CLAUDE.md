@@ -1,6 +1,6 @@
 # Example App
 
-Next.js example for @genui-a3/core. AI rules for this app (Claude Code and Cursor). Single source of truth; Cursor uses via symlink `.cursorrules` → this file.
+Next.js example for @genui/a3. AI rules for this app (Claude Code and Cursor). Single source of truth; Cursor uses via symlink `.cursorrules` → this file.
 
 ## Stack
 

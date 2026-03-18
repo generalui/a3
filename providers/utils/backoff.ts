@@ -1,4 +1,4 @@
-import type { BackoffConfig } from '@genui-a3/core'
+import type { BackoffConfig } from '@genui-a3/a3'
 
 /**
  * Calculates the backoff delay for a given retry attempt.

@@ -1,6 +1,6 @@
 # A3 Core Example
 
-This is a Next.js example application demonstrating how to use the `@genui-a3/core` package.
+This is a Next.js example application demonstrating how to use the `@genui/a3` package.
 
 ## Getting Started
 
@@ -18,7 +18,7 @@ cd example
 npm install
 ```
 
-The example app is configured to use the local `@genui-a3/core` package via the `file:` protocol in package.json.
+The example app is configured to use the local `@genui/a3` package via the `file:` protocol in package.json.
 
 1. Run the development server:
 
@@ -32,7 +32,7 @@ npm run dev
 
 This example demonstrates how to:
 
-- Install and import the `@genui-a3/core` package
+- Install and import the `@genui/a3` package
 - Register agents with the framework
 - Use the core agent orchestration functionality
 

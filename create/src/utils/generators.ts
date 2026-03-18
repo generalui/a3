@@ -27,6 +27,18 @@ export function generateProviderFiles(targetDir: string, config: ProviderConfig)
   lines.push('')
 
   fs.outputFileSync(path.join(providersDir, 'index.ts'), lines.join('\n'))
+
+  // Remove unselected provider packages from package.json
+  const pkgJsonPath = path.join(targetDir, 'package.json')
+  if (fs.existsSync(pkgJsonPath)) {
+    const pkg = fs.readJsonSync(pkgJsonPath) as Record<string, Record<string, string>>
+    for (const [key, meta] of Object.entries(PROVIDER_META)) {
+      if (!config.providers.includes(key) && pkg.dependencies?.[meta.npmPackage]) {
+        delete pkg.dependencies[meta.npmPackage]
+      }
+    }
+    fs.writeJsonSync(pkgJsonPath, pkg, { spaces: 2 })
+  }
 }
 
 export function generateEnvFile(targetDir: string, config: ProviderConfig): void {
@@ -66,5 +78,21 @@ export function scaffoldProject(templateDir: string, targetDir: string, projectN
   const gitignoreSrc = path.join(targetDir, '_gitignore')
   if (fs.existsSync(gitignoreSrc)) {
     fs.renameSync(gitignoreSrc, path.join(targetDir, '.gitignore'))
+  }
+
+  // Create .cursorrules symlink pointing to CLAUDE.md
+  // Using a fallback to copy if symlinks are not supported (e.g. Windows without admin)
+  try {
+    const cursorrulesPath = path.join(targetDir, '.cursorrules')
+    const claudeMdPath = path.join(targetDir, 'CLAUDE.md')
+    if (fs.existsSync(claudeMdPath)) {
+      fs.symlinkSync('CLAUDE.md', cursorrulesPath, 'file')
+    }
+  } catch {
+    try {
+      fs.copyFileSync(path.join(targetDir, 'CLAUDE.md'), path.join(targetDir, '.cursorrules'))
+    } catch {
+      // Ignore fallback errors
+    }
   }
 }

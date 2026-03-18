@@ -10,7 +10,7 @@ All three support blocking and streaming modes, model fallback, and structured o
 ### AWS Bedrock
 
 ```typescript
-import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+import { createBedrockProvider } from '@genui/a3-bedrock'
 
 const provider = createBedrockProvider({
   models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],
@@ -21,7 +21,7 @@ const provider = createBedrockProvider({
 ### Anthropic
 
 ```typescript
-import { createAnthropicProvider } from '@genui-a3/providers/anthropic'
+import { createAnthropicProvider } from '@genui/a3-anthropic'
 
 const provider = createAnthropicProvider({
   models: ['claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001'],
@@ -32,7 +32,7 @@ const provider = createAnthropicProvider({
 ### OpenAI
 
 ```typescript
-import { createOpenAIProvider } from '@genui-a3/providers/openai'
+import { createOpenAIProvider } from '@genui/a3-openai'
 
 const provider = createOpenAIProvider({
   models: ['gpt-4o', 'gpt-4o-mini'],
@@ -43,7 +43,7 @@ const provider = createOpenAIProvider({
 ### Use with A3
 
 ```typescript
-import { ChatSession, MemorySessionStore } from '@genui-a3/core'
+import { ChatSession, MemorySessionStore } from '@genui/a3'
 
 const session = new ChatSession({
   sessionId: 'user-123',
@@ -152,8 +152,8 @@ See the [Resilience documentation](./RESILIENCE.md) for configuration options an
 Each agent can override the session-level provider:
 
 ```typescript
-import { createOpenAIProvider } from '@genui-a3/providers/openai'
-import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+import { createOpenAIProvider } from '@genui/a3-openai'
+import { createBedrockProvider } from '@genui/a3-bedrock'
 
 // Session uses Bedrock by default
 const session = new ChatSession({
@@ -172,7 +172,7 @@ const premiumAgent = {
 
 ## Provider Interface
 
-All providers implement the `Provider` interface from `@genui-a3`:
+All providers implement the `Provider` interface from `@genui`:
 
 | Member | Description |
 |---|---|
@@ -183,35 +183,31 @@ All providers implement the `Provider` interface from `@genui-a3`:
 To create a custom provider, implement this interface and pass it to `ChatSession` or an individual agent.
 See [Creating a Custom Provider](./CUSTOM_PROVIDERS.md) for a step-by-step guide.
 
-## Exports
+## Packages
 
-This package uses [subpath exports](https://nodejs.org/api/packages.html#subpath-exports).
-Import from the specific provider entry point:
+Each provider is a separate npm package.
+Install the one(s) you need:
 
-```typescript
-// Correct
-import { createBedrockProvider } from '@genui-a3/providers/bedrock'
-import { createAnthropicProvider } from '@genui-a3/providers/anthropic'
-import { createOpenAIProvider } from '@genui-a3/providers/openai'
-
-// No bare import
-import { ... } from '@genui-a3/providers'
+```bash
+npm install @genui/a3-bedrock @genui/a3
+npm install @genui/a3-openai @genui/a3
+npm install @genui/a3-anthropic @genui/a3
 ```
 
-| Entry point | Export | Description |
+| Package | Export | Description |
 |---|---|---|
-| `@genui-a3/providers/bedrock` | `createBedrockProvider` | Factory function returning a Bedrock `Provider` |
-| `@genui-a3/providers/bedrock` | `BedrockProviderConfig` | TypeScript config interface |
-| `@genui-a3/providers/anthropic` | `createAnthropicProvider` | Factory function returning an Anthropic `Provider` |
-| `@genui-a3/providers/anthropic` | `AnthropicProviderConfig` | TypeScript config interface |
-| `@genui-a3/providers/openai` | `createOpenAIProvider` | Factory function returning an OpenAI `Provider` |
-| `@genui-a3/providers/openai` | `OpenAIProviderConfig` | TypeScript config interface |
+| `@genui/a3-bedrock` | `createBedrockProvider` | Factory function returning a Bedrock `Provider` |
+| `@genui/a3-bedrock` | `BedrockProviderConfig` | TypeScript config interface |
+| `@genui/a3-anthropic` | `createAnthropicProvider` | Factory function returning an Anthropic `Provider` |
+| `@genui/a3-anthropic` | `AnthropicProviderConfig` | TypeScript config interface |
+| `@genui/a3-openai` | `createOpenAIProvider` | Factory function returning an OpenAI `Provider` |
+| `@genui/a3-openai` | `OpenAIProviderConfig` | TypeScript config interface |
 
 ## Requirements
 
 - Node.js 20.19.0+
 - TypeScript 5.9+
-- `@genui-a3/core` (peer dependency)
+- `@genui/a3` (peer dependency)
 - **Bedrock**: AWS credentials configured in the environment
 - **Anthropic**: `ANTHROPIC_API_KEY` environment variable or `apiKey` config option
 - **OpenAI**: `OPENAI_API_KEY` environment variable or `apiKey` config option
