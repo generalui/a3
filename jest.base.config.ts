@@ -102,5 +102,8 @@ export const baseConfig: Config = {
     '<rootDir>/__tests__/.*/shared/',
     '<rootDir>/no_commit/',
   ],
+  modulePathIgnorePatterns: [
+    '<rootDir>/create/template/',
+  ],
   testTimeout: 30000,
 }
