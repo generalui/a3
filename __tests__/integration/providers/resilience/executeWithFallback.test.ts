@@ -1,5 +1,4 @@
-import { executeWithFallback } from '@providers/utils/executeWithFallback'
-
+import { executeWithFallback } from '@providers-utils/executeWithFallback'
 import { A3ResilienceError, A3TimeoutError } from '@errors/resilience'
 import { resolveResilienceConfig } from '@utils/resilience/defaults'
 import type { ResolvedResilienceConfig } from 'types/resilience'

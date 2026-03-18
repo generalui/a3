@@ -1,8 +1,8 @@
 import * as p from '@clack/prompts'
 
-import { detectAwsProfileRegion, detectAwsProfiles } from './aws'
-import { PROVIDER_META, type ProviderConfig } from './providers'
-import { normalizeKey, validateAnthropicKey, validateAwsCredentials, validateOpenAIKey } from './validation'
+import { detectAwsProfileRegion, detectAwsProfiles } from '@create-utils/aws'
+import { PROVIDER_META, type ProviderConfig } from '@create-utils/providers'
+import { normalizeKey, validateAnthropicKey, validateAwsCredentials, validateOpenAIKey } from '@create-utils/validation'
 
 function handleCancel<T>(value: T | symbol): asserts value is T {
   if (p.isCancel(value)) {
@@ -28,7 +28,9 @@ export async function promptProjectName(): Promise<string> {
 }
 
 async function promptAccessKeys(config: ProviderConfig): Promise<void> {
-  p.log.info('You\'ll need AWS access keys to authenticate with Bedrock.\n  Create or manage keys at: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html')
+  p.log.info(
+    "You'll need AWS access keys to authenticate with Bedrock.\n  Create or manage keys at: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
+  )
   const awsAccessKeyId = await p.text({
     message: 'AWS_ACCESS_KEY_ID:',
     validate(input) {
@@ -84,7 +86,8 @@ async function promptAnthropicConfig(config: ProviderConfig): Promise<void> {
     const anthropicApiKey = await p.password({
       message: 'Anthropic API key:',
       validate(input) {
-        if (!input) return 'API key is required (starts with sk-ant-...). Get one at https://console.anthropic.com/settings/keys'
+        if (!input)
+          return 'API key is required (starts with sk-ant-...). Get one at https://console.anthropic.com/settings/keys'
       },
     })
     handleCancel(anthropicApiKey)
@@ -144,7 +147,9 @@ async function promptDetectProfile(config: ProviderConfig): Promise<string | nul
 
   while (true) {
     p.log.warn('No AWS profiles found in ~/.aws/credentials')
-    p.log.info('Set up a profile with: aws configure\n  Guide: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html')
+    p.log.info(
+      'Set up a profile with: aws configure\n  Guide: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html',
+    )
 
     const action = await p.select({
       message: 'How would you like to proceed?',
@@ -215,15 +220,12 @@ async function promptBedrockConfig(config: ProviderConfig): Promise<void> {
     }
     firstAttempt = false
 
-    const currentDetectedRegion = config.bedrockAuthMode === 'profile'
-      ? detectAwsProfileRegion(config.awsProfile!)
-      : undefined
+    const currentDetectedRegion =
+      config.bedrockAuthMode === 'profile' ? detectAwsProfileRegion(config.awsProfile!) : undefined
 
     const awsRegion = await p.text({
       message: 'AWS region:',
-      ...(currentDetectedRegion
-        ? { initialValue: currentDetectedRegion }
-        : { placeholder: 'us-east-1' }),
+      ...(currentDetectedRegion ? { initialValue: currentDetectedRegion } : { placeholder: 'us-east-1' }),
       validate(input) {
         if (!input) return 'AWS region is required.'
       },
@@ -234,9 +236,15 @@ async function promptBedrockConfig(config: ProviderConfig): Promise<void> {
     const spin = p.spinner()
     spin.start('Validating AWS Bedrock credentials...')
 
-    const credentialInput = config.bedrockAuthMode === 'profile'
-      ? { mode: 'profile' as const, profile: config.awsProfile!, region: config.awsRegion }
-      : { mode: 'keys' as const, accessKeyId: config.awsAccessKeyId!, secretAccessKey: config.awsSecretAccessKey!, region: config.awsRegion }
+    const credentialInput =
+      config.bedrockAuthMode === 'profile'
+        ? { mode: 'profile' as const, profile: config.awsProfile!, region: config.awsRegion }
+        : {
+            mode: 'keys' as const,
+            accessKeyId: config.awsAccessKeyId!,
+            secretAccessKey: config.awsSecretAccessKey!,
+            region: config.awsRegion,
+          }
 
     const result = await validateAwsCredentials(credentialInput)
     spin.stop(result.valid ? 'AWS Bedrock credentials verified' : 'AWS Bedrock validation failed')

@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { createOpenAIProvider } from '@providers/openai/index'
-import type { ProviderRequest } from 'src/types/provider'
+import { createOpenAIProvider } from '@providers-openai/index'
+import type { ProviderRequest } from 'types/provider'
 import { EventType } from '@ag-ui/client'
 
 // Mock AI SDK

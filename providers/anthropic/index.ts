@@ -11,8 +11,8 @@ import {
   type ResilienceConfig,
   type ResolvedResilienceConfig,
 } from '@genui-a3/a3'
-import { processAnthropicStream } from './streamProcessor'
-import { executeWithFallback } from '@providers/utils/executeWithFallback'
+import { processAnthropicStream } from '@providers-anthropic/streamProcessor'
+import { executeWithFallback } from '@providers-utils/executeWithFallback'
 
 /**
  * Configuration for creating an Anthropic provider.

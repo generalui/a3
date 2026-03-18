@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { Agent } from '@genui-a3/a3'
-import { State } from './greeting'
+import { State } from '@agents/greeting'
 
 /**
  * Sample age agent that gets the user's age.
