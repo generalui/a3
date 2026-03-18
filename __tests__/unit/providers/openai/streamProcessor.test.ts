@@ -1,6 +1,6 @@
 import { EventType } from '@ag-ui/client'
 import { z } from 'zod'
-import { processOpenAIStream } from '@providers/openai/streamProcessor'
+import { processOpenAIStream } from '@providers-openai/streamProcessor'
 import type { StreamTextResult, ToolSet } from 'ai'
 
 /** Helper: collect all events from an async generator */

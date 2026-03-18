@@ -16,9 +16,9 @@ import {
   type ResilienceConfig,
   type ResolvedResilienceConfig,
 } from '@genui-a3/a3'
-import { mergeSequentialMessages } from './messageMerger'
-import { processBedrockStream } from './streamProcessor'
-import { executeWithFallback } from '@providers/utils/executeWithFallback'
+import { mergeSequentialMessages } from '@providers-bedrock/messageMerger'
+import { processBedrockStream } from '@providers-bedrock/streamProcessor'
+import { executeWithFallback } from '@providers-utils/executeWithFallback'
 
 const RESPONSE_FORMAT_INSTRUCTIONS = `
 

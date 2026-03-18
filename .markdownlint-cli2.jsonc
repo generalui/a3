@@ -17,5 +17,9 @@
     "**/SPECS.md",
     "**/.terraform/**",
     "**/.venv/**",
+    "**/CLAUDE.md",
+    "**/.cusorrules",
+    "**/.cursor/**",
+    ".github/copilot-instructions.md",
   ],
 }

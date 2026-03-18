@@ -1,6 +1,6 @@
 {
   "name": "@genui-a3/a3",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "description": "Core package for the A3 agentic backend framework",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -41,14 +41,20 @@
     "lint:markdown": "markdownlint-cli2 '**/*.md'",
     "lint:project": "eslint './**/*.{ts,tsx}' --max-warnings=0 --cache --cache-location .eslintcache",
     "prepublishOnly": "npm run clean && npm run build",
-    "test": "run-p test:unit",
+    "test": "run-p test:unit test:integration",
     "test:coverage": "run-p test:unit:coverage",
     "test:integration": "jest --config jest.integration.config.ts",
     "test:integration:watch": "npm run test:integration -- --watch",
     "test:unit": "jest __tests__/unit",
+    "test:unit:create": "jest __tests__/unit/create --passWithNoTests",
+    "test:unit:create:coverage": "npm run test:unit:create -- --coverage --collectCoverageFrom='create/**/*.{ts,tsx}'",
+    "test:unit:core": "jest __tests__/unit/src",
+    "test:unit:core:coverage": "npm run test:unit:core -- --coverage --collectCoverageFrom='src/**/*.{ts,tsx}'",
     "test:unit:coverage": "npm run test:unit -- --coverage",
-    "test:unit:watch": "npm run test:unit -- --watch",
-    "test:watch": "jest --watch"
+    "test:unit:providers": "jest __tests__/unit/providers",
+    "test:unit:providers:coverage": "npm run test:unit:providers -- --coverage --collectCoverageFrom='providers/**/*.{ts,tsx}'",
+    "test:unit:watch": "jest __tests__/unit --watch",
+    "test:watch": "run-p test:unit:watch test:integration:watch"
   },
   "keywords": [
     "agentic",

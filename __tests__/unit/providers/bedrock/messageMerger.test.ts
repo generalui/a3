@@ -1,5 +1,5 @@
-import { mergeSequentialMessages } from '@providers/bedrock/messageMerger'
-import type { ProviderMessage } from 'src/types/provider'
+import { mergeSequentialMessages } from '@providers-bedrock/messageMerger'
+import type { ProviderMessage } from 'types/provider'
 
 describe('mergeSequentialMessages', () => {
   it('should return empty array for empty input', () => {

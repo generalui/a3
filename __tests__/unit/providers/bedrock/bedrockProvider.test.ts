@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createBedrockProvider } from '@providers/bedrock/index'
+import { createBedrockProvider } from '@providers-bedrock/index'
 import type { ProviderRequest } from 'types/provider'
 import { A3ResilienceError } from '@errors/resilience'
 import { EventType } from '@ag-ui/client'
