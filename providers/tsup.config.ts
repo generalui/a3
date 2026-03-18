@@ -1,11 +1,9 @@
 import { defineConfig } from 'tsup'
+import path from 'path'
 
 export default defineConfig({
-  entry: {
-    'bedrock/index': 'bedrock/index.ts',
-    'openai/index': 'openai/index.ts',
-    'anthropic/index': 'anthropic/index.ts',
-  },
+  entry: { index: 'index.ts' },
+  outDir: 'dist',
   format: ['cjs', 'esm'],
   dts: true,
   sourcemap: true,
@@ -13,7 +11,11 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   target: 'node20',
-  outDir: 'dist',
   tsconfig: './tsconfig.json',
-  external: ['@genui-a3/core'],
+  external: ['@genui-a3/a3'],
+  esbuildOptions(options) {
+    options.alias = {
+      '@providers/utils': path.resolve(process.cwd(), '..', 'utils'),
+    }
+  },
 })

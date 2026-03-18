@@ -13,7 +13,7 @@ const templateDir = path.resolve(rootDir, 'template')
 
 const EXCLUDE = ['node_modules', '.next', 'tsconfig.tsbuildinfo', '.env', '.env.example', 'README.md', '.cursorrules']
 
-const GENUI_PACKAGES = ['@genui-a3/core', '@genui-a3/providers']
+const GENUI_PACKAGES = ['@genui-a3/a3', '@genui-a3/a3-bedrock', '@genui-a3/a3-openai', '@genui-a3/a3-anthropic']
 
 // --- Helpers ---
 
@@ -111,7 +111,7 @@ if (fs.existsSync(docsDir)) {
 // Write a simple README.md
 const readme = `# A3 App
 
-Built with [GenUI A3](https://www.npmjs.com/package/@genui-a3/core).
+Built with [GenUI A3](https://www.npmjs.com/package/@genui/a3).
 
 ## Documentation
 
@@ -127,7 +127,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Learn More
 
-- [A3 Core Documentation](https://www.npmjs.com/package/@genui-a3/core)
+- [A3 Core Documentation](https://www.npmjs.com/package/@genui/a3)
 - [Next.js Documentation](https://nextjs.org/docs)
 `
 

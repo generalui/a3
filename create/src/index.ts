@@ -25,7 +25,7 @@ const BANNER = `
 
 function installDependencies(targetDir: string, projectName: string): void {
   try {
-    execSync('npm install', { cwd: targetDir, stdio: 'inherit' })
+    execSync('npm install --legacy-peer-deps', { cwd: targetDir, stdio: 'inherit' })
   } catch {
     p.log.error('Failed to install dependencies. You can try manually:')
     p.log.info(`  cd ${projectName}\n  npm install`)

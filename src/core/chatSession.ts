@@ -22,7 +22,7 @@ import { MemorySessionStore } from '@stores/memoryStore'
  *
  * @example
  * ```typescript
- * import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+ * import { createBedrockProvider } from '@genui/a3-bedrock'
  *
  * const provider = createBedrockProvider({
  *   models: ['us.anthropic.claude-sonnet-4-5-20250929-v1:0'],

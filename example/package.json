@@ -1,5 +1,5 @@
 {
-  "name": "@genui-a3/example",
+  "name": "@genui/example",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,8 +12,10 @@
     "@ag-ui/encoder": "0.0.45",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
-    "@genui-a3/core": "file:..",
-    "@genui-a3/providers": "file:../providers",
+    "@genui-a3/a3": "file:..",
+    "@genui-a3/a3-bedrock": "file:../providers/bedrock",
+    "@genui-a3/a3-openai": "file:../providers/openai",
+    "@genui-a3/a3-anthropic": "file:../providers/anthropic",
     "@mui/icons-material": "7.3.7",
     "@mui/material": "7.3.7",
     "next": "16.1.6",

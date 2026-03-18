@@ -3,7 +3,7 @@
 The fastest way to get started with A3 is using the interactive CLI. It scaffolds a full Next.js application, configures your LLM providers, and installs dependencies.
 
 ```bash
-npx @genui-a3/create@latest
+npx @genui/a3-create@latest
 ```
 
 Follow the prompts to name your project and provide your API keys. Once finished:
@@ -13,7 +13,7 @@ cd your-project-name
 npm run dev
 ```
 
-For more details on the CLI, see the [@genui-a3/create README](https://www.npmjs.com/package/@genui-a3/create).
+For more details on the CLI, see the [@genui/a3-create README](https://www.npmjs.com/package/@genui/a3-create).
 
 ---
 
@@ -24,14 +24,14 @@ If you are adding A3 to an existing project or prefer a manual setup, follow the
 ### Install
 
 ```bash
-npm install @genui-a3/core
+npm install @genui/a3
 ```
 
 ## Define an agent
 
 ```typescript
 import { z } from 'zod'
-import { Agent, BaseState } from '@genui-a3/core'
+import { Agent, BaseState } from '@genui/a3'
 
 interface State extends BaseState {
   userName?: string
@@ -56,8 +56,8 @@ export const greetingAgent: Agent<State> = {
 ## Register and run
 
 ```typescript
-import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
-import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui/a3'
+import { createBedrockProvider } from '@genui/a3-bedrock'
 
 const registry = AgentRegistry.getInstance<State>()
 registry.register(greetingAgent)
@@ -90,7 +90,7 @@ Here's a pattern with three agents that route between each other, demonstrating 
 
 ```typescript
 import { z } from 'zod'
-import { Agent, BaseState } from '@genui-a3/core'
+import { Agent, BaseState } from '@genui/a3'
 
 interface AppState extends BaseState {
   userName?: string
@@ -148,8 +148,8 @@ const supportAgent: Agent<AppState> = {
 ### Wire them up
 
 ```typescript
-import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/core'
-import { createBedrockProvider } from '@genui-a3/providers/bedrock'
+import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui/a3'
+import { createBedrockProvider } from '@genui/a3-bedrock'
 
 const registry = AgentRegistry.getInstance<AppState>()
 registry.register([greetingAgent, authAgent, supportAgent])

@@ -3,12 +3,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'src/**'
-      - 'example/**'
-      - 'package.json'
-      - 'create/**'
-      - 'providers/**'
   workflow_dispatch:
 
 permissions:
@@ -17,31 +11,10 @@ permissions:
 
 jobs:
   publish:
-    name: Publish
+    name: Publish All Packages
     runs-on: ubuntu-latest
     environment:
       name: main
-    strategy:
-      matrix:
-        include:
-          - package: lib
-            path: .
-            makeLatest: true
-            name: '@genui-a3/core'
-            files: |
-              src/**
-              example/**
-              package.json
-          - package: create
-            path: create
-            makeLatest: false
-            name: '@genui-a3/create'
-            files: create/**
-          - package: providers
-            path: providers
-            makeLatest: false
-            name: '@genui-a3/providers'
-            files: providers/**
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -49,48 +22,45 @@ jobs:
           fetch-depth: 0
           submodules: false
 
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v44
-        with:
-          files: ${{ matrix.files }}
-
-      - name: Version and Release Setup
-        run: |
-          if [ "${{ matrix.path }}" = "." ]; then
-            version=$(cat package.json | jq -r '.version')
-          else
-            version=$(cat ${{ matrix.path }}/package.json | jq -r '.version')
-          fi
-          version_tag="${{ matrix.package }}-${version}"
-
-          echo "version=${version}" >> $GITHUB_OUTPUT
-          echo "version_tag=${version_tag}" >> $GITHUB_OUTPUT
-
-          echo "::group::Version Tag"
-          echo "Version Tag: ${version_tag}"
-          echo "::endgroup::"
-        shell: bash
+      - name: Read version
         id: version
+        run: |
+          VERSION=$(jq -r .version package.json)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=v${VERSION}" >> $GITHUB_OUTPUT
+          echo "Publishing version: ${VERSION}"
+        shell: bash
 
-      - name: Check for Tag
+      - name: Check tag and changes
         id: check_tag
         run: |
-          if [ "${{ steps.changed-files.outputs.any_changed }}" != "true" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
-              echo "No files changed for ${{ matrix.package }}, skipping publish."
+          TAG="${{ steps.version.outputs.tag }}"
+
+          if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
+            echo "Tag ${TAG} already exists — version has not been bumped."
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Find the most recent v* tag to diff against
+          LATEST_TAG=$(git tag --sort=-v:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" | head -n 1 || true)
+
+          if [ -n "$LATEST_TAG" ]; then
+            CHANGES=$(git diff --name-only "$LATEST_TAG"..HEAD -- \
+              src/ providers/ create/ package.json example/)
+
+            if [ -z "$CHANGES" ]; then
+              echo "No package-relevant changes since ${LATEST_TAG}, skipping."
               echo "skip=true" >> $GITHUB_OUTPUT
               exit 0
+            fi
+
+            echo "::group::Changed files since ${LATEST_TAG}"
+            echo "$CHANGES"
+            echo "::endgroup::"
           fi
 
-          tag="${{ steps.version.outputs.version_tag }}"
-
-          if git show-ref --tags --verify --quiet "refs/tags/${tag}"; then
-              echo "The tag ${tag} already exists, skipping publish for ${{ matrix.package }}."
-              echo "skip=true" >> $GITHUB_OUTPUT
-          else
-              echo "Proceeding with publish for ${{ matrix.package }}."
-              echo "skip=false" >> $GITHUB_OUTPUT
-          fi
+          echo "skip=false" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Setup Node JS
@@ -99,82 +69,86 @@ jobs:
         with:
           node-version-file: .tool-versions
           cache: 'npm'
-          cache-dependency-path: ${{ matrix.path == 'create' && 'create/package-lock.json' || 'package-lock.json' }}
+          cache-dependency-path: |
+            package-lock.json
+            create/package-lock.json
 
-      - name: Install Dependencies
+      - name: Install and build
         if: steps.check_tag.outputs.skip != 'true'
         run: |
-          if [ "${{ matrix.path }}" = "create" ]; then
-            cd create && npm ci
-          else
-            npm ci
-            if [ "${{ matrix.path }}" = "providers" ]; then
-              npm run build:core
-            fi
-          fi
+          npm ci
+          npm run build:core
+          npm run build:providers
+          cd create && npm ci && npm run build && cd ..
         shell: bash
 
-      - name: Push new tag
+      - name: Publish all packages
         if: steps.check_tag.outputs.skip != 'true'
-        id: image_tags
         run: |
-          version_tag="${{ steps.version.outputs.version_tag }}"
+          VERSION="${{ steps.version.outputs.version }}"
 
-          echo "new_tag=${version_tag}" >> $GITHUB_OUTPUT
-
-          echo "::group::New Tag"
-          echo "New Tag: ${version_tag}"
+          echo "::group::Publish @genui-a3/a3"
+          npm publish --access public
           echo "::endgroup::"
 
-          git tag "${version_tag}"
-          git push origin "${version_tag}"
+          for dir in providers/bedrock providers/openai providers/anthropic; do
+            PACKAGE_NAME=$(jq -r .name "$dir/package.json")
+            echo "::group::Publish ${PACKAGE_NAME}"
+            cd "$dir"
+            npm version "$VERSION" --no-git-tag-version --allow-same-version
+            npm pkg set "peerDependencies.@genui-a3/a3=>=${VERSION}"
+            npm publish --access public
+            cd -
+            echo "::endgroup::"
+          done
 
-          # Get all tags sorted by version, filtered by the package prefix
-          previous_tag=$(git tag --sort=-v:refname | grep -E "^${{ matrix.package }}-[0-9]+\.[0-9]+\.[0-9]+$" | sed -n '2p')
+          echo "::group::Publish @genui-a3/a3-create"
+          cd create
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          npm publish --access public
+          cd -
+          echo "::endgroup::"
+        shell: bash
 
+      - name: Push tag
+        if: steps.check_tag.outputs.skip != 'true'
+        id: push_tag
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          git tag "${TAG}"
+          git push origin "${TAG}"
+          echo "new_tag=${TAG}" >> $GITHUB_OUTPUT
+
+          previous_tag=$(git tag --sort=-v:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" | sed -n '2p')
           echo "previous_tag=${previous_tag}" >> $GITHUB_OUTPUT
-
-          echo "::group::Previous Tag"
-          echo "Previous Tag: ${previous_tag}"
-          echo "::endgroup::"
         shell: bash
 
-      - name: Create/Update CHANGELOG
+      - name: Create changelog
         if: steps.check_tag.outputs.skip != 'true'
         id: changelog
         uses: requarks/changelog-action@v1
         with:
           excludeTypes: ''
-          fromTag: ${{ steps.image_tags.outputs.previous_tag != '' && steps.image_tags.outputs.new_tag || '' }}
+          fromTag: ${{ steps.push_tag.outputs.previous_tag != '' && steps.push_tag.outputs.new_tag || '' }}
           includeInvalidCommits: true
-          tag: ${{ steps.image_tags.outputs.previous_tag == '' && steps.image_tags.outputs.new_tag || '' }}
-          toTag: ${{ steps.image_tags.outputs.previous_tag != '' && steps.image_tags.outputs.previous_tag || '' }}
+          tag: ${{ steps.push_tag.outputs.previous_tag == '' && steps.push_tag.outputs.new_tag || '' }}
+          toTag: ${{ steps.push_tag.outputs.previous_tag != '' && steps.push_tag.outputs.previous_tag || '' }}
           token: ${{ github.token }}
           writeToFile: false
-
-      - name: Publish to NPM
-        if: steps.check_tag.outputs.skip != 'true'
-        run: |
-          if [ "${{ matrix.path }}" = "." ]; then
-            npm publish --access public
-          else
-            cd ${{ matrix.path }} && npm publish --access public
-          fi
-        shell: bash
 
       - name: Create release
         if: steps.check_tag.outputs.skip != 'true'
         uses: ncipollo/release-action@v1
         with:
           body: ${{ steps.changelog.outputs.changes }}
-          makeLatest: ${{ matrix.makeLatest }}
-          name: '${{ matrix.name }} v${{ steps.version.outputs.version }}'
+          makeLatest: true
+          name: 'v${{ steps.version.outputs.version }}'
           prerelease: false
           skipIfReleaseExists: true
-          tag: ${{ steps.image_tags.outputs.new_tag }}
+          tag: ${{ steps.push_tag.outputs.new_tag }}
 
       - name: Clean up on failure
-        if: ${{ failure() && steps.image_tags.outputs.new_tag }}
+        if: ${{ failure() && steps.push_tag.outputs.new_tag }}
         run: |
-          git push --delete origin "${{ steps.image_tags.outputs.new_tag }}"
+          git push --delete origin "${{ steps.push_tag.outputs.new_tag }}"
         shell: bash

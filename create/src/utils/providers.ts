@@ -10,8 +10,18 @@ export interface ProviderConfig {
   awsRegion?: string
 }
 
-export const PROVIDER_META: Record<string, { label: string; exportName: string; file: string }> = {
-  openai: { label: 'OpenAI', exportName: 'getOpenAIProvider', file: 'openai.ts' },
-  bedrock: { label: 'AWS Bedrock', exportName: 'getBedrockProvider', file: 'bedrock.ts' },
-  anthropic: { label: 'Anthropic', exportName: 'getAnthropicProvider', file: 'anthropic.ts' },
+export const PROVIDER_META: Record<string, { label: string; exportName: string; file: string; npmPackage: string }> = {
+  openai: { label: 'OpenAI', exportName: 'getOpenAIProvider', file: 'openai.ts', npmPackage: '@genui-a3/a3-openai' },
+  bedrock: {
+    label: 'AWS Bedrock',
+    exportName: 'getBedrockProvider',
+    file: 'bedrock.ts',
+    npmPackage: '@genui-a3/a3-bedrock',
+  },
+  anthropic: {
+    label: 'Anthropic',
+    exportName: 'getAnthropicProvider',
+    file: 'anthropic.ts',
+    npmPackage: '@genui-a3/a3-anthropic',
+  },
 }

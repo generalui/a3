@@ -1,7 +1,7 @@
 import { ConverseStreamOutput } from '@aws-sdk/client-bedrock-runtime'
 import { EventType } from '@ag-ui/client'
 import { ZodType } from 'zod'
-import type { AgentId, StreamEvent, BaseState } from '@genui-a3/core'
+import type { AgentId, StreamEvent, BaseState } from '@genui-a3/a3'
 
 export async function* processBedrockStream<TState extends BaseState = BaseState>(
   rawStream: AsyncIterable<ConverseStreamOutput>,

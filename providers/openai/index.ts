@@ -10,7 +10,7 @@ import {
   type StreamEvent,
   type ResilienceConfig,
   type ResolvedResilienceConfig,
-} from '@genui-a3/core'
+} from '@genui-a3/a3'
 import { processOpenAIStream } from './streamProcessor'
 import { executeWithFallback } from '@providers/utils/executeWithFallback'
 

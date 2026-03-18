@@ -1,6 +1,6 @@
 {
-  "name": "@genui-a3/core",
-  "version": "0.1.19",
+  "name": "@genui-a3/a3",
+  "version": "0.1.20",
   "description": "Core package for the A3 agentic backend framework",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -19,19 +19,21 @@
     "docs"
   ],
   "workspaces": [
-    "providers",
+    "providers/bedrock",
+    "providers/openai",
+    "providers/anthropic",
     "example",
     "create"
   ],
   "scripts": {
     "build": "run-s build:core build:providers build:example",
     "build:core": "tsup",
-    "build:providers": "npm run build -w providers",
+    "build:providers": "npm run build -w @genui-a3/a3-bedrock -w @genui-a3/a3-openai -w @genui-a3/a3-anthropic",
     "build:example": "npm run build -w example",
     "clean": "rm -rf dist",
     "dev": "run-p dev:core dev:providers example:dev",
     "dev:core": "tsup --watch",
-    "dev:providers": "npm run dev -w providers",
+    "dev:providers": "npm run dev -w @genui-a3/a3-bedrock -w @genui-a3/a3-openai -w @genui-a3/a3-anthropic",
     "example:dev": "cd example && npm run dev",
     "example:setup": "cd example && npm i",
     "example:start": "cd example && npm run start",

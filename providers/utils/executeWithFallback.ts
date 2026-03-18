@@ -4,7 +4,7 @@ import {
   DEFAULT_RESILIENCE_CONFIG,
   type ResilienceErrorEntry,
   type ResolvedResilienceConfig,
-} from '@genui-a3/core'
+} from '@genui-a3/a3'
 import { calculateBackoff, sleep } from './backoff'
 
 /**
@@ -45,7 +45,11 @@ async function attemptAction<T>(
   }
 }
 
-function checkTotalTimeout(totalAbort: AbortController | undefined, timeoutMs: number | undefined, errors: ResilienceErrorEntry[]): void {
+function checkTotalTimeout(
+  totalAbort: AbortController | undefined,
+  timeoutMs: number | undefined,
+  errors: ResilienceErrorEntry[],
+): void {
   if (totalAbort?.signal.aborted) {
     throw new A3TimeoutError(`Total timeout of ${timeoutMs}ms exceeded`, errors)
   }

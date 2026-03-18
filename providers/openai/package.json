@@ -1,0 +1,46 @@
+{
+  "name": "@genui-a3/a3-openai",
+  "version": "0.0.1",
+  "description": "OpenAI provider for the A3 agentic framework",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup --config ../tsup.config.ts",
+    "dev": "tsup --config ../tsup.config.ts --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "a3",
+    "providers",
+    "openai",
+    "ai",
+    "llm"
+  ],
+  "author": "GenUI <https://genui.com>",
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@genui-a3/a3": ">=0.0.1"
+  },
+  "dependencies": {
+    "@ag-ui/client": "0.0.47",
+    "@ai-sdk/openai": "^3.0.41",
+    "ai": "^6.0.116",
+    "zod": "4.3.6"
+  }
+}

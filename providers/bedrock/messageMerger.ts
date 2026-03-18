@@ -1,5 +1,5 @@
 import { Message as BedrockMessage } from '@aws-sdk/client-bedrock-runtime'
-import type { ProviderMessage } from '@genui-a3/core'
+import type { ProviderMessage } from '@genui-a3/a3'
 
 /**
  * Converts provider-agnostic messages to Bedrock format, merging sequential same-role messages.

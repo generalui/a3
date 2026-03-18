@@ -1,11 +1,11 @@
-# @genui-a3/create
+# @genui/a3-create
 
-Scaffold a new [A3](https://www.npmjs.com/package/@genui-a3/core) agentic app in seconds.
+Scaffold a new [A3](https://www.npmjs.com/package/@genui/a3) agentic app in seconds.
 
 ## Quick Start
 
 ```bash
-npx @genui-a3/create@latest
+npx @genui/a3-create@latest
 ```
 
 This starts an **interactive session** that will:
@@ -32,7 +32,7 @@ A fully configured Next.js application with:
 - **Chat interface** — conversational UI backed by A3 agents
 - **Streaming responses** — real-time streamed agent output
 - **AG-UI protocol support** — compatible with the [AG-UI](https://docs.ag-ui.com) standard
-- **Agent registration** — define and wire up custom agents using `@genui-a3/core`
+- **Agent registration** — define and wire up custom agents using `@genui/a3`
 - **Material UI** — pre-configured theming with MUI components
 - **TypeScript** — strict type-checking out of the box
 
@@ -57,10 +57,10 @@ The CLI guides you through setting up your LLM providers and authentication duri
 
 ```bash
 # Interactive — prompts for a project name
-npx @genui-a3/create@latest
+npx @genui/a3-create@latest
 
 # Non-interactive — pass the name directly
-npx @genui-a3/create@latest my-app
+npx @genui/a3-create@latest my-app
 ```
 
 The CLI will not overwrite a non-empty directory.
@@ -116,7 +116,7 @@ npx --package=/absolute/path/to/genui-a3-create-0.x.x.tgz create-genui-a3
 
 ## Related
 
-- [@genui-a3/core](https://www.npmjs.com/package/@genui-a3/core) — the core A3 agentic framework that powers scaffolded apps
+- [@genui/a3](https://www.npmjs.com/package/@genui/a3) — the core A3 agentic framework that powers scaffolded apps
 
 ## License
 

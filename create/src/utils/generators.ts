@@ -27,6 +27,18 @@ export function generateProviderFiles(targetDir: string, config: ProviderConfig)
   lines.push('')
 
   fs.outputFileSync(path.join(providersDir, 'index.ts'), lines.join('\n'))
+
+  // Remove unselected provider packages from package.json
+  const pkgJsonPath = path.join(targetDir, 'package.json')
+  if (fs.existsSync(pkgJsonPath)) {
+    const pkg = fs.readJsonSync(pkgJsonPath) as Record<string, Record<string, string>>
+    for (const [key, meta] of Object.entries(PROVIDER_META)) {
+      if (!config.providers.includes(key) && pkg.dependencies?.[meta.npmPackage]) {
+        delete pkg.dependencies[meta.npmPackage]
+      }
+    }
+    fs.writeJsonSync(pkgJsonPath, pkg, { spaces: 2 })
+  }
 }
 
 export function generateEnvFile(targetDir: string, config: ProviderConfig): void {

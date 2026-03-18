@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { Agent, BaseState } from '@genui-a3/core'
+import { Agent, BaseState } from '@genui-a3/a3'
 
 /**
  * Consumer defines their GLOBAL state extending BaseState.

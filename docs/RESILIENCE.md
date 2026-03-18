@@ -39,7 +39,7 @@ With zero configuration, every provider gets:
 | `timeout.totalTimeoutMs` | `undefined` (no limit) |
 | `isRetryableError` | Built-in classifier |
 
-These defaults are exported as `DEFAULT_RESILIENCE_CONFIG` from `@genui-a3/core`.
+These defaults are exported as `DEFAULT_RESILIENCE_CONFIG` from `@genui/a3`.
 
 ## Configuration examples
 
@@ -156,7 +156,7 @@ Thrown when every model has failed.
 Contains an `errors` array with one entry per failed attempt.
 
 ```typescript
-import { A3ResilienceError } from '@genui-a3/core'
+import { A3ResilienceError } from '@genui/a3'
 
 try {
   await provider.sendRequest(request)
@@ -181,7 +181,7 @@ Thrown when `totalTimeoutMs` is exceeded.
 Extends `A3ResilienceError`, so it includes the same `errors` array and can be caught by either type.
 
 ```typescript
-import { A3TimeoutError, A3ResilienceError } from '@genui-a3/core'
+import { A3TimeoutError, A3ResilienceError } from '@genui/a3'
 
 try {
   await provider.sendRequest(request)
