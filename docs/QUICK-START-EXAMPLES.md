@@ -48,8 +48,7 @@ export const greetingAgent: Agent<State> = {
   outputSchema: z.object({
     userName: z.string().optional(),
   }),
-  transition: (_state, goalAchieved) =>
-    goalAchieved ? 'end' : 'greeting',
+  // `transition` is optional. When omitted, the agent stays active by default
 }
 ```
 
@@ -140,8 +139,7 @@ const supportAgent: Agent<AppState> = {
   outputSchema: z.object({
     issueCategory: z.string().optional(),
   }),
-  transition: (_state, goalAchieved) =>
-    goalAchieved ? 'end' : 'support',
+  // `transition` is optional. If omitted, the flow of the interaction will stay in this agent.
 }
 ```
 
@@ -195,3 +193,5 @@ Notice that:
 - **State persists across agents**: `userName` set by the greeting agent is available to auth and support
 - **Agent chaining is automatic**: when greeting completes, auth starts in the same request
 - **Each agent has its own prompt and schema**: they extract different data but share the same state
+
+For non-deterministic routing (LLM-driven agent selection), see [Transitions](./TRANSITIONS.md#non-deterministic-agentid).
