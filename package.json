@@ -1,7 +1,7 @@
 {
   "name": "@genui-a3/a3",
-  "version": "0.1.24",
-  "description": "Core package for the A3 agentic backend framework",
+  "version": "0.1.25",
+  "description": "Predictable, governable multi-agent orchestration for TypeScript",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -57,13 +57,22 @@
     "test:watch": "run-p test:unit:watch test:integration:watch"
   },
   "keywords": [
-    "agentic",
     "ai",
-    "aaa",
-    "a3",
+    "agents",
+    "multi-agent",
+    "orchestration",
+    "llm",
+    "chatbot",
+    "typescript",
+    "zod",
+    "structured-output",
+    "bedrock",
+    "openai",
+    "anthropic",
+    "agentic",
     "framework",
-    "genui",
-    "backend"
+    "a3",
+    "genui"
   ],
   "author": "GenUI <https://genui.com>",
   "contributors": [
@@ -83,7 +92,7 @@
       "name": "Jon Ryser"
     }
   ],
-  "license": "ISC",
+  "license": "MIT",
   "homepage": "https://genui.com",
   "repository": {
     "type": "git",

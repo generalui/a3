@@ -108,29 +108,8 @@ if (fs.existsSync(docsDir)) {
   console.warn('Warning: docs/ directory not found, skipping documentation copy.')
 }
 
-// Write a simple README.md
-const readme = `# A3 App
-
-Built with [GenUI A3](https://www.npmjs.com/package/@genui/a3).
-
-## Documentation
-
-Local documentation is available in the [\`./docs\`](./docs) folder. Check there for concepts, recipes, and API reference!
-
-## Getting Started
-
-\`\`\`bash
-npm run dev
-\`\`\`
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Learn More
-
-- [A3 Core Documentation](https://www.npmjs.com/package/@genui/a3)
-- [Next.js Documentation](https://nextjs.org/docs)
-`
-
+// Write README.md from template source file
+const readme = fs.readFileSync(path.join(__dirname, 'README.template.md'), 'utf-8')
 fs.writeFileSync(path.join(templateDir, 'README.md'), readme)
 console.log('Wrote template README.md')
 
