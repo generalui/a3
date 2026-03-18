@@ -108,9 +108,10 @@ export const baseConfig: Config = {
   ],
   coverageThreshold: {
     global: {
-      functions: 2,
-      lines: 4,
-      statements: 4,
+      branches: 50,
+      functions: 50,
+      lines: 50,
+      statements: 50,
     },
   },
   verbose: true,
