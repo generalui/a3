@@ -46,7 +46,6 @@ Scaffold a new project:
 # Fastest way to start — scaffolds a full Next.js app
 npx @genui/a3-create@latest my-app
 cd my-app
-npm install
 ```
 
 Or add A3 to an existing project:

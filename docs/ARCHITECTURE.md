@@ -7,7 +7,7 @@
 │                      Your Application                        │
 └─────────────────────────┬────────────────────────────────────┘
                           │                          ▲
-                .send(message)              ChatResponse
+                   .send(message)              ChatResponse
                           │              { responseMessage,
                           │                state, goalAchieved }
                           ▼                          │
@@ -36,7 +36,7 @@
 │                                                              │
 └───────────┬──────────────────────────────────────────────────┘
             │                                  ▲
-            │ generateResponse            │ { chatbotMessage,
+            │      generateResponse            │ { chatbotMessage,
             │   ({ agent, sessionData })       │   newState,
             │                                  │   nextAgentId }
             ▼                                  │
