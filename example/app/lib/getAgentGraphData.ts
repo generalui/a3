@@ -1,4 +1,5 @@
 import { agentRegistry } from '@agents/registry'
+import { getTransitionTargetMap } from './parseTransitionTargets'
 
 export type AgentInfo = {
   id: string
@@ -9,10 +10,14 @@ export type AgentInfo = {
 /**
  * Returns registered agents with transition metadata for the AgentGraph visualization component.
  * Caller is responsible for ensuring agents are registered before calling this function.
+ *
+ * For deterministic transitions (functions), uses AST parsing to discover the actual
+ * target agent IDs from the source code rather than listing all other agents.
  */
 export function getAgentGraphData(): AgentInfo[] {
   const agents = agentRegistry.getAll()
   const allAgentIds = agents.map((a) => a.id)
+  const targetMap = getTransitionTargetMap()
 
   return agents.map((agent) => {
     let type: 'deterministic' | 'dynamic' | 'none'
@@ -23,7 +28,7 @@ export function getAgentGraphData(): AgentInfo[] {
       targets = agent.transition
     } else if (typeof agent.transition === 'function') {
       type = 'deterministic'
-      targets = allAgentIds.filter((id) => id !== agent.id)
+      targets = targetMap.get(agent.id) ?? allAgentIds.filter((id) => id !== agent.id)
     } else {
       type = 'none'
       targets = []
