@@ -1,10 +1,8 @@
 import styled, { keyframes } from 'styled-components'
 import { Typography } from '@mui/material'
 import { MessageBubble } from '@atoms'
-import { MESSAGE_SENDER } from '@constants/chat'
-import type { ChatMessage as ChatMessageType } from 'types'
-
-type Props = { message: ChatMessageType }
+import { MessageSender } from '@genui-a3/a3'
+import type { Message } from '@genui-a3/a3'
 
 const MessageRow = styled.div<{ $isUser: boolean }>`
   display: flex;
@@ -26,13 +24,13 @@ const StreamingCursor = styled.span`
   animation: ${blink} 0.8s step-end infinite;
 `
 
-export function ChatMessage({ message }: Props) {
-  const isUser = message?.source === MESSAGE_SENDER.USER
+export function ChatMessage({ message }: { message: Message }) {
+  const isUser = message?.metadata?.source === MessageSender.USER
   return (
     <MessageRow $isUser={isUser} data-testid="chat-message">
       <MessageBubble $isUser={isUser} elevation={0}>
         <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-          {message.body.trim()}
+          {message.text.trim()}
           {message.isStreaming && <StreamingCursor />}
         </Typography>
       </MessageBubble>

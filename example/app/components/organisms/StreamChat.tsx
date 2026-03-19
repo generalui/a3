@@ -3,12 +3,11 @@
 import { useState, useCallback, useRef } from 'react'
 import { Typography } from '@mui/material'
 import { ChatMessageList } from '@organisms/ChatMessageList'
-import { ChatContainer, ChatHeader } from '@atoms'
+import { ChatContainer } from '@atoms'
 import { ChatInput } from '@molecules'
-import type { ChatMessage as ChatMessageType } from 'types'
+import { MessageSender } from '@genui-a3/a3'
+import type { Message } from '@genui-a3/a3'
 import { EventType } from '@ag-ui/client'
-
-const SESSION_ID = 'demo-stream-session'
 
 type StreamEvent = {
   type: EventType
@@ -21,17 +20,23 @@ type StreamEvent = {
   value?: Record<string, unknown>
 }
 
-export function StreamChat() {
-  const [messages, setMessages] = useState<ChatMessageType[]>([])
+interface StreamChatProps {
+  sessionId: string
+  initialMessages?: Message[]
+  onSessionUpdate?: (update: { activeAgentId: string | null; state: Record<string, unknown> }) => void
+}
+
+export function StreamChat({ sessionId, initialMessages, onSessionUpdate }: StreamChatProps) {
+  const [messages, setMessages] = useState<Message[]>(initialMessages ?? [])
   const [isLoading, setIsLoading] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const assistantIdRef = useRef<string>('')
 
   const handleSubmit = useCallback(async (text: string) => {
-    const userMsg: ChatMessageType = {
-      id: crypto.randomUUID(),
-      body: text,
-      source: 'user',
+    const userMsg: Message = {
+      messageId: crypto.randomUUID(),
+      text,
+      metadata: { source: MessageSender.USER },
     }
     setMessages((prev) => [...prev, userMsg])
     setIsLoading(true)
@@ -40,10 +45,10 @@ export function StreamChat() {
     let assistantId = crypto.randomUUID()
     assistantIdRef.current = assistantId
 
-    const streamingMsg: ChatMessageType = {
-      id: assistantId,
-      body: '',
-      source: 'assistant',
+    const streamingMsg: Message = {
+      messageId: assistantId,
+      text: '',
+      metadata: { source: MessageSender.ASSISTANT },
       isStreaming: true,
     }
     setMessages((prev) => [...prev, streamingMsg])
@@ -52,7 +57,7 @@ export function StreamChat() {
       const response = await fetch('/api/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, sessionId: SESSION_ID }),
+        body: JSON.stringify({ message: text, sessionId }),
       })
 
       if (!response.ok) {
@@ -85,25 +90,37 @@ export function StreamChat() {
 
             if (event.type === EventType.TEXT_MESSAGE_CONTENT && event.delta) {
               setIsTransitioning(false)
-              setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, body: m.body + event.delta } : m)))
+              setMessages((prev) => prev.map((m) => (m.messageId === assistantId ? { ...m, text: m.text + event.delta } : m)))
             } else if (event.type === EventType.CUSTOM && event.name === 'AgentTransition') {
+              const transitionEvent = event as StreamEvent & {
+                value?: { toAgentId?: string; state?: Record<string, unknown> }
+              }
+              onSessionUpdate?.({
+                activeAgentId: transitionEvent.value?.toAgentId ?? null,
+                state: transitionEvent.value?.state ?? {},
+              })
               const prevAssistantId = assistantId
               assistantId = crypto.randomUUID()
               assistantIdRef.current = assistantId
               setIsTransitioning(true)
               setMessages((prev) => {
-                const updated = prev.map((m) => (m.id === prevAssistantId ? { ...m, isStreaming: false } : m))
-                return [...updated, { id: assistantId, body: '', source: 'assistant', isStreaming: true }]
+                const updated = prev.map((m) => (m.messageId === prevAssistantId ? { ...m, isStreaming: false } : m))
+                return [...updated, { messageId: assistantId, text: '', metadata: { source: MessageSender.ASSISTANT }, isStreaming: true }]
               })
             } else if (event.type === EventType.RUN_FINISHED) {
               setIsTransitioning(false)
-              setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, isStreaming: false } : m)))
+              const result = event.result
+              onSessionUpdate?.({
+                activeAgentId: (result?.activeAgentId as string) ?? null,
+                state: (result?.state as Record<string, unknown>) ?? {},
+              })
+              setMessages((prev) => prev.map((m) => (m.messageId === assistantId ? { ...m, isStreaming: false } : m)))
             } else if (event.type === EventType.RUN_ERROR) {
               setIsTransitioning(false)
               setMessages((prev) =>
                 prev.map((m) =>
-                  m.id === assistantId
-                    ? { ...m, body: m.body || 'Sorry, something went wrong.', isStreaming: false }
+                  m.messageId === assistantId
+                    ? { ...m, text: m.text || 'Sorry, something went wrong.', isStreaming: false }
                     : m,
                 ),
               )
@@ -115,13 +132,13 @@ export function StreamChat() {
       }
 
       // Ensure streaming flag is cleared
-      setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, isStreaming: false } : m)))
+      setMessages((prev) => prev.map((m) => (m.messageId === assistantId ? { ...m, isStreaming: false } : m)))
     } catch (error) {
       console.error('Chat stream error:', error)
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === assistantId
-            ? { ...m, body: m.body || 'Sorry, something went wrong. Please try again.', isStreaming: false }
+          m.messageId === assistantId
+            ? { ...m, text: m.text || 'Sorry, something went wrong. Please try again.', isStreaming: false }
             : m,
         ),
       )
@@ -132,11 +149,6 @@ export function StreamChat() {
 
   return (
     <ChatContainer elevation={0}>
-      <ChatHeader>
-        <Typography variant="h6" component="h2">
-          Chat (Streaming)
-        </Typography>
-      </ChatHeader>
       <ChatMessageList messages={messages} />
       {isTransitioning && (
         <Typography variant="caption" color="textSecondary" sx={{ px: 2, pb: 1, fontStyle: 'italic' }}>

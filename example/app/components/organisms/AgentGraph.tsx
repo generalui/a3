@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Paper, Typography, Box, Stack } from '@mui/material'
+import { getAgents } from '../../actions/getAgents'
 
 type AgentInfo = {
   id: string
@@ -25,9 +26,8 @@ export function AgentGraph({ activeAgentId }: AgentGraphProps) {
   const [agents, setAgents] = useState<AgentInfo[]>([])
 
   useEffect(() => {
-    fetch('/api/agents')
-      .then((res) => res.json())
-      .then((data: { agents: AgentInfo[] }) => setAgents(data.agents))
+    getAgents()
+      .then((data) => setAgents(data.agents))
       .catch(console.error)
   }, [])
 

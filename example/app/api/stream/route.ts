@@ -1,19 +1,10 @@
 import { NextRequest } from 'next/server'
-import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/a3'
-import { getProvider } from '@providers'
-import { greetingAgent, State } from '@agents/greeting'
-import { ageAgent } from '@agents/age'
-
-// Guard: agent may already be registered by the non-streaming route
-const registry = AgentRegistry.getInstance<State>()
-if (!registry.has('greeting')) {
-  registry.register(greetingAgent)
-}
-if (!registry.has('age')) {
-  registry.register(ageAgent)
-}
-
-const store = new MemorySessionStore<State>()
+import { getChatSessionInstance } from '@agents'
+import { SESSION_IDS } from '@constants/chat'
+import { AgentRegistry } from '@genui-a3/a3'
+import type { State } from '@agents/state'
+import { onboardingAgent } from '@agents/onboarding'
+import { initRegistry } from '@agents/registry'
 
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as { message?: string; sessionId?: string }
@@ -26,13 +17,13 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  const session = new ChatSession<State>({
-    sessionId,
-    store,
-    initialAgentId: 'greeting',
-    initialState: { userName: undefined },
-    provider: getProvider(),
-  })
+  let session = getChatSessionInstance({ sessionId })
+  initRegistry()
+  if (sessionId === SESSION_IDS.ONBOARDING) {
+    const registry = AgentRegistry.getInstance<State>()
+    registry.register(onboardingAgent)
+    session = getChatSessionInstance({ sessionId, initialAgentId: onboardingAgent.id })
+  }
 
   const encoder = new TextEncoder()
 

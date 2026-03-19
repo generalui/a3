@@ -6,7 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ChatSession, MemorySessionStore } from '@genui-a3/a3'
 import { getProvider } from '@providers'
-import { State } from '@agents/greeting'
+import { State } from '@agents/state'
+import { initRegistry } from '@agents/registry'
 
 const sessionStore = new MemorySessionStore<State>()
 
@@ -18,6 +19,8 @@ export async function POST(request: NextRequest) {
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
     }
+
+    initRegistry()
 
     // Create session and send message
     const session = new ChatSession<State>({

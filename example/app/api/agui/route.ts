@@ -3,7 +3,8 @@ import { EventType, type RunAgentInput } from '@ag-ui/client'
 import { EventEncoder } from '@ag-ui/encoder'
 import { ChatSession, AGUIAgent, MemorySessionStore } from '@genui-a3/a3'
 import { getProvider } from '@providers'
-import { State } from '@agents/greeting'
+import { State } from '@agents/state'
+import { initRegistry } from '@agents/registry'
 
 export const aguiSessionStore = new MemorySessionStore<State>()
 
@@ -23,6 +24,8 @@ export async function POST(request: NextRequest) {
 
   const encoder = new EventEncoder()
   const events$ = a3Agent.run(body)
+
+  initRegistry()
 
   const stream = new ReadableStream({
     start(controller) {

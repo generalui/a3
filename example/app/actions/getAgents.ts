@@ -1,15 +1,18 @@
-import { NextResponse } from 'next/server'
-import { agentRegistry } from '@lib/agentSetup'
+'use server'
+
+import { agentRegistry, initRegistry } from '@agents/registry'
 
 /**
- * GET /api/agents — returns registered agents with transition metadata
+ * Server action that returns registered agents with transition metadata
  * for the AgentGraph visualization component.
  */
-export function GET() {
+// eslint-disable-next-line @typescript-eslint/require-await
+export async function getAgents() {
+  initRegistry()
   const agents = agentRegistry.getAll()
   const allAgentIds = agents.map((a) => a.id)
 
-  return NextResponse.json({
+  return {
     agents: agents.map((agent) => {
       let type: 'deterministic' | 'dynamic' | 'none'
       let targets: string[]
@@ -31,5 +34,5 @@ export function GET() {
         transition: { type, targets },
       }
     }),
-  })
+  }
 }

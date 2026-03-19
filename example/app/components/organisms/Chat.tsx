@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { CircularProgress, Typography } from '@mui/material'
+import { CircularProgress } from '@mui/material'
 import { ChatMessageList } from '@organisms/ChatMessageList'
 import { ChatContainer, ChatHeader } from '@atoms'
 import { ChatInput } from '@molecules'
-import type { ChatMessage as ChatMessageType } from 'types'
+import { MessageSender } from '@genui-a3/a3'
+import type { Message } from '@genui-a3/a3'
 
 const SESSION_ID = 'demo-session'
 
@@ -22,15 +23,15 @@ interface ChatProps {
 }
 
 export function Chat({ onSessionUpdate }: ChatProps) {
-  const [messages, setMessages] = useState<ChatMessageType[]>([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = useCallback(
     async (text: string) => {
-      const userMsg: ChatMessageType = {
-        id: crypto.randomUUID(),
-        body: text,
-        source: 'user',
+      const userMsg: Message = {
+        messageId: crypto.randomUUID(),
+        text,
+        metadata: { source: MessageSender.USER },
       }
       setMessages((prev) => [...prev, userMsg])
       setIsLoading(true)
@@ -50,18 +51,18 @@ export function Chat({ onSessionUpdate }: ChatProps) {
 
         onSessionUpdate?.({ activeAgentId: data.activeAgentId, state: data.state })
 
-        const assistantMsg: ChatMessageType = {
-          id: crypto.randomUUID(),
-          body: data.response,
-          source: 'assistant',
+        const assistantMsg: Message = {
+          messageId: crypto.randomUUID(),
+          text: data.response,
+          metadata: { source: MessageSender.ASSISTANT },
         }
         setMessages((prev) => [...prev, assistantMsg])
       } catch (error) {
         console.error('Chat API error:', error)
-        const errorMsg: ChatMessageType = {
-          id: crypto.randomUUID(),
-          body: 'Sorry, something went wrong. Please try again.',
-          source: 'assistant',
+        const errorMsg: Message = {
+          messageId: crypto.randomUUID(),
+          text: 'Sorry, something went wrong. Please try again.',
+          metadata: { source: MessageSender.ASSISTANT },
         }
         setMessages((prev) => [...prev, errorMsg])
       } finally {
