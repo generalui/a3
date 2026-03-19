@@ -106,14 +106,9 @@
   },
   "dependencies": {
     "@ag-ui/client": "0.0.47",
-    "@datadog/browser-logs": "6.25.4",
     "@loglayer/transport-tslog": "4.0.2",
-    "chrono-node": "2.9.0",
-    "date-fns": "4.1.0",
     "loglayer": "9.1.0",
-    "loglevel": "1.9.2",
     "tslog": "4.10.2",
-    "winston": "3.19.0",
     "zod": "4.3.6"
   },
   "devDependencies": {
