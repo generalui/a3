@@ -3,11 +3,13 @@
 import { useState, useCallback, useRef } from 'react'
 import { Typography } from '@mui/material'
 import { ChatMessageList } from '@organisms/ChatMessageList'
-import { ChatContainer } from '@atoms'
+import { ChatContainer, ChatHeader } from '@atoms'
 import { ChatInput } from '@molecules'
 import { MessageSender } from '@genui-a3/a3'
 import type { Message } from '@genui-a3/a3'
 import { EventType } from '@ag-ui/client'
+import { CHAT_ERROR, CHAT_ERROR_SHORT, CHAT_TRANSITION } from '@constants/ui'
+import { useRestart, type RestartResult } from '@lib/hooks/useRestart'
 
 type StreamEvent = {
   type: EventType
@@ -24,13 +26,15 @@ interface StreamChatProps {
   sessionId: string
   initialMessages?: Message[]
   onSessionUpdate?: (update: { activeAgentId: string | null; state: Record<string, unknown> }) => void
+  onRestart?: () => Promise<RestartResult>
 }
 
-export function StreamChat({ sessionId, initialMessages, onSessionUpdate }: StreamChatProps) {
+export function StreamChat({ sessionId, initialMessages, onSessionUpdate, onRestart }: StreamChatProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages ?? [])
   const [isLoading, setIsLoading] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const assistantIdRef = useRef<string>('')
+  const { isRestarting, handleRestart } = useRestart({ onRestart, setMessages, onSessionUpdate })
 
   const handleSubmit = useCallback(async (text: string) => {
     const userMsg: Message = {
@@ -120,7 +124,7 @@ export function StreamChat({ sessionId, initialMessages, onSessionUpdate }: Stre
               setMessages((prev) =>
                 prev.map((m) =>
                   m.messageId === assistantId
-                    ? { ...m, text: m.text || 'Sorry, something went wrong.', isStreaming: false }
+                    ? { ...m, text: m.text || CHAT_ERROR_SHORT, isStreaming: false }
                     : m,
                 ),
               )
@@ -138,24 +142,25 @@ export function StreamChat({ sessionId, initialMessages, onSessionUpdate }: Stre
       setMessages((prev) =>
         prev.map((m) =>
           m.messageId === assistantId
-            ? { ...m, text: m.text || 'Sorry, something went wrong. Please try again.', isStreaming: false }
+            ? { ...m, text: m.text || CHAT_ERROR, isStreaming: false }
             : m,
         ),
       )
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [onSessionUpdate, sessionId])
 
   return (
     <ChatContainer elevation={0}>
+      <ChatHeader onRestart={() => void handleRestart?.()} isRestarting={isRestarting} />
       <ChatMessageList messages={messages} />
       {isTransitioning && (
         <Typography variant="caption" color="textSecondary" sx={{ px: 2, pb: 1, fontStyle: 'italic' }}>
-          Agent transition in progress...
+          {CHAT_TRANSITION}
         </Typography>
       )}
-      <ChatInput onSubmit={handleSubmit} disabled={isLoading} />
+      <ChatInput onSubmit={handleSubmit} disabled={isLoading || isRestarting} />
     </ChatContainer>
   )
 }

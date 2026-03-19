@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import { ThemeProvider } from './ThemeProvider'
 import { SidebarLayout } from '@organisms'
+import { APP_TITLE, APP_DESCRIPTION } from '@constants/ui'
 
 export const metadata: Metadata = {
-  title: 'A3 Core Example',
-  description: 'Example application for @genui/a3',
+  title: APP_TITLE,
+  description: APP_DESCRIPTION,
   icons: [
     { rel: 'icon', url: '/favicon.ico', type: 'image/x-icon', sizes: '32x32', media: '(prefers-color-scheme: light)' },
     {

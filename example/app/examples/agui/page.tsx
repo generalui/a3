@@ -2,6 +2,7 @@ import { getChatSessionInstance } from '@agents'
 import { getAgentGraphData } from '@lib/getAgentGraphData'
 import { initRegistry } from '@agents/registry'
 import { SESSION_IDS } from '@constants/chat'
+import { PAGE_AGUI_TITLE, PAGE_AGUI_DESCRIPTION } from '@constants/ui'
 import { ExamplePageLayout } from '@organisms'
 
 export default async function AguiExample() {
@@ -12,8 +13,8 @@ export default async function AguiExample() {
 
   return (
     <ExamplePageLayout
-      title="A3 Example — AG-UI Protocol"
-      description="A greeting agent asks for your name. Once it has it, control passes to an age agent that asks for your age. You can ask to change your name at any time and you'll be handed back to the greeting agent. Communication uses the AG-UI protocol, streaming structured events for text, transitions, and run lifecycle."
+      title={PAGE_AGUI_TITLE}
+      description={PAGE_AGUI_DESCRIPTION}
       sessionId={SESSION_IDS.EXAMPLES.AGUI}
       initialMessages={sessionData.messages}
       initialActiveAgentId={sessionData.activeAgentId}

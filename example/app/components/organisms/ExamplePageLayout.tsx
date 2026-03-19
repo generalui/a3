@@ -7,6 +7,7 @@ import { Chat } from './Chat'
 import { AguiChat } from './AguiChat'
 import { StreamChat } from './StreamChat'
 import { StateViewer } from './StateViewer'
+import { restartSession } from '@lib/actions/restartSession'
 import type { AgentInfo } from '@lib/getAgentGraphData'
 import type { Message } from '@genui-a3/a3'
 
@@ -32,6 +33,15 @@ export function ExamplePageLayout({ title, description, sessionId, initialMessag
     setState(update.state)
   }, [])
 
+  const handleRestart = useCallback(async () => {
+    const fresh = await restartSession(sessionId)
+    return {
+      messages: fresh.messages,
+      activeAgentId: fresh.activeAgentId,
+      state: fresh.state as Record<string, unknown>,
+    }
+  }, [sessionId])
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', px: { xs: 2, sm: 3, md: 5, lg: 8 }, maxWidth: 1600, width: '100%', mx: 'auto' }}>
       <Typography variant="h5" fontWeight="bold" sx={{ pt: 3 }}>
@@ -51,9 +61,9 @@ export function ExamplePageLayout({ title, description, sessionId, initialMessag
         }}
       >
         <Box sx={{ minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {variant === 'blocking' && <Chat sessionId={sessionId} initialMessages={initialMessages} onSessionUpdate={handleSessionUpdate} />}
-          {variant === 'stream' && <StreamChat sessionId={sessionId} initialMessages={initialMessages} onSessionUpdate={handleSessionUpdate} />}
-          {variant === 'agui' && <AguiChat initialMessages={initialMessages} onSessionUpdate={handleSessionUpdate} />}
+          {variant === 'blocking' && <Chat sessionId={sessionId} initialMessages={initialMessages} onSessionUpdate={handleSessionUpdate} onRestart={handleRestart} />}
+          {variant === 'stream' && <StreamChat sessionId={sessionId} initialMessages={initialMessages} onSessionUpdate={handleSessionUpdate} onRestart={handleRestart} />}
+          {variant === 'agui' && <AguiChat sessionId={sessionId} initialMessages={initialMessages} onSessionUpdate={handleSessionUpdate} onRestart={handleRestart} />}
         </Box>
         <Box sx={{ minHeight: 0, display: 'flex', flexDirection: 'column', gap: 3, overflow: 'auto' }}>
           <AgentGraph agents={agents} activeAgentId={activeAgentId} />

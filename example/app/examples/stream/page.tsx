@@ -2,6 +2,7 @@ import { getChatSessionInstance } from '@agents'
 import { getAgentGraphData } from '@lib/getAgentGraphData'
 import { initRegistry } from '@agents/registry'
 import { SESSION_IDS } from '@constants/chat'
+import { PAGE_STREAMING_TITLE, PAGE_STREAMING_DESCRIPTION } from '@constants/ui'
 import { ExamplePageLayout } from '@organisms'
 
 export default async function StreamExample() {
@@ -12,8 +13,8 @@ export default async function StreamExample() {
 
   return (
     <ExamplePageLayout
-      title="A3 Example — Streaming"
-      description="A greeting agent asks for your name. Once it has it, control passes to an age agent that asks for your age. You can ask to change your name at any time and you'll be handed back to the greeting agent."
+      title={PAGE_STREAMING_TITLE}
+      description={PAGE_STREAMING_DESCRIPTION}
       sessionId={SESSION_IDS.EXAMPLES.STREAMING}
       initialMessages={sessionData.messages}
       initialActiveAgentId={sessionData.activeAgentId}
