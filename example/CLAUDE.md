@@ -111,7 +111,7 @@ The `docs/` directory contains essential A3 framework documentation.
 | `docs/CUSTOM_LOGGING.md` | Supplying a custom logger via `configureLogger()` |
 | `docs/CUSTOM_PROVIDERS.md` | Creating a custom provider and streaming support |
 | `docs/INITIAL_PROMPT.md` | System prompts and instructions for AI agents |
-| `docs/LOGGING.md` | Internal logging architecture, `log` singleton, log levels |
+| `docs/contributing/LOGGING.md` | Internal logging architecture, `log` singleton, log levels |
 | `docs/PROVIDERS.md` | Provider setup (Bedrock, OpenAI, Anthropic), config options, model fallback, per-agent overrides |
 | `docs/QUICK-START-EXAMPLES.md` | Agent definitions, registration, multi-agent flows, ChatSession usage |
 | `docs/RESILIENCE.md` | Retry, backoff, timeout config, error classification, resilience error handling |

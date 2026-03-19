@@ -4,7 +4,7 @@ A3 uses [LogLayer](https://loglayer.dev) as its logging abstraction and [tslog](
 
 ## For package users
 
-If you want A3's logs to flow through your own logging infrastructure, see [Custom Logging](./CUSTOM_LOGGING.md).
+If you want A3's logs to flow through your own logging infrastructure, see [Custom Logging](../CUSTOM_LOGGING.md).
 
 ---
 

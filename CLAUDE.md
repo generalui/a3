@@ -195,7 +195,7 @@ Key files:
 
 Documentation:
 
-- `docs/LOGGING.md` — internal guide for A3 package developers
+- `docs/contributing/LOGGING.md` — internal guide for A3 package developers
 - `docs/CUSTOM_LOGGING.md` — guide for package users who want to provide their own logger
 
 DOCUMENTATION:

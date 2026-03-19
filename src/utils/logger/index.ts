@@ -19,7 +19,7 @@ let _logger: ILogLayer | null = null
 // takes effect even though this reference was captured when the module
 // was first imported.
 //
-// Uses the LogLayer API — see docs/LOGGING.md for usage examples.
+// Uses the LogLayer API — see docs/contributing/LOGGING.md for usage examples.
 //
 // ⚠️  Use withMetadata() for per-request data (agentId, sessionId, etc.).
 //    withContext() persists across calls on the shared instance and will
