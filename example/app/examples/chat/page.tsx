@@ -1,8 +1,12 @@
 import { getChatSessionInstance } from '@agents'
+import { getAgentGraphData } from '@lib/getAgentGraphData'
+import { initRegistry } from '@agents/registry'
 import { SESSION_IDS } from '@constants/chat'
 import { ExamplePageLayout } from '@organisms'
 
 export default async function ChatExample() {
+  initRegistry()
+  const agents = getAgentGraphData()
   const session = getChatSessionInstance({ sessionId: SESSION_IDS.EXAMPLES.BLOCKING })
   const sessionData = await session.getOrCreateSessionData()
 
@@ -15,6 +19,7 @@ export default async function ChatExample() {
       initialActiveAgentId={sessionData.activeAgentId}
       initialState={sessionData.state}
       variant="blocking"
+      agents={agents}
     />
   )
 }

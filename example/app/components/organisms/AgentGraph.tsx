@@ -1,16 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Paper, Typography, Box, Stack } from '@mui/material'
-import { getAgents } from '../../actions/getAgents'
-
-type AgentInfo = {
-  id: string
-  description: string
-  transition: { type: 'deterministic' | 'dynamic' | 'none'; targets: string[] }
-}
+import type { AgentInfo } from '@lib/getAgentGraphData'
 
 interface AgentGraphProps {
+  agents: AgentInfo[]
   activeAgentId: string | null
 }
 
@@ -23,15 +17,7 @@ const ARROW_ABOVE_Y = 14
 const ARROW_BELOW_Y = 28
 const LABEL_HEIGHT = 20
 
-export function AgentGraph({ activeAgentId }: AgentGraphProps) {
-  const [agents, setAgents] = useState<AgentInfo[]>([])
-
-  useEffect(() => {
-    getAgents()
-      .then((data) => setAgents(data.agents))
-      .catch(console.error)
-  }, [])
-
+export function AgentGraph({ agents, activeAgentId }: AgentGraphProps) {
   if (agents.length === 0) return null
 
   const resolvedActiveId = activeAgentId ?? agents[0]?.id ?? null

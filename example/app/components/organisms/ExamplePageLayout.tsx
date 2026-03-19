@@ -7,6 +7,7 @@ import { Chat } from './Chat'
 import { AguiChat } from './AguiChat'
 import { StreamChat } from './StreamChat'
 import { StateViewer } from './StateViewer'
+import type { AgentInfo } from '@lib/getAgentGraphData'
 import type { Message } from '@genui-a3/a3'
 
 type ExampleVariant = 'blocking' | 'stream' | 'agui'
@@ -17,11 +18,12 @@ interface ExamplePageLayoutProps {
   sessionId: string
   initialMessages: Message[]
   variant: ExampleVariant
+  agents: AgentInfo[]
   initialActiveAgentId?: string | null
   initialState?: Record<string, unknown>
 }
 
-export function ExamplePageLayout({ title, description, sessionId, initialMessages, variant, initialActiveAgentId, initialState }: ExamplePageLayoutProps) {
+export function ExamplePageLayout({ title, description, sessionId, initialMessages, variant, agents, initialActiveAgentId, initialState }: ExamplePageLayoutProps) {
   const [activeAgentId, setActiveAgentId] = useState<string | null>(initialActiveAgentId ?? null)
   const [state, setState] = useState<Record<string, unknown>>(initialState ?? {})
 
@@ -54,7 +56,7 @@ export function ExamplePageLayout({ title, description, sessionId, initialMessag
           {variant === 'agui' && <AguiChat initialMessages={initialMessages} onSessionUpdate={handleSessionUpdate} />}
         </Box>
         <Box sx={{ minHeight: 0, display: 'flex', flexDirection: 'column', gap: 3, overflow: 'auto' }}>
-          <AgentGraph activeAgentId={activeAgentId} />
+          <AgentGraph agents={agents} activeAgentId={activeAgentId} />
           <StateViewer state={state} />
         </Box>
       </Box>

@@ -16,6 +16,7 @@ A3's core thesis: **the best agentic applications are specifically defined, trus
 and reliable** — not open-ended do-everything assistants that may or may not do the right thing.
 
 The platonic ideal is the optimal combination of:
+
 - **Deterministic code** for structured, critical, compliance-sensitive actions (forms, payments,
   routing decisions, data writes) — places where LLM unpredictability is unacceptable
 - **Agentic flexibility** for natural language understanding, intent classification, fluid conversation,
@@ -40,6 +41,7 @@ and anchoring that motion to the core product thesis (governed, trustworthy, det
 rather than generic "agentic AI" positioning.
 
 A3 serves two audiences simultaneously:
+
 1. **Developers** — as an open-source package to adopt and build with
 2. **Enterprise buyers** — as the engine GenUI uses to automate their manual workflows
 
@@ -73,6 +75,7 @@ This is the pattern: the ROI story for A3 in enterprise is not "switch framework
 it's "automate what your staff is doing manually right now."
 
 Real cost of the status quo:
+
 - Staff time spent on workflows that don't require human judgment
 - Error rates from manual, repetitive processes
 - Inability to scale without proportionally growing headcount
@@ -82,11 +85,13 @@ Real cost of the status quo:
 ## Target User & Narrowest Wedge
 
 **The developer audience:**
+
 - TypeScript engineers building multi-agent AI products
 - Attracted via OSS: GitHub, docs, DX quality, community
 - Acquisition channel: organic / developer word-of-mouth
 
 **The enterprise buyer (primary GTM focus right now):**
+
 - Ops executives, VPs of Growth/Operations, CTOs at companies with high-volume, multi-step
   manual workflows in regulated or high-stakes environments
 - Attracted via: Experity case study, direct outreach, partner referrals
@@ -190,6 +195,7 @@ Building the playbook before you've lived through a second deal is writing ficti
    NOW activate the CoBuilder Partner Program with that playbook as the sales tool.
 
 **For the developer/OSS track (parallel, but lower priority):**
+
 - Improve docs and quickstart experience (already in progress per git log)
 - The Experity case study is the most powerful dev community signal — make it findable
 - Don't split messaging: "A3 is what GenUI uses to build Care Agent-scale systems" is a
