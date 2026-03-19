@@ -1,4 +1,5 @@
 export { AppLogo } from './AppLogo'
+export { MarkdownRenderer } from './MarkdownRenderer'
 export { MessageBubble } from './MessageBubble'
 export { ChatContainer } from './ChatContainer'
 export { ChatHeader } from './ChatHeader'

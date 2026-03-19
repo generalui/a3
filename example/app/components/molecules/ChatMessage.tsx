@@ -1,6 +1,6 @@
 import styled, { keyframes } from 'styled-components'
 import { Typography } from '@mui/material'
-import { MessageBubble } from '@atoms'
+import { MarkdownRenderer, MessageBubble } from '@atoms'
 import { MessageSender } from '@genui-a3/a3'
 import type { Message } from '@genui-a3/a3'
 
@@ -29,10 +29,16 @@ export function ChatMessage({ message }: { message: Message }) {
   return (
     <MessageRow $isUser={isUser} data-testid="chat-message">
       <MessageBubble $isUser={isUser} elevation={0}>
-        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-          {message.text.trim()}
-          {message.isStreaming && <StreamingCursor />}
-        </Typography>
+        {isUser ? (
+          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+            {message.text.trim()}
+          </Typography>
+        ) : (
+          <>
+            <MarkdownRenderer content={message.text.trim()} />
+            {message.isStreaming && <StreamingCursor />}
+          </>
+        )}
       </MessageBubble>
     </MessageRow>
   )
