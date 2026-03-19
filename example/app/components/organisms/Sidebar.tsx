@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
-import { Box, Collapse, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Typography } from '@mui/material'
+import { Box, Collapse, Drawer, List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
 import HomeOutlined from '@mui/icons-material/HomeOutlined'
 import SmartToyOutlined from '@mui/icons-material/SmartToyOutlined'
 import CodeOutlined from '@mui/icons-material/CodeOutlined'
@@ -29,9 +29,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <AppLogo width={28} height={28} />
-        <Typography variant="h6" fontWeight="bold">
-          A3
-        </Typography>
       </Box>
 
       <List component="nav" sx={{ px: 1 }}>
