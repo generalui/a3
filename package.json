@@ -1,6 +1,6 @@
 {
   "name": "@genui-a3/a3",
-  "version": "0.1.26",
+  "version": "0.1.27",
   "description": "Predictable, governable multi-agent orchestration for TypeScript",
   "type": "module",
   "main": "./dist/index.cjs",
