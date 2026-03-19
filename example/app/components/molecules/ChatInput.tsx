@@ -26,7 +26,7 @@ const InputForm = styled.form`
 
 export function ChatInput({ onSubmit, disabled, placeholder = 'Type a message...' }: Props) {
   const [value, setValue] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const prevDisabled = useRef(disabled)
 
   useEffect(() => {
@@ -50,14 +50,27 @@ export function ChatInput({ onSubmit, disabled, placeholder = 'Type a message...
     [value, disabled, onSubmit],
   )
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        handleSubmit(e)
+      }
+    },
+    [handleSubmit],
+  )
+
   return (
     <InputContainer>
       <InputForm onSubmit={handleSubmit}>
         <TextField
           inputRef={inputRef}
           fullWidth
+          multiline
+          maxRows={6}
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
           variant="outlined"

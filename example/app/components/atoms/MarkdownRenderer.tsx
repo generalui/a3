@@ -76,6 +76,11 @@ function useMarkdownComponents(): Components {
         </Link>
       )
     },
+    li: ({ children }) => (
+      <Typography variant="body2" component="li" sx={{ my: 0.25 }}>
+        {children}
+      </Typography>
+    ),
     code: ({ className, children, ...props }) => {
       const match = /language-(\w+)/.exec(className || '')
       const codeString = String(children as string).replace(/\n$/, '')
