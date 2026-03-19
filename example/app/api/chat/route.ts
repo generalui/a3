@@ -4,12 +4,8 @@
  * It waits for the full agent response before returning a complete JSON payload.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { ChatSession, MemorySessionStore } from '@genui-a3/a3'
-import { getProvider } from '@providers'
-import { State } from '@agents/state'
+import { getChatSessionInstance } from '@agents'
 import { initRegistry } from '@agents/registry'
-
-const sessionStore = new MemorySessionStore<State>()
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,15 +18,7 @@ export async function POST(request: NextRequest) {
 
     initRegistry()
 
-    // Create session and send message
-    const session = new ChatSession<State>({
-      sessionId,
-      store: sessionStore,
-      initialAgentId: 'greeting',
-      initialState: { userName: undefined },
-      provider: getProvider(),
-    })
-
+    const session = getChatSessionInstance({ sessionId })
     const result = await session.send({ message })
 
     return NextResponse.json({

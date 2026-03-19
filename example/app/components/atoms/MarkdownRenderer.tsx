@@ -7,6 +7,7 @@ import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { REPO_URL } from '@constants/paths'
 
 const MarkdownRoot = styled('div')(({ theme }) => ({
   '& > *:first-of-type': { marginTop: 0 },
@@ -66,11 +67,15 @@ function useMarkdownComponents(): Components {
         {children}
       </Typography>
     ),
-    a: ({ href, children }) => (
-      <Link href={href} target="_blank" rel="noopener noreferrer">
-        {children}
-      </Link>
-    ),
+    a: ({ href, children }) => {
+      const resolvedHref = href?.match(/^\.?\/?docs\/.*\.md$/) ? `${REPO_URL}/${href.replace(/^\.\//, '')}` : href
+
+      return (
+        <Link href={resolvedHref} target="_blank" rel="noopener noreferrer">
+          {children}
+        </Link>
+      )
+    },
     code: ({ className, children, ...props }) => {
       const match = /language-(\w+)/.exec(className || '')
       const codeString = String(children as string).replace(/\n$/, '')

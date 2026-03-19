@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ThemeProvider } from './ThemeProvider'
+import { SidebarLayout } from '@organisms'
 
 export const metadata: Metadata = {
   title: 'A3 Core Example',
@@ -25,7 +26,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <SidebarLayout>{children}</SidebarLayout>
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -1,16 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Paper, Typography, Box, Stack } from '@mui/material'
-import { getAgents } from '../../actions/getAgents'
-
-type AgentInfo = {
-  id: string
-  description: string
-  transition: { type: 'deterministic' | 'dynamic' | 'none'; targets: string[] }
-}
+import type { AgentInfo } from '@lib/getAgentGraphData'
 
 interface AgentGraphProps {
+  agents: AgentInfo[]
   activeAgentId: string | null
 }
 
@@ -21,22 +15,15 @@ const PADDING_X = 30
 const PADDING_TOP = 20
 const ARROW_ABOVE_Y = 14
 const ARROW_BELOW_Y = 28
+const LABEL_HEIGHT = 20
 
-export function AgentGraph({ activeAgentId }: AgentGraphProps) {
-  const [agents, setAgents] = useState<AgentInfo[]>([])
-
-  useEffect(() => {
-    getAgents()
-      .then((data) => setAgents(data.agents))
-      .catch(console.error)
-  }, [])
-
+export function AgentGraph({ agents, activeAgentId }: AgentGraphProps) {
   if (agents.length === 0) return null
 
   const resolvedActiveId = activeAgentId ?? agents[0]?.id ?? null
 
   const svgWidth = PADDING_X * 2 + agents.length * NODE_WIDTH + (agents.length - 1) * NODE_GAP
-  const svgHeight = PADDING_TOP + ARROW_ABOVE_Y + NODE_HEIGHT + ARROW_BELOW_Y + PADDING_TOP
+  const svgHeight = PADDING_TOP + ARROW_ABOVE_Y + NODE_HEIGHT + ARROW_BELOW_Y + LABEL_HEIGHT + PADDING_TOP
 
   const agentIndex = new Map(agents.map((a, i) => [a.id, i]))
 
@@ -205,6 +192,28 @@ export function AgentGraph({ activeAgentId }: AgentGraphProps) {
                 >
                   {agent.id}
                 </text>
+                {isActive && (
+                  <>
+                    <circle
+                      cx={x + NODE_WIDTH / 2 - 16}
+                      cy={y + NODE_HEIGHT + 14}
+                      r={3}
+                      fill="#22c55e"
+                    />
+                    <text
+                      x={x + NODE_WIDTH / 2 - 10}
+                      y={y + NODE_HEIGHT + 14}
+                      textAnchor="start"
+                      dominantBaseline="middle"
+                      fill="#2563eb"
+                      fontSize={9}
+                      fontWeight={600}
+                      fontFamily="system-ui, sans-serif"
+                    >
+                      Active
+                    </text>
+                  </>
+                )}
               </g>
             )
           })}

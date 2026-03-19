@@ -1,46 +1,16 @@
-import Link from 'next/link'
-import { Box, Typography } from '@mui/material'
-import { PageLayout, StreamChat } from '@organisms'
-import { getChatSessionInstance } from '@agents'
-import { SESSION_IDS } from '@constants/chat'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { Box, Container } from '@mui/material'
+import { MarkdownRenderer } from '@atoms'
 
-function ViewExamplesLink() {
-  return (
-    <Link
-      href="/examples"
-      style={{
-        color: 'inherit',
-        textDecoration: 'none',
-        fontWeight: 600,
-      }}
-    >
-      <Typography
-        sx={{
-          color: 'primary.main',
-          '&:hover': { textDecoration: 'underline' },
-        }}
-      >
-        View Examples
-      </Typography>
-    </Link>
-  )
-}
-
-export default async function Home() {
-  const session = getChatSessionInstance({ sessionId: SESSION_IDS.ONBOARDING })
-
-  const sessionData = await session.getOrCreateSessionData()
+export default function Home() {
+  const readme = readFileSync(join(process.cwd(), 'docs/A3-README.md'), 'utf-8')
 
   return (
-    <PageLayout title="A3" headerAction={<ViewExamplesLink />}>
-      <Box sx={{ px: 3, py: 3, textAlign: 'center' }}>
-        <Typography variant="body1" color="text.secondary">
-          <strong>A3</strong> — Predictable, governable multi-agent orchestration for TypeScript.
-        </Typography>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Box sx={{ px: { xs: 1, sm: 2 } }}>
+        <MarkdownRenderer content={readme} />
       </Box>
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', pb: 3 }}>
-        <StreamChat sessionId={SESSION_IDS.ONBOARDING} initialMessages={sessionData.messages} />
-      </Box>
-    </PageLayout>
+    </Container>
   )
 }

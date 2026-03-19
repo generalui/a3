@@ -1,25 +1,25 @@
-'use client'
+import { getChatSessionInstance } from '@agents'
+import { getAgentGraphData } from '@lib/getAgentGraphData'
+import { initRegistry } from '@agents/registry'
+import { SESSION_IDS } from '@constants/chat'
+import { ExamplePageLayout } from '@organisms'
 
-import { useState, useCallback } from 'react'
-import { Chat, ExamplePageLayout } from '@organisms'
-
-export default function ChatExample() {
-  const [activeAgentId, setActiveAgentId] = useState<string | null>(null)
-  const [state, setState] = useState<Record<string, unknown>>({})
-
-  const handleSessionUpdate = useCallback((update: { activeAgentId: string | null; state: Record<string, unknown> }) => {
-    setActiveAgentId(update.activeAgentId)
-    setState(update.state)
-  }, [])
+export default async function ChatExample() {
+  initRegistry()
+  const agents = getAgentGraphData()
+  const session = getChatSessionInstance({ sessionId: SESSION_IDS.EXAMPLES.BLOCKING })
+  const sessionData = await session.getOrCreateSessionData()
 
   return (
     <ExamplePageLayout
       title="A3 Example — Blocking Chat"
       description="A greeting agent asks for your name. Once it has it, control passes to an age agent that asks for your age. You can ask to change your name at any time and you'll be handed back to the greeting agent. Each response arrives in full once the agent is done thinking."
-      activeAgentId={activeAgentId}
-      state={state}
-    >
-      <Chat onSessionUpdate={handleSessionUpdate} />
-    </ExamplePageLayout>
+      sessionId={SESSION_IDS.EXAMPLES.BLOCKING}
+      initialMessages={sessionData.messages}
+      initialActiveAgentId={sessionData.activeAgentId}
+      initialState={sessionData.state}
+      variant="blocking"
+      agents={agents}
+    />
   )
 }

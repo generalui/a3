@@ -174,7 +174,7 @@ Effort: S (CC: ~2h)
 
 The `create` package evolves into the unified `a3` CLI:
 
-```
+```text
 @genui/a3-cli (was: @genui/a3-create)
 ├── a3 create --template=<use-case>    # scaffold a new project
 ├── a3 doctor                           # analyze agent config, flag issues
@@ -190,7 +190,7 @@ Decide now: does `a3` CLI version independently of `@genui/a3` core?
 
 ## Architecture Diagram
 
-```
+```text
 @genui/a3-cli
 ├── a3 create --template=<name>
 ├── a3 doctor
@@ -223,7 +223,7 @@ example/ (Next.js app — ships reference dashboard)
 
 ## Platform Flywheel (18-Month Vision)
 
-```
+```text
 Templates → Developers adopt A3 → Need more agents → @genui/agent-* fills gaps
      ↑                                                          |
      └──── Community publishes their own agents ←──────────────┘
