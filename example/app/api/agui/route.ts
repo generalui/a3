@@ -1,27 +1,19 @@
 import { NextRequest } from 'next/server'
 import { EventType, type RunAgentInput } from '@ag-ui/client'
 import { EventEncoder } from '@ag-ui/encoder'
-import { AgentRegistry, ChatSession, MemorySessionStore, AGUIAgent } from '@genui-a3/a3'
+import { ChatSession, AGUIAgent, MemorySessionStore } from '@genui-a3/a3'
 import { getProvider } from '@providers'
-import { greetingAgent, State } from '@agents/greeting'
-import { ageAgent } from '@agents/age'
+import { State } from '@agents/state'
+import { initRegistry } from '@agents/registry'
 
-const registry = AgentRegistry.getInstance<State>()
-if (!registry.has('greeting')) {
-  registry.register(greetingAgent)
-}
-if (!registry.has('age')) {
-  registry.register(ageAgent)
-}
-
-const store = new MemorySessionStore<State>()
+export const aguiSessionStore = new MemorySessionStore<State>()
 
 const a3Agent = new AGUIAgent({
   agentId: 'a3-demo',
   createSession: (input: RunAgentInput) =>
     new ChatSession<State>({
       sessionId: input.threadId,
-      store,
+      store: aguiSessionStore,
       initialAgentId: 'greeting',
       provider: getProvider(),
     }),
@@ -32,6 +24,8 @@ export async function POST(request: NextRequest) {
 
   const encoder = new EventEncoder()
   const events$ = a3Agent.run(body)
+
+  initRegistry()
 
   const stream = new ReadableStream({
     start(controller) {

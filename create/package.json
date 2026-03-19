@@ -44,5 +44,9 @@
     "@types/node": "20.19.0",
     "tsup": "8.5.1",
     "typescript": "5.9.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/generalui/a3.git"
   }
 }

@@ -31,6 +31,9 @@ export default tseslint.config(
         project: './example/tsconfig.json',
       },
     },
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
   },
   {
     files: ['example/**/*.{js,jsx,mjs}'],

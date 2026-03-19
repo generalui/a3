@@ -9,6 +9,7 @@ export const ChatHeader = styled.div`
   padding: ${({ theme }) => (theme as Theme).spacing(2, 3)};
   flex-shrink: 0;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-end;
+  min-height: 40px;
+  height: 40px;
 `

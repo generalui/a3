@@ -37,7 +37,9 @@
       "types": ["./app/types"],
       "types/*": ["./app/types/*"],
       "@utils": ["./app/utils"],
-      "@utils/*": ["./app/utils/*"]
+      "@utils/*": ["./app/utils/*"],
+      "@lib": ["./app/lib"],
+      "@lib/*": ["./app/lib/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],

@@ -1,27 +1,31 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { Typography } from '@mui/material'
 import { ChatMessageList } from '@organisms/ChatMessageList'
-import { ChatContainer, ChatHeader } from '@atoms'
+import { ChatContainer } from '@atoms'
 import { ChatInput } from '@molecules'
-import type { ChatMessage as ChatMessageType } from 'types'
+import { MessageSender } from '@genui-a3/a3'
+import type { Message } from '@genui-a3/a3'
 import { HttpAgent, EventType } from '@ag-ui/client'
 
 const agent = new HttpAgent({
   url: '/api/agui',
 })
 
-export function AguiChat() {
-  const [messages, setMessages] = useState<ChatMessageType[]>([])
+interface AguiChatProps {
+  onSessionUpdate?: (update: { activeAgentId: string | null; state: Record<string, unknown> }) => void
+}
+
+export function AguiChat({ onSessionUpdate }: AguiChatProps) {
+  const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const assistantIdRef = useRef<string>('')
 
   const handleSubmit = useCallback(async (text: string) => {
-    const userMsg: ChatMessageType = {
-      id: crypto.randomUUID(),
-      body: text,
-      source: 'user',
+    const userMsg: Message = {
+      messageId: crypto.randomUUID(),
+      text,
+      metadata: { source: MessageSender.USER },
     }
     setMessages((prev) => [...prev, userMsg])
     setIsLoading(true)
@@ -29,10 +33,10 @@ export function AguiChat() {
     let assistantId = crypto.randomUUID()
     assistantIdRef.current = assistantId
 
-    const streamingMsg: ChatMessageType = {
-      id: assistantId,
-      body: '',
-      source: 'assistant',
+    const streamingMsg: Message = {
+      messageId: assistantId,
+      text: '',
+      metadata: { source: MessageSender.ASSISTANT },
       isStreaming: true,
     }
     setMessages((prev) => [...prev, streamingMsg])
@@ -54,25 +58,34 @@ export function AguiChat() {
           onEvent({ event }) {
             if (event.type === EventType.TEXT_MESSAGE_CONTENT && 'delta' in event) {
               const delta = (event as unknown as { delta: string }).delta
-              setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, body: m.body + delta } : m)))
+              setMessages((prev) => prev.map((m) => (m.messageId === assistantId ? { ...m, text: m.text + delta } : m)))
             } else if (event.type === EventType.CUSTOM && 'name' in event) {
-              const customEvent = event as unknown as { name: string }
+              const customEvent = event as unknown as { name: string; value?: { toAgentId?: string; state?: Record<string, unknown> } }
               if (customEvent.name === 'AgentTransition') {
+                onSessionUpdate?.({
+                  activeAgentId: customEvent.value?.toAgentId ?? null,
+                  state: customEvent.value?.state ?? {},
+                })
                 const prevAssistantId = assistantId
                 assistantId = crypto.randomUUID()
                 assistantIdRef.current = assistantId
                 setMessages((prev) => {
-                  const updated = prev.map((m) => (m.id === prevAssistantId ? { ...m, isStreaming: false } : m))
-                  return [...updated, { id: assistantId, body: '', source: 'assistant', isStreaming: true }]
+                  const updated = prev.map((m) => (m.messageId === prevAssistantId ? { ...m, isStreaming: false } : m))
+                  return [...updated, { messageId: assistantId, text: '', metadata: { source: MessageSender.ASSISTANT }, isStreaming: true }]
                 })
               }
             } else if (event.type === EventType.RUN_FINISHED) {
-              setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, isStreaming: false } : m)))
+              const result = (event as unknown as { result?: Record<string, unknown> }).result
+              onSessionUpdate?.({
+                activeAgentId: (result?.activeAgentId as string) ?? null,
+                state: (result?.state as Record<string, unknown>) ?? {},
+              })
+              setMessages((prev) => prev.map((m) => (m.messageId === assistantId ? { ...m, isStreaming: false } : m)))
             } else if (event.type === EventType.RUN_ERROR) {
               setMessages((prev) =>
                 prev.map((m) =>
-                  m.id === assistantId
-                    ? { ...m, body: m.body || 'Sorry, something went wrong.', isStreaming: false }
+                  m.messageId === assistantId
+                    ? { ...m, text: m.text || 'Sorry, something went wrong.', isStreaming: false }
                     : m,
                 ),
               )
@@ -84,24 +97,19 @@ export function AguiChat() {
       console.error('AG-UI chat error:', error)
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === assistantId
-            ? { ...m, body: m.body || 'Sorry, something went wrong. Please try again.', isStreaming: false }
+          m.messageId === assistantId
+            ? { ...m, text: m.text || 'Sorry, something went wrong. Please try again.', isStreaming: false }
             : m,
         ),
       )
     } finally {
       setIsLoading(false)
-      setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, isStreaming: false } : m)))
+      setMessages((prev) => prev.map((m) => (m.messageId === assistantId ? { ...m, isStreaming: false } : m)))
     }
-  }, [])
+  }, [onSessionUpdate])
 
   return (
     <ChatContainer elevation={0}>
-      <ChatHeader>
-        <Typography variant="h6" component="h2">
-          Chat (AG-UI Protocol)
-        </Typography>
-      </ChatHeader>
       <ChatMessageList messages={messages} />
       <ChatInput onSubmit={handleSubmit} disabled={isLoading} />
     </ChatContainer>

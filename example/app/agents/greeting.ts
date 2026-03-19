@@ -1,14 +1,6 @@
 import { z } from 'zod'
-import { Agent, BaseState } from '@genui-a3/a3'
-
-/**
- * Consumer defines their GLOBAL state extending BaseState.
- * This state is shared across ALL agents in the session.
- */
-export interface State extends BaseState {
-  userName?: string
-  userAge?: string
-}
+import { Agent } from '@genui-a3/a3'
+import type { State } from '@agents/state'
 
 /**
  * Sample greeting agent that demonstrates the AgentRegistry pattern.
