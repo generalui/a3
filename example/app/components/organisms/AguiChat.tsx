@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { Typography } from '@mui/material'
 import { ChatMessageList } from '@organisms/ChatMessageList'
-import { ChatContainer, ChatHeader } from '@atoms'
+import { ChatContainer } from '@atoms'
 import { ChatInput } from '@molecules'
 import type { ChatMessage as ChatMessageType } from 'types'
 import { HttpAgent, EventType } from '@ag-ui/client'
@@ -12,7 +11,11 @@ const agent = new HttpAgent({
   url: '/api/agui',
 })
 
-export function AguiChat() {
+interface AguiChatProps {
+  onSessionUpdate?: (update: { activeAgentId: string | null; state: Record<string, unknown> }) => void
+}
+
+export function AguiChat({ onSessionUpdate }: AguiChatProps) {
   const [messages, setMessages] = useState<ChatMessageType[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const assistantIdRef = useRef<string>('')
@@ -56,8 +59,12 @@ export function AguiChat() {
               const delta = (event as unknown as { delta: string }).delta
               setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, body: m.body + delta } : m)))
             } else if (event.type === EventType.CUSTOM && 'name' in event) {
-              const customEvent = event as unknown as { name: string }
+              const customEvent = event as unknown as { name: string; value?: { toAgentId?: string; state?: Record<string, unknown> } }
               if (customEvent.name === 'AgentTransition') {
+                onSessionUpdate?.({
+                  activeAgentId: customEvent.value?.toAgentId ?? null,
+                  state: customEvent.value?.state ?? {},
+                })
                 const prevAssistantId = assistantId
                 assistantId = crypto.randomUUID()
                 assistantIdRef.current = assistantId
@@ -67,6 +74,11 @@ export function AguiChat() {
                 })
               }
             } else if (event.type === EventType.RUN_FINISHED) {
+              const result = (event as unknown as { result?: Record<string, unknown> }).result
+              onSessionUpdate?.({
+                activeAgentId: (result?.activeAgentId as string) ?? null,
+                state: (result?.state as Record<string, unknown>) ?? {},
+              })
               setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, isStreaming: false } : m)))
             } else if (event.type === EventType.RUN_ERROR) {
               setMessages((prev) =>
@@ -93,15 +105,10 @@ export function AguiChat() {
       setIsLoading(false)
       setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, isStreaming: false } : m)))
     }
-  }, [])
+  }, [onSessionUpdate])
 
   return (
     <ChatContainer elevation={0}>
-      <ChatHeader>
-        <Typography variant="h6" component="h2">
-          Chat (AG-UI Protocol)
-        </Typography>
-      </ChatHeader>
       <ChatMessageList messages={messages} />
       <ChatInput onSubmit={handleSubmit} disabled={isLoading} />
     </ChatContainer>

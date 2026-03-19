@@ -4,22 +4,11 @@
  * It waits for the full agent response before returning a complete JSON payload.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { AgentRegistry, ChatSession, MemorySessionStore } from '@genui-a3/a3'
+import { ChatSession, MemorySessionStore } from '@genui-a3/a3'
 import { getProvider } from '@providers'
-import { greetingAgent, State } from '@agents/greeting'
-import { ageAgent } from '@agents/age'
+import { State } from '@agents/greeting'
 
-// Register the agent on module load
-const registry = AgentRegistry.getInstance<State>()
-if (!registry.has('greeting')) {
-  registry.register(greetingAgent)
-}
-if (!registry.has('age')) {
-  registry.register(ageAgent)
-}
-
-// Shared store instance (in production, use Redis/DynamoDB)
-const store = new MemorySessionStore<State>()
+const sessionStore = new MemorySessionStore<State>()
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Create session and send message
     const session = new ChatSession<State>({
       sessionId,
-      store,
+      store: sessionStore,
       initialAgentId: 'greeting',
       initialState: { userName: undefined },
       provider: getProvider(),
@@ -52,16 +41,4 @@ export async function POST(request: NextRequest) {
     console.error('Chat error:', error)
     return NextResponse.json({ error: 'Internal server error', details: String(error) }, { status: 500 })
   }
-}
-
-// GET endpoint to list available agents
-export function GET() {
-  const agents = AgentRegistry.getInstance().getAll()
-  return NextResponse.json({
-    agents: agents.map((agent) => ({
-      id: agent.id,
-      name: agent.name,
-      description: agent.description,
-    })),
-  })
 }

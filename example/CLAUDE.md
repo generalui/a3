@@ -88,6 +88,9 @@ When added, tests should be comprehensive, runnable in isolation, and cover erro
 
 ## Workflow
 
+- **Please understand the requirements of this project before building.**
+- **Please ask any clarifying questions before making any changes or recommendations.**
+
 1. Understand requirements (business, technical, non-functional)
 2. Plan implementation
 3. Write tests, then code that passes them
@@ -102,11 +105,17 @@ The `docs/` directory contains essential A3 framework documentation.
 
 | File | Topic |
 |---|---|
-| `docs/QUICK-START-EXAMPLES.md` | Agent definitions, registration, multi-agent flows, ChatSession usage |
-| `docs/PROVIDERS.md` | Provider setup (Bedrock, OpenAI, Anthropic), config options, model fallback, per-agent overrides |
-| `docs/RESILIENCE.md` | Retry, backoff, timeout config, error classification, resilience error handling |
-| `docs/LOGGING.md` | Internal logging architecture, `log` singleton, log levels |
+| `docs/API-REFERENCE.md` | Core exports, types, and API descriptions |
+| `docs/ARCHITECTURE.md` | Framework architecture and system design |
+| `docs/CORE-CONCEPTS.md` | Agents, providers, and fundamental building blocks |
 | `docs/CUSTOM_LOGGING.md` | Supplying a custom logger via `configureLogger()` |
+| `docs/CUSTOM_PROVIDERS.md` | Creating a custom provider and streaming support |
+| `docs/INITIAL_PROMPT.md` | System prompts and instructions for AI agents |
+| `docs/LOGGING.md` | Internal logging architecture, `log` singleton, log levels |
+| `docs/PROVIDERS.md` | Provider setup (Bedrock, OpenAI, Anthropic), config options, model fallback, per-agent overrides |
+| `docs/QUICK-START-EXAMPLES.md` | Agent definitions, registration, multi-agent flows, ChatSession usage |
+| `docs/RESILIENCE.md` | Retry, backoff, timeout config, error classification, resilience error handling |
+| `docs/TRANSITIONS.md` | Agent hand-offs and transition control |
 
 When in doubt about A3 API usage, patterns, or configuration — **read the relevant doc file first**.
 Any new `.md` files added to `docs/` are part of this documentation set and should be consulted as needed.
