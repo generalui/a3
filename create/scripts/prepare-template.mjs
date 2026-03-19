@@ -99,7 +99,7 @@ if (fs.existsSync(docsDir)) {
   fs.mkdirSync(templateDocsDir, { recursive: true })
 
   for (const entry of fs.readdirSync(docsDir, { withFileTypes: true })) {
-    if (!entry.isFile()) continue
+    if (!entry.isFile()) continue // skip subdirectories (e.g. contributing/ — contributor-only docs)
 
     fs.copyFileSync(path.join(docsDir, entry.name), path.join(templateDocsDir, entry.name))
     console.log(`Copied doc: ${entry.name}`)
