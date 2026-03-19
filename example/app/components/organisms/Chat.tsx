@@ -8,8 +8,6 @@ import { ChatInput } from '@molecules'
 import { MessageSender } from '@genui-a3/a3'
 import type { Message } from '@genui-a3/a3'
 
-const SESSION_ID = 'demo-session'
-
 type ChatApiResponse = {
   response: string
   activeAgentId: string | null
@@ -19,11 +17,13 @@ type ChatApiResponse = {
 }
 
 interface ChatProps {
+  sessionId: string
+  initialMessages?: Message[]
   onSessionUpdate?: (update: { activeAgentId: string | null; state: Record<string, unknown> }) => void
 }
 
-export function Chat({ onSessionUpdate }: ChatProps) {
-  const [messages, setMessages] = useState<Message[]>([])
+export function Chat({ sessionId, initialMessages, onSessionUpdate }: ChatProps) {
+  const [messages, setMessages] = useState<Message[]>(initialMessages ?? [])
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = useCallback(
@@ -40,7 +40,7 @@ export function Chat({ onSessionUpdate }: ChatProps) {
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, sessionId: SESSION_ID }),
+          body: JSON.stringify({ message: text, sessionId }),
         })
 
         if (!response.ok) {
@@ -69,7 +69,7 @@ export function Chat({ onSessionUpdate }: ChatProps) {
         setIsLoading(false)
       }
     },
-    [onSessionUpdate],
+    [onSessionUpdate, sessionId],
   )
 
   return (

@@ -14,3 +14,12 @@ export const SESSION_IDS = {
     AGUI: 'agui',
   },
 }
+
+const EXAMPLE_GREETING = `Hi there! I'm the **greeting agent**. What's your name?`
+
+export const SESSION_INITIAL_MESSAGES: Record<string, string> = {
+  [SESSION_IDS.ONBOARDING]: WELCOME_MESSAGE_TEXT,
+  [SESSION_IDS.EXAMPLES.BLOCKING]: EXAMPLE_GREETING,
+  [SESSION_IDS.EXAMPLES.STREAMING]: EXAMPLE_GREETING,
+  [SESSION_IDS.EXAMPLES.AGUI]: EXAMPLE_GREETING,
+}

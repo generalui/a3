@@ -2,27 +2,37 @@ import { ChatSession, MemorySessionStore, MessageSender } from '@genui-a3/a3'
 import { getProvider } from '@providers'
 import type { State } from '@agents/state'
 import type { Message } from '@genui-a3/a3'
-import { WELCOME_MESSAGE_TEXT, SESSION_IDS } from '@constants/chat'
+import { SESSION_INITIAL_MESSAGES } from '@constants/chat'
+
+const globalForStore = globalThis as unknown as {
+  __a3SessionStore?: MemorySessionStore<State>
+}
 
 /**
- * Shared session store for all API routes.
+ * Get the shared session store, persisted on globalThis to survive HMR.
  */
-let sessionStore: MemorySessionStore<State> | null = null
+function getSessionStore(): MemorySessionStore<State> {
+  globalForStore.__a3SessionStore ??= new MemorySessionStore<State>()
+  return globalForStore.__a3SessionStore
+}
+
+/**
+ * Create a single assistant message from text.
+ */
+function createInitialMessage(text: string): Message {
+  return {
+    messageId: crypto.randomUUID(),
+    text,
+    metadata: { source: MessageSender.ASSISTANT, timestamp: Date.now() },
+  }
+}
 
 /**
  * Build the default initial messages for a given session ID.
  */
 function getDefaultInitialMessages(sessionId: string): Message[] | undefined {
-  if (sessionId === SESSION_IDS.ONBOARDING) {
-    return [
-      {
-        messageId: crypto.randomUUID(),
-        text: WELCOME_MESSAGE_TEXT,
-        metadata: { source: MessageSender.ASSISTANT, timestamp: Date.now() },
-      },
-    ]
-  }
-  return undefined
+  const text = SESSION_INITIAL_MESSAGES[sessionId]
+  return text ? [createInitialMessage(text)] : undefined
 }
 
 /**
@@ -36,10 +46,9 @@ export function getChatSessionInstance(options: {
   initialAgentId?: string
   initialMessages?: Message[]
 }): ChatSession<State> {
-  sessionStore ??= new MemorySessionStore<State>()
   return new ChatSession<State>({
     sessionId: options.sessionId,
-    store: sessionStore,
+    store: getSessionStore(),
     initialAgentId: options.initialAgentId ?? 'greeting',
     initialState: { userName: undefined },
     provider: getProvider(),

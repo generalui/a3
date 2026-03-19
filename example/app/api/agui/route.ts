@@ -1,22 +1,13 @@
 import { NextRequest } from 'next/server'
 import { EventType, type RunAgentInput } from '@ag-ui/client'
 import { EventEncoder } from '@ag-ui/encoder'
-import { ChatSession, AGUIAgent, MemorySessionStore } from '@genui-a3/a3'
-import { getProvider } from '@providers'
-import { State } from '@agents/state'
+import { AGUIAgent } from '@genui-a3/a3'
+import { getChatSessionInstance } from '@agents'
 import { initRegistry } from '@agents/registry'
-
-export const aguiSessionStore = new MemorySessionStore<State>()
 
 const a3Agent = new AGUIAgent({
   agentId: 'a3-demo',
-  createSession: (input: RunAgentInput) =>
-    new ChatSession<State>({
-      sessionId: input.threadId,
-      store: aguiSessionStore,
-      initialAgentId: 'greeting',
-      provider: getProvider(),
-    }),
+  createSession: (input: RunAgentInput) => getChatSessionInstance({ sessionId: input.threadId }),
 })
 
 export async function POST(request: NextRequest) {

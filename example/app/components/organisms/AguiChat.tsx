@@ -13,11 +13,12 @@ const agent = new HttpAgent({
 })
 
 interface AguiChatProps {
+  initialMessages?: Message[]
   onSessionUpdate?: (update: { activeAgentId: string | null; state: Record<string, unknown> }) => void
 }
 
-export function AguiChat({ onSessionUpdate }: AguiChatProps) {
-  const [messages, setMessages] = useState<Message[]>([])
+export function AguiChat({ initialMessages, onSessionUpdate }: AguiChatProps) {
+  const [messages, setMessages] = useState<Message[]>(initialMessages ?? [])
   const [isLoading, setIsLoading] = useState(false)
   const assistantIdRef = useRef<string>('')
 

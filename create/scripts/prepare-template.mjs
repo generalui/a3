@@ -15,6 +15,12 @@ const EXCLUDE = ['node_modules', '.next', 'tsconfig.tsbuildinfo', '.env', '.env.
 
 const GENUI_PACKAGES = ['@genui-a3/a3', '@genui-a3/a3-bedrock', '@genui-a3/a3-openai', '@genui-a3/a3-anthropic']
 
+/**
+ * Documents from arbitrary monorepo locations to copy into template/docs/.
+ * Each entry: { src: absolute path, destName: filename inside template/docs/ }
+ */
+const EXTRA_DOCS = [{ src: path.join(monorepoRoot, 'README.md'), destName: 'A3-README.md' }]
+
 // --- Helpers ---
 
 /**
@@ -29,7 +35,8 @@ function copyDirFiltered(src, dest) {
     const srcPath = path.join(src, entry.name)
     const destPath = path.join(dest, entry.name)
 
-    if (entry.isDirectory()) {
+    const stat = fs.statSync(srcPath)
+    if (stat.isDirectory()) {
       copyDirFiltered(srcPath, destPath)
     } else {
       fs.copyFileSync(srcPath, destPath)
@@ -106,6 +113,16 @@ if (fs.existsSync(docsDir)) {
   }
 } else {
   console.warn('Warning: docs/ directory not found, skipping documentation copy.')
+}
+
+// Copy extra documents into template/docs/
+for (const { src, destName } of EXTRA_DOCS) {
+  if (fs.existsSync(src)) {
+    fs.copyFileSync(src, path.join(templateDocsDir, destName))
+    console.log(`Copied extra doc: ${path.basename(src)} → docs/${destName}`)
+  } else {
+    console.warn(`Warning: Extra doc not found: ${src}`)
+  }
 }
 
 // Write README.md from template source file
