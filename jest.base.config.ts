@@ -90,7 +90,9 @@ export const baseConfig: Config = {
   },
   collectCoverageFrom: [
     '**/*.{ts,tsx}',
+    '!**/*.d.ts',
     '!./*',
+    '!**/.next/**',
     '!**/__tests__/**',
     '!**/no_commit/**',
     '!**/node_modules/**',
@@ -102,8 +104,10 @@ export const baseConfig: Config = {
   coverageProvider: 'v8',
   coverageReporters: ['html', 'text'],
   coveragePathIgnorePatterns: [
+    '\\.d\\.ts$',
     '<rootDir>/.next/',
     '<rootDir>/__tests__/',
+    '<rootDir>/example/.next/',
     '<rootDir>/no_commit/',
     '<rootDir>/node_modules/',
     '<rootDir>/src/constants/',
