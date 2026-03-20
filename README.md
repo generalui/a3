@@ -94,6 +94,7 @@ See more examples in the [Quick Start & Examples guide](./docs/QUICK-START-EXAMP
 - [Custom Providers](./docs/CUSTOM_PROVIDERS.md) -- building your own provider
 - [Resilience](./docs/RESILIENCE.md) -- retries, timeouts, and model fallback
 - [Custom Logging](./docs/CUSTOM_LOGGING.md) -- plugging in your own logger
+- [Custom Stores](./docs/CUSTOM_STORES.md) -- implementing your own session store
 
 ## Roadmap
 
