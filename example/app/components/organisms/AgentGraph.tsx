@@ -7,6 +7,7 @@ import { AgentNode } from '@atoms/AgentNode'
 import { DeterministicEdge, DynamicEdge, SelfLoopEdge } from '@atoms/TransitionEdge'
 import { getGraphLayout } from '@lib/getGraphLayout'
 import type { AgentInfo } from '@lib/getAgentGraphData'
+import { GRAPH_HEADING, GRAPH_LEGEND_DETERMINISTIC, GRAPH_LEGEND_LLM } from '@constants/ui'
 import '@xyflow/react/dist/style.css'
 
 interface AgentGraphProps {
@@ -30,19 +31,19 @@ export function AgentGraph({ agents, activeAgentId }: AgentGraphProps) {
     <Paper elevation={0} sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 3 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
         <Typography variant="subtitle2" fontWeight="bold">
-          Agent Graph
+          {GRAPH_HEADING}
         </Typography>
         <Stack direction="row" gap={2} alignItems="center">
           <Stack direction="row" gap={0.5} alignItems="center">
             <Box sx={{ width: 20, height: 0, borderTop: '2px solid #64748b' }} />
             <Typography variant="caption" color="text.secondary">
-              Deterministic
+              {GRAPH_LEGEND_DETERMINISTIC}
             </Typography>
           </Stack>
           <Stack direction="row" gap={0.5} alignItems="center">
             <Box sx={{ width: 20, height: 0, borderTop: '2px dashed #94a3b8' }} />
             <Typography variant="caption" color="text.secondary">
-              LLM-driven
+              {GRAPH_LEGEND_LLM}
             </Typography>
           </Stack>
         </Stack>

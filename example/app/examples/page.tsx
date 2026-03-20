@@ -6,36 +6,44 @@ import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import StreamIcon from '@mui/icons-material/Stream'
 import ExtensionIcon from '@mui/icons-material/Extension'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import {
+  EXAMPLES_HEADING,
+  EXAMPLES_SUBTITLE,
+  EXAMPLES_CTA,
+  EXAMPLE_BLOCKING_TITLE,
+  EXAMPLE_BLOCKING_DESCRIPTION,
+  EXAMPLE_STREAMING_TITLE,
+  EXAMPLE_STREAMING_DESCRIPTION,
+  EXAMPLE_AGUI_TITLE,
+  EXAMPLE_AGUI_DESCRIPTION,
+} from '@constants/ui'
 
 const EXAMPLES = [
   {
-    title: 'Blocking Chat',
-    description:
-      'A synchronous (unary) chat implementation. The client waits for the agent to finish processing completely before rendering the response.',
+    title: EXAMPLE_BLOCKING_TITLE,
+    description: EXAMPLE_BLOCKING_DESCRIPTION,
     href: '/examples/chat',
     icon: <ChatBubbleOutlineIcon fontSize="large" />,
     color: '#2563eb',
     bgColor: 'rgba(37, 99, 235, 0.1)',
   },
   {
-    title: 'Streaming Chat',
-    description:
-      'A streaming response implementation using Server-Sent Events (SSE). The client renders the agent\'s response incrementally as it\'s being generated.',
+    title: EXAMPLE_STREAMING_TITLE,
+    description: EXAMPLE_STREAMING_DESCRIPTION,
     href: '/examples/stream',
     icon: <StreamIcon fontSize="large" />,
     color: '#9c27b0',
     bgColor: 'rgba(156, 39, 176, 0.1)',
   },
   {
-    title: 'AG-UI Protocol',
-    description:
-      'Agentic UI implementation using the AG-UI protocol. The agent returns structured semantic events driving the client interface in real-time.',
+    title: EXAMPLE_AGUI_TITLE,
+    description: EXAMPLE_AGUI_DESCRIPTION,
     href: '/examples/agui',
     icon: <ExtensionIcon fontSize="large" />,
     color: '#2e7d32',
     bgColor: 'rgba(46, 125, 50, 0.1)',
   },
-] as const
+]
 
 export default function ExamplesIndex() {
   return (
@@ -43,10 +51,10 @@ export default function ExamplesIndex() {
       <Container maxWidth="lg" sx={{ mt: 5, mb: 10 }}>
         <Stack spacing={3} alignItems="center" mb={10} textAlign="center">
           <Typography variant="h3" fontWeight={800} color="text.primary">
-            A3 Examples
+            {EXAMPLES_HEADING}
           </Typography>
           <Typography variant="h6" color="text.secondary" maxWidth="md">
-            Explore the different communication protocols and frontend implementations available in the A3 architecture.
+            {EXAMPLES_SUBTITLE}
           </Typography>
         </Stack>
 
@@ -86,7 +94,7 @@ export default function ExamplesIndex() {
                   {example.description}
                 </Typography>
                 <Stack direction="row" alignItems="center" gap={1} sx={{ color: example.color }} fontWeight="bold" mt={2}>
-                  Try it out <ArrowForwardIcon fontSize="small" />
+                  {EXAMPLES_CTA} <ArrowForwardIcon fontSize="small" />
                 </Stack>
               </CardActionArea>
             </Card>

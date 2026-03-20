@@ -5,6 +5,7 @@ import styled from 'styled-components'
 import { TextField, Button, Box } from '@mui/material'
 import type { Theme } from '@mui/material/styles'
 import SendIcon from '@mui/icons-material/Send'
+import { CHAT_PLACEHOLDER, CHAT_SEND } from '@constants/ui'
 
 type Props = {
   onSubmit: (text: string) => void | Promise<void>
@@ -24,7 +25,7 @@ const InputForm = styled.form`
   gap: ${({ theme }) => (theme as Theme).spacing(1.5)};
 `
 
-export function ChatInput({ onSubmit, disabled, placeholder = 'Type a message...' }: Props) {
+export function ChatInput({ onSubmit, disabled, placeholder = CHAT_PLACEHOLDER }: Props) {
   const [value, setValue] = useState('')
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const prevDisabled = useRef(disabled)
@@ -85,7 +86,7 @@ export function ChatInput({ onSubmit, disabled, placeholder = 'Type a message...
           startIcon={<SendIcon />}
           data-testid="chat-send"
         >
-          Send
+          {CHAT_SEND}
         </Button>
       </InputForm>
     </InputContainer>

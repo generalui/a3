@@ -284,6 +284,28 @@ export class ChatSession<TState extends BaseState = BaseState, TContext extends 
     }
   }
 
+  /**
+   * Restart the session by clearing all data and re-initializing to initial values.
+   * Returns the fresh session data with initial messages, state, and agent.
+   *
+   * @returns The newly created SessionData with initial values
+   *
+   * @example
+   * ```typescript
+   * const freshSession = await session.restart()
+   * console.log(freshSession.messages) // initial messages
+   * console.log(freshSession.activeAgentId) // initial agent
+   * ```
+   */
+  async restart(): Promise<SessionData<TState, TContext>> {
+    if (this.store.delete) {
+      await this.store.delete(this.sessionId)
+    }
+    const newSession = this.createInitialSession()
+    await this.store.save(this.sessionId, newSession)
+    return newSession
+  }
+
   private createInitialSession(): SessionData<TState, TContext> {
     return {
       sessionId: this.sessionId,

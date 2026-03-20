@@ -7,6 +7,8 @@ import { ChatContainer, ChatHeader } from '@atoms'
 import { ChatInput } from '@molecules'
 import { MessageSender } from '@genui-a3/a3'
 import type { Message } from '@genui-a3/a3'
+import { CHAT_ERROR } from '@constants/ui'
+import { useRestart, type RestartResult } from '@lib/hooks/useRestart'
 
 type ChatApiResponse = {
   response: string
@@ -20,11 +22,13 @@ interface ChatProps {
   sessionId: string
   initialMessages?: Message[]
   onSessionUpdate?: (update: { activeAgentId: string | null; state: Record<string, unknown> }) => void
+  onRestart?: () => Promise<RestartResult>
 }
 
-export function Chat({ sessionId, initialMessages, onSessionUpdate }: ChatProps) {
+export function Chat({ sessionId, initialMessages, onSessionUpdate, onRestart }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages ?? [])
   const [isLoading, setIsLoading] = useState(false)
+  const { isRestarting, handleRestart } = useRestart({ onRestart, setMessages, onSessionUpdate })
 
   const handleSubmit = useCallback(
     async (text: string) => {
@@ -61,7 +65,7 @@ export function Chat({ sessionId, initialMessages, onSessionUpdate }: ChatProps)
         console.error('Chat API error:', error)
         const errorMsg: Message = {
           messageId: crypto.randomUUID(),
-          text: 'Sorry, something went wrong. Please try again.',
+          text: CHAT_ERROR,
           metadata: { source: MessageSender.ASSISTANT },
         }
         setMessages((prev) => [...prev, errorMsg])
@@ -74,9 +78,11 @@ export function Chat({ sessionId, initialMessages, onSessionUpdate }: ChatProps)
 
   return (
     <ChatContainer elevation={0}>
-      <ChatHeader>{isLoading && <CircularProgress size={16} />}</ChatHeader>
+      <ChatHeader onRestart={() => void handleRestart?.()} isRestarting={isRestarting}>
+        {isLoading && <CircularProgress size={16} />}
+      </ChatHeader>
       <ChatMessageList messages={messages} />
-      <ChatInput onSubmit={handleSubmit} disabled={isLoading} />
+      <ChatInput onSubmit={handleSubmit} disabled={isLoading || isRestarting} />
     </ChatContainer>
   )
 }

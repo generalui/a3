@@ -1,19 +1,17 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
 import Link from 'next/link'
-import { Box, Collapse, Drawer, List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
+import { Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
 import HomeOutlined from '@mui/icons-material/HomeOutlined'
 import SmartToyOutlined from '@mui/icons-material/SmartToyOutlined'
 import CodeOutlined from '@mui/icons-material/CodeOutlined'
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import StreamIcon from '@mui/icons-material/Stream'
 import ExtensionIcon from '@mui/icons-material/Extension'
-import ExpandLess from '@mui/icons-material/ExpandLess'
-import ExpandMore from '@mui/icons-material/ExpandMore'
 import { AppLogo } from '@atoms'
 import { SIDEBAR_WIDTH } from './SidebarLayout'
+import { NAV_HOME, NAV_ONBOARDING, NAV_EXAMPLES, NAV_CHAT, NAV_STREAMING, NAV_AGUI } from '@constants/ui'
 
 interface SidebarProps {
   open: boolean
@@ -22,8 +20,6 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname()
-  const isExamplesPath = pathname.startsWith('/examples')
-  const [examplesOpen, setExamplesOpen] = useState(isExamplesPath)
 
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -42,7 +38,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <ListItemIcon sx={{ minWidth: 40 }}>
             <HomeOutlined />
           </ListItemIcon>
-          <ListItemText primary="Home" />
+          <ListItemText primary={NAV_HOME} />
         </ListItemButton>
 
         <ListItemButton
@@ -55,59 +51,62 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <ListItemIcon sx={{ minWidth: 40 }}>
             <SmartToyOutlined />
           </ListItemIcon>
-          <ListItemText primary="Onboarding" />
+          <ListItemText primary={NAV_ONBOARDING} />
         </ListItemButton>
 
-        <ListItemButton onClick={() => setExamplesOpen(!examplesOpen)} sx={{ borderRadius: 1, mb: 0.5 }}>
+        <ListItemButton
+          component={Link}
+          href="/examples"
+          selected={pathname === '/examples'}
+          onClick={onClose}
+          sx={{ borderRadius: 1, mb: 0.5 }}
+        >
           <ListItemIcon sx={{ minWidth: 40 }}>
             <CodeOutlined />
           </ListItemIcon>
-          <ListItemText primary="Examples" />
-          {examplesOpen ? <ExpandLess /> : <ExpandMore />}
+          <ListItemText primary={NAV_EXAMPLES} />
         </ListItemButton>
 
-        <Collapse in={examplesOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            <ListItemButton
-              component={Link}
-              href="/examples/chat"
-              selected={pathname === '/examples/chat'}
-              onClick={onClose}
-              sx={{ borderRadius: 1, mb: 0.5, pl: 4 }}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <ChatBubbleOutlineIcon />
-              </ListItemIcon>
-              <ListItemText primary="Chat" />
-            </ListItemButton>
+        <List component="div" disablePadding>
+          <ListItemButton
+            component={Link}
+            href="/examples/chat"
+            selected={pathname === '/examples/chat'}
+            onClick={onClose}
+            sx={{ borderRadius: 1, mb: 0.5, pl: 4 }}
+          >
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <ChatBubbleOutlineIcon />
+            </ListItemIcon>
+            <ListItemText primary={NAV_CHAT} />
+          </ListItemButton>
 
-            <ListItemButton
-              component={Link}
-              href="/examples/stream"
-              selected={pathname === '/examples/stream'}
-              onClick={onClose}
-              sx={{ borderRadius: 1, mb: 0.5, pl: 4 }}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <StreamIcon />
-              </ListItemIcon>
-              <ListItemText primary="Streaming" />
-            </ListItemButton>
+          <ListItemButton
+            component={Link}
+            href="/examples/stream"
+            selected={pathname === '/examples/stream'}
+            onClick={onClose}
+            sx={{ borderRadius: 1, mb: 0.5, pl: 4 }}
+          >
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <StreamIcon />
+            </ListItemIcon>
+            <ListItemText primary={NAV_STREAMING} />
+          </ListItemButton>
 
-            <ListItemButton
-              component={Link}
-              href="/examples/agui"
-              selected={pathname === '/examples/agui'}
-              onClick={onClose}
-              sx={{ borderRadius: 1, mb: 0.5, pl: 4 }}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <ExtensionIcon />
-              </ListItemIcon>
-              <ListItemText primary="AG-UI" />
-            </ListItemButton>
-          </List>
-        </Collapse>
+          <ListItemButton
+            component={Link}
+            href="/examples/agui"
+            selected={pathname === '/examples/agui'}
+            onClick={onClose}
+            sx={{ borderRadius: 1, mb: 0.5, pl: 4 }}
+          >
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <ExtensionIcon />
+            </ListItemIcon>
+            <ListItemText primary={NAV_AGUI} />
+          </ListItemButton>
+        </List>
       </List>
     </Box>
   )
