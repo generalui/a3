@@ -11,7 +11,7 @@ jest.mock('fs-extra', () => ({
 
 import fs from 'fs-extra'
 import { generateEnvFile, generateProviderFiles, scaffoldProject } from '@create-utils/generators'
-import type { ProviderConfig } from '@create-utils/providers'
+import { PROVIDER_META, providerDocName, type ProviderConfig } from '@create-utils/providers'
 
 const mockFs = jest.mocked(fs)
 
@@ -194,21 +194,21 @@ describe('generateProviderFiles', () => {
     // All provider files exist by default
     mockFs.existsSync.mockReturnValue(true)
     // Simulate a package.json with all provider packages installed
-    mockFs.readJsonSync.mockReturnValue({
-      dependencies: {
-        '@genui-a3/a3-anthropic': '^0.1.0',
-        '@genui-a3/a3-bedrock': '^0.1.0',
-        '@genui-a3/a3-openai': '^0.1.0',
-      },
-    })
+    const allDependencies = Object.fromEntries(
+      Object.values(PROVIDER_META).map((meta) => [meta.npmPackage, '^0.1.0']),
+    )
+    mockFs.readJsonSync.mockReturnValue({ dependencies: allDependencies })
   })
 
   it('removes unselected provider files', () => {
-    const config: ProviderConfig = { providers: ['openai'], primaryProvider: 'openai' }
+    const allKeys = Object.keys(PROVIDER_META)
+    const [selected, ...unselected] = allKeys
+    const config: ProviderConfig = { providers: [selected], primaryProvider: selected }
     generateProviderFiles('/target', config)
-    expect(mockFs.unlinkSync).toHaveBeenCalledWith(expect.stringContaining('bedrock.ts'))
-    expect(mockFs.unlinkSync).toHaveBeenCalledWith(expect.stringContaining('anthropic.ts'))
-    expect(mockFs.unlinkSync).not.toHaveBeenCalledWith(expect.stringContaining('openai.ts'))
+    for (const key of unselected) {
+      expect(mockFs.unlinkSync).toHaveBeenCalledWith(expect.stringContaining(PROVIDER_META[key].file))
+    }
+    expect(mockFs.unlinkSync).not.toHaveBeenCalledWith(expect.stringContaining(PROVIDER_META[selected].file))
   })
 
   it('does not call unlinkSync when an unselected file does not exist', () => {
@@ -218,34 +218,69 @@ describe('generateProviderFiles', () => {
     expect(mockFs.unlinkSync).not.toHaveBeenCalled()
   })
 
+  it('removes doc files for unselected providers and keeps doc for selected provider', () => {
+    const allKeys = Object.keys(PROVIDER_META)
+    const [selected, ...unselected] = allKeys
+    const config: ProviderConfig = { providers: [selected], primaryProvider: selected }
+    generateProviderFiles('/target', config)
+    for (const key of unselected) {
+      expect(mockFs.unlinkSync).toHaveBeenCalledWith(expect.stringContaining(providerDocName(key)))
+    }
+    expect(mockFs.unlinkSync).not.toHaveBeenCalledWith(expect.stringContaining(providerDocName(selected)))
+  })
+
+  it('removes provider doc files from the docs subdirectory of the target', () => {
+    const [selected] = Object.keys(PROVIDER_META)
+    const config: ProviderConfig = { providers: [selected], primaryProvider: selected }
+    generateProviderFiles('/my/project', config)
+    expect(mockFs.unlinkSync).toHaveBeenCalledWith(expect.stringContaining('/my/project/docs/'))
+  })
+
+  it('does not remove provider doc files when they do not exist', () => {
+    mockFs.existsSync.mockReturnValue(false)
+    const [selected] = Object.keys(PROVIDER_META)
+    const config: ProviderConfig = { providers: [selected], primaryProvider: selected }
+    generateProviderFiles('/target', config)
+    for (const key of Object.keys(PROVIDER_META)) {
+      expect(mockFs.unlinkSync).not.toHaveBeenCalledWith(expect.stringContaining(providerDocName(key)))
+    }
+  })
+
   it('generates an index.ts that re-exports the selected provider', () => {
-    const config: ProviderConfig = { providers: ['openai'], primaryProvider: 'openai' }
+    const [selected] = Object.keys(PROVIDER_META)
+    const meta = PROVIDER_META[selected]
+    const baseName = meta.file.replace('.ts', '')
+    const config: ProviderConfig = { providers: [selected], primaryProvider: selected }
     generateProviderFiles('/target', config)
     const content = mockFs.outputFileSync.mock.calls[0][1] as string
-    expect(content).toContain("export { getOpenAIProvider } from './openai'")
+    expect(content).toContain(`export { ${meta.exportName} } from './${baseName}'`)
   })
 
   it('aliases the primary provider as getProvider in the index', () => {
-    const config: ProviderConfig = { providers: ['openai'], primaryProvider: 'openai' }
+    const [selected] = Object.keys(PROVIDER_META)
+    const meta = PROVIDER_META[selected]
+    const baseName = meta.file.replace('.ts', '')
+    const config: ProviderConfig = { providers: [selected], primaryProvider: selected }
     generateProviderFiles('/target', config)
     const content = mockFs.outputFileSync.mock.calls[0][1] as string
-    expect(content).toContain("export { getOpenAIProvider as getProvider } from './openai'")
+    expect(content).toContain(`export { ${meta.exportName} as getProvider } from './${baseName}'`)
   })
 
   it('generates index.ts with all selected providers when multiple are chosen', () => {
-    const config: ProviderConfig = {
-      providers: ['openai', 'anthropic'],
-      primaryProvider: 'anthropic',
-    }
+    const [first, second] = Object.keys(PROVIDER_META)
+    const firstMeta = PROVIDER_META[first]
+    const secondMeta = PROVIDER_META[second]
+    const config: ProviderConfig = { providers: [first, second], primaryProvider: second }
     generateProviderFiles('/target', config)
     const content = mockFs.outputFileSync.mock.calls[0][1] as string
-    expect(content).toContain("export { getOpenAIProvider } from './openai'")
-    expect(content).toContain("export { getAnthropicProvider } from './anthropic'")
-    expect(content).toContain("export { getAnthropicProvider as getProvider } from './anthropic'")
+    expect(content).toContain(`export { ${firstMeta.exportName} } from './${firstMeta.file.replace('.ts', '')}'`)
+    expect(content).toContain(`export { ${secondMeta.exportName} } from './${secondMeta.file.replace('.ts', '')}'`)
+    expect(content).toContain(`export { ${secondMeta.exportName} as getProvider } from './${secondMeta.file.replace('.ts', '')}'`)
   })
 
   it('writes the index to <targetDir>/app/lib/providers/index.ts', () => {
-    const config: ProviderConfig = { providers: ['bedrock'], primaryProvider: 'bedrock' }
+    const [selected] = Object.keys(PROVIDER_META)
+    const config: ProviderConfig = { providers: [selected], primaryProvider: selected }
     generateProviderFiles('/my/project', config)
     expect(mockFs.outputFileSync).toHaveBeenCalledWith(
       expect.stringContaining('/my/project/app/lib/providers/index.ts'),
@@ -254,12 +289,15 @@ describe('generateProviderFiles', () => {
   })
 
   it('removes unselected provider packages from package.json dependencies', () => {
-    const config: ProviderConfig = { providers: ['openai'], primaryProvider: 'openai' }
+    const allKeys = Object.keys(PROVIDER_META)
+    const [selected, ...unselected] = allKeys
+    const config: ProviderConfig = { providers: [selected], primaryProvider: selected }
     generateProviderFiles('/target', config)
     const written = mockFs.writeJsonSync.mock.calls[0][1] as { dependencies: Record<string, string> }
-    expect(written.dependencies['@genui-a3/a3-openai']).toBeDefined()
-    expect(written.dependencies['@genui-a3/a3-anthropic']).toBeUndefined()
-    expect(written.dependencies['@genui-a3/a3-bedrock']).toBeUndefined()
+    expect(written.dependencies[PROVIDER_META[selected].npmPackage]).toBeDefined()
+    for (const key of unselected) {
+      expect(written.dependencies[PROVIDER_META[key].npmPackage]).toBeUndefined()
+    }
   })
 
   it('skips package.json dependency pruning when package.json does not exist', () => {
