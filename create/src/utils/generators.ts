@@ -1,15 +1,19 @@
 import path from 'node:path'
 import fs from 'fs-extra'
-import { PROVIDER_META, type ProviderConfig } from '@create-utils/providers'
+import { PROVIDER_META, providerDocName, type ProviderConfig } from '@create-utils/providers'
 
 export function generateProviderFiles(targetDir: string, config: ProviderConfig): void {
   const providersDir = path.join(targetDir, 'app', 'lib', 'providers')
 
-  // Remove unselected provider files
+  // Remove unselected provider files and docs
+  const docsDir = path.join(targetDir, 'docs')
   for (const [key, meta] of Object.entries(PROVIDER_META)) {
     if (!config.providers.includes(key)) {
       const filePath = path.join(providersDir, meta.file)
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
+
+      const docPath = path.join(docsDir, providerDocName(key))
+      if (fs.existsSync(docPath)) fs.unlinkSync(docPath)
     }
   }
 

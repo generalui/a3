@@ -115,6 +115,19 @@ if (fs.existsSync(docsDir)) {
   console.warn('Warning: docs/ directory not found, skipping documentation copy.')
 }
 
+// Copy provider README files into template/docs/ as PROVIDER-{KEY}.md
+const providersMeta = JSON.parse(fs.readFileSync(path.resolve(rootDir, 'src', 'utils', 'providers', 'providersMeta.json'), 'utf-8'))
+for (const key of Object.keys(providersMeta)) {
+  const src = path.join(monorepoRoot, 'providers', key, 'README.md')
+  const destName = `PROVIDER-${key.toUpperCase()}.md`
+  if (fs.existsSync(src)) {
+    fs.copyFileSync(src, path.join(templateDocsDir, destName))
+    console.log(`Copied provider doc: ${key}/README.md → docs/${destName}`)
+  } else {
+    console.warn(`Warning: Provider doc not found: ${src}`)
+  }
+}
+
 // Copy extra documents into template/docs/
 for (const { src, destName } of EXTRA_DOCS) {
   if (fs.existsSync(src)) {
