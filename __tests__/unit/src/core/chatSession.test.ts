@@ -360,3 +360,56 @@ describe('clear()', () => {
     expect(await store.load('sid')).toBeNull()
   })
 })
+
+// ── restart() ─────────────────────────────────────────────────────────────────
+
+describe('restart()', () => {
+  it('deletes existing session and returns fresh initial data', async () => {
+    const { session, store } = makeSession()
+    await store.save('sid', makeStoredSession({ state: { step: 42 }, messages: [{ text: 'old message' }] }))
+
+    const fresh = await session.restart()
+
+    expect(fresh.sessionId).toBe('sid')
+    expect(fresh.messages).toEqual([])
+    expect(fresh.state).toEqual({})
+    expect(fresh.activeAgentId).toBe('agent-a')
+    expect(await store.load('sid')).toEqual(fresh)
+  })
+
+  it('resets to all configured initial values', async () => {
+    const store = new MemorySessionStore<TestState>()
+    const session = new ChatSession<TestState>({
+      sessionId: 'sid',
+      store,
+      initialAgentId: 'agent-a',
+      initialState: { step: 1 },
+      initialMessages: [{ text: 'Welcome!' }],
+      provider: mockProvider,
+    })
+    await store.save('sid', makeStoredSession({ state: { step: 99 }, messages: [{ text: 'old' }], activeAgentId: 'agent-z' }))
+
+    const fresh = await session.restart()
+
+    expect(fresh.state.step).toBe(1)
+    expect(fresh.messages).toHaveLength(1)
+    expect(fresh.messages[0].text).toBe('Welcome!')
+    expect(fresh.activeAgentId).toBe('agent-a')
+  })
+
+  it('works when the store does not implement delete', async () => {
+    const store = new MemorySessionStore<TestState>()
+    const storeWithoutDelete = { load: store.load.bind(store), save: store.save.bind(store) }
+    const session = new ChatSession<TestState>({
+      sessionId: 'sid',
+      store: storeWithoutDelete,
+      initialAgentId: 'agent-a',
+      provider: mockProvider,
+    })
+
+    const fresh = await session.restart()
+
+    expect(fresh.sessionId).toBe('sid')
+    expect(fresh.activeAgentId).toBe('agent-a')
+  })
+})

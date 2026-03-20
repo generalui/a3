@@ -55,6 +55,11 @@ export const baseConfig: Config = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^jest\\.setup$': '<rootDir>/jest.setup.ts',
+
+    // These alias are from the example app.
+    '^@agents$': '<rootDir>/example/app/agents',
+    '^@agents/(.*)$': '<rootDir>/example/app/agents/$1',
+
     '^@create-utils$': '<rootDir>/create/src/utils',
     '^@create-utils/(.*)$': '<rootDir>/create/src/utils/$1',
     '^@constants$': '<rootDir>/src/constants',
@@ -123,8 +128,6 @@ export const baseConfig: Config = {
     '<rootDir>/__tests__/.*/shared/',
     '<rootDir>/no_commit/',
   ],
-  modulePathIgnorePatterns: [
-    '<rootDir>/create/template/',
-  ],
+  modulePathIgnorePatterns: ['<rootDir>/create/template/'],
   testTimeout: 30000,
 }

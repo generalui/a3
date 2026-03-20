@@ -3,6 +3,7 @@
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { Box, Typography } from '@mui/material'
+import { GRAPH_ACTIVE_BADGE } from '@constants/ui'
 
 function AgentNodeComponent({ data }: NodeProps) {
   const { label, isActive } = data as { label: string; isActive: boolean; description: string }
@@ -43,7 +44,7 @@ function AgentNodeComponent({ data }: NodeProps) {
       {isActive && (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mt: 0.5 }}>
           <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#22c55e' }} />
-          <Typography sx={{ fontSize: 9, fontWeight: 600, color: '#2563eb' }}>Active</Typography>
+          <Typography sx={{ fontSize: 9, fontWeight: 600, color: '#2563eb' }}>{GRAPH_ACTIVE_BADGE}</Typography>
         </Box>
       )}
       <Handle type="source" id="source-bottom" position={Position.Bottom} style={{ opacity: 0 }} />

@@ -35,7 +35,7 @@
 | `getInstance()` | `AgentRegistry<TState>` | Get the singleton instance |
 | `resetInstance()` | `void` | Reset the singleton (for testing) |
 | `register(agents)` | `void` | Register one or more agents (throws on duplicate ID) |
-| `unregister(id)` | `boolean` | Remove an agent by ID |
+| `unregister(agentOrId)` | `boolean` | Remove an agent by ID or agent instance |
 | `get(id)` | `Agent<TState> \| undefined` | Look up an agent by ID |
 | `getAll()` | `Agent<TState>[]` | Get all registered agents |
 | `has(id)` | `boolean` | Check if an agent is registered |

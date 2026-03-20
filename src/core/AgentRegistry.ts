@@ -106,12 +106,13 @@ export class AgentRegistry<TState extends BaseState = BaseState, TContext extend
   }
 
   /**
-   * Unregisters an agent by its ID.
+   * Unregisters an agent by its ID or agent instance.
    *
-   * @param id - The agent ID to unregister
+   * @param agentOrId - The agent ID or agent instance to unregister
    * @returns true if the agent was found and removed, false otherwise
    */
-  unregister(id: AgentId): boolean {
+  unregister(agentOrId: AgentId | Agent<TState, TContext>): boolean {
+    const id = typeof agentOrId === 'string' ? agentOrId : agentOrId.id
     return this.agents.delete(id)
   }
 

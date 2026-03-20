@@ -166,6 +166,18 @@ describe('AgentRegistry', () => {
 
       expect(result).toBe(false)
     })
+
+    it('should remove an agent when passed an Agent instance', () => {
+      const registry = AgentRegistry.getInstance()
+      const agent = createMockAgent('instance-remove')
+      registry.register(agent)
+
+      const result = registry.unregister(agent)
+
+      expect(result).toBe(true)
+      expect(registry.has('instance-remove')).toBe(false)
+      expect(registry.count).toBe(0)
+    })
   })
 
   describe('getDescriptions()', () => {

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Paper, Typography, Box, List, ListItemButton, ListItemText, Collapse } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import { STATE_HEADING, STATE_EMPTY } from '@constants/ui'
 
 interface StateViewerProps {
   state: Record<string, unknown>
@@ -105,7 +106,7 @@ export function StateViewer({ state }: StateViewerProps) {
       sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 3, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
     >
       <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-        Session State
+        {STATE_HEADING}
       </Typography>
       <Box sx={{ overflowY: 'auto', maxHeight: 300 }}>
         {hasData ? (
@@ -116,7 +117,7 @@ export function StateViewer({ state }: StateViewerProps) {
           </List>
         ) : (
           <Typography variant="body2" sx={{ color: 'text.secondary', py: 2, textAlign: 'center', fontStyle: 'italic' }}>
-            No state properties
+            {STATE_EMPTY}
           </Typography>
         )}
       </Box>
