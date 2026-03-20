@@ -1,6 +1,7 @@
 import { executeWithFallback } from '@providers-utils/executeWithFallback'
 import { A3ResilienceError, A3TimeoutError } from '@errors/resilience'
 import { resolveResilienceConfig } from '@utils/resilience/defaults'
+import { getLogger } from '@utils/logger'
 import type { ResolvedResilienceConfig } from 'types/resilience'
 
 function makeTransientError(message = 'Service unavailable'): Error {
@@ -125,6 +126,13 @@ describe('executeWithFallback', () => {
         expect(resErr.errors[2].attempt).toBe(1)
         expect(resErr.errors[3].model).toBe('model-2')
         expect(resErr.errors[3].attempt).toBe(2)
+
+        // Error message includes per-attempt details
+        expect(resErr.message).toContain('All models failed after 4 total attempt(s): model-1, model-2')
+        expect(resErr.message).toContain('model-1 (attempt 1): Service unavailable')
+        expect(resErr.message).toContain('model-1 (attempt 2): Service unavailable')
+        expect(resErr.message).toContain('model-2 (attempt 1): Service unavailable')
+        expect(resErr.message).toContain('model-2 (attempt 2): Service unavailable')
       }
     })
 
@@ -183,7 +191,29 @@ describe('executeWithFallback', () => {
       })
 
       await expect(executeWithFallback(['model-1'], action, config)).rejects.toThrow(A3TimeoutError)
+
+      const mockLogger = getLogger()
+      expect(mockLogger.warn).toHaveBeenCalled()
     }, 10_000)
+  })
+
+  describe('error logging', () => {
+    it('should log each error at warn level when all models are exhausted', async () => {
+      const action = jest
+        .fn()
+        .mockRejectedValueOnce(makeTransientError('fail-1'))
+        .mockRejectedValueOnce(makeTransientError('fail-2'))
+
+      const config = makeConfig({ retry: false })
+
+      await expect(executeWithFallback(['model-1', 'model-2'], action, config)).rejects.toThrow(
+        A3ResilienceError,
+      )
+
+      const mockLogger = getLogger()
+      expect(mockLogger.warn).toHaveBeenCalledWith('Attempt 1 for model "model-1" failed: fail-1')
+      expect(mockLogger.warn).toHaveBeenCalledWith('Attempt 1 for model "model-2" failed: fail-2')
+    })
   })
 
   describe('backward compatibility', () => {
