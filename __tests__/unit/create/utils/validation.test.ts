@@ -62,11 +62,14 @@ describe('validateOpenAIKey', () => {
         headers: expect.objectContaining({
           Authorization: 'Bearer sk-proj-testkey',
           'Content-Type': 'application/json',
-        }),
-        body: expect.any(String),
+        }) as Record<string, string>,
+        body: expect.any(String) as string,
       }),
     )
-    const body = JSON.parse((jest.mocked(global.fetch).mock.calls[0][1] as RequestInit).body as string)
+    const body = JSON.parse((jest.mocked(global.fetch).mock.calls[0][1] as RequestInit).body as string) as Record<
+      string,
+      unknown
+    >
     expect(body).toEqual({
       model: 'gpt-4o-mini',
       max_tokens: 1,
@@ -151,11 +154,14 @@ describe('validateAnthropicKey', () => {
           'x-api-key': 'sk-ant-testkey',
           'anthropic-version': '2023-06-01',
           'content-type': 'application/json',
-        }),
-        body: expect.any(String),
+        }) as Record<string, string>,
+        body: expect.any(String) as string,
       }),
     )
-    const body = JSON.parse((jest.mocked(global.fetch).mock.calls[0][1] as RequestInit).body as string)
+    const body = JSON.parse((jest.mocked(global.fetch).mock.calls[0][1] as RequestInit).body as string) as Record<
+      string,
+      unknown
+    >
     expect(body).toEqual({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1,
@@ -280,7 +286,9 @@ describe('validateAwsCredentials', () => {
     })
 
     it('returns a signature-mismatch message for InvalidSignatureException', async () => {
-      const mockSend = jest.fn().mockRejectedValue(new Error('InvalidSignatureException: The request signature is invalid'))
+      const mockSend = jest
+        .fn()
+        .mockRejectedValue(new Error('InvalidSignatureException: The request signature is invalid'))
       MockBedrockClient.mockImplementation(() => ({ send: mockSend }))
 
       const result = await validateAwsCredentials(validKeys)
@@ -338,9 +346,7 @@ describe('validateAwsCredentials', () => {
 
       await validateAwsCredentials(profileInput)
       expect(mockFromIni).toHaveBeenCalledWith({ profile: 'my-profile' })
-      expect(MockBedrockClient).toHaveBeenCalledWith(
-        expect.objectContaining({ region: 'eu-west-1' }),
-      )
+      expect(MockBedrockClient).toHaveBeenCalledWith(expect.objectContaining({ region: 'eu-west-1' }))
     })
 
     it('includes the profile name in the credential-not-found message', async () => {

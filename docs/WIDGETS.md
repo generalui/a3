@@ -257,6 +257,7 @@ The message renderer iterates `message.widgets` and passes each entry to the dis
 ```
 
 Key points:
+
 1. Pass `disabled={!isLastMessage}` so only the latest message's widgets accept input.
 1. A single message can contain multiple widgets.
 1. Guard with `message.widgets &&` since widgets are optional.
@@ -271,7 +272,7 @@ The pattern that makes widgets interactive:
 1. The new response arrives with new widgets and/or text.
 1. Previous message widgets become `disabled`.
 
-```
+```text
 User clicks → sendMessage() → ChatSession.send() → new response → new widgets → previous widgets disabled
 ```
 
