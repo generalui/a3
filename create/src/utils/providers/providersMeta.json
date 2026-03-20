@@ -3,18 +3,30 @@
     "label": "OpenAI",
     "exportName": "getOpenAIProvider",
     "file": "openai.ts",
-    "npmPackage": "@genui-a3/a3-openai"
+    "npmPackage": "@genui-a3/a3-openai",
+    "urls": {
+      "keys": "https://platform.openai.com/account/api-keys"
+    }
   },
   "bedrock": {
     "label": "AWS Bedrock",
     "exportName": "getBedrockProvider",
     "file": "bedrock.ts",
-    "npmPackage": "@genui-a3/a3-bedrock"
+    "npmPackage": "@genui-a3/a3-bedrock",
+    "urls": {
+      "keys": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
+      "configure": "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html",
+      "credentials": "https://console.aws.amazon.com/iam/home#/security_credentials",
+      "docs": "https://docs.aws.amazon.com/bedrock/latest/userguide/"
+    }
   },
   "anthropic": {
     "label": "Anthropic",
     "exportName": "getAnthropicProvider",
     "file": "anthropic.ts",
-    "npmPackage": "@genui-a3/a3-anthropic"
+    "npmPackage": "@genui-a3/a3-anthropic",
+    "urls": {
+      "keys": "https://console.anthropic.com/settings/keys"
+    }
   }
 }
