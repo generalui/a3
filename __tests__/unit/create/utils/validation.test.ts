@@ -49,21 +49,35 @@ describe('validateOpenAIKey', () => {
     jest.mocked(global.fetch).mockResolvedValue({ ok: true } as Response)
     const result = await validateOpenAIKey('sk-proj-validkey')
     expect(result.valid).toBe(true)
-    expect(result.message).toBe('OpenAI API key is valid.')
+    expect(result.message).toBe('OpenAI API key verified — completions working.')
   })
 
-  it('sends the key as a Bearer Authorization header', async () => {
+  it('sends a minimal completion request with the key as Bearer auth', async () => {
     jest.mocked(global.fetch).mockResolvedValue({ ok: true } as Response)
     await validateOpenAIKey('sk-proj-testkey')
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://api.openai.com/v1/models',
+      'https://api.openai.com/v1/chat/completions',
       expect.objectContaining({
-        headers: { Authorization: 'Bearer sk-proj-testkey' },
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer sk-proj-testkey',
+          'Content-Type': 'application/json',
+        }) as Record<string, string>,
+        body: expect.any(String) as string,
       }),
     )
+    const body = JSON.parse((jest.mocked(global.fetch).mock.calls[0][1] as RequestInit).body as string) as Record<
+      string,
+      unknown
+    >
+    expect(body).toEqual({
+      model: 'gpt-4o-mini',
+      max_tokens: 1,
+      messages: [{ role: 'user', content: 'hi' }],
+    })
   })
 
-  it('returns valid false with a hint checklist on 401', async () => {
+  it('passes through the API error message with hints on 401', async () => {
     jest.mocked(global.fetch).mockResolvedValue({
       ok: false,
       status: 401,
@@ -71,19 +85,20 @@ describe('validateOpenAIKey', () => {
     } as unknown as Response)
     const result = await validateOpenAIKey('sk-proj-key')
     expect(result.valid).toBe(false)
+    expect(result.message).toContain('OpenAI API key error: Invalid auth')
     expect(result.message).toContain('Make sure')
-    expect(result.message).toContain('platform.openai.com')
   })
 
-  it('returns a rate-limit message on 429', async () => {
+  it('passes through the API error message with hints on 429', async () => {
     jest.mocked(global.fetch).mockResolvedValue({
       ok: false,
       status: 429,
-      json: jest.fn().mockResolvedValue({}),
+      json: jest.fn().mockResolvedValue({ error: { message: 'Rate limit exceeded' } }),
     } as unknown as Response)
     const result = await validateOpenAIKey('sk-proj-key')
     expect(result.valid).toBe(false)
-    expect(result.message).toContain('rate limited')
+    expect(result.message).toContain('OpenAI API key error: Rate limit exceeded')
+    expect(result.message).toContain('Make sure')
   })
 
   it('falls back to the HTTP status code when the response body has no error message', async () => {
@@ -94,8 +109,8 @@ describe('validateOpenAIKey', () => {
     } as unknown as Response)
     const result = await validateOpenAIKey('sk-proj-key')
     expect(result.valid).toBe(false)
-    expect(result.message).toContain('Invalid OpenAI API key')
-    expect(result.message).toContain('403')
+    expect(result.message).toContain('OpenAI API key error: HTTP 403')
+    expect(result.message).toContain('Make sure')
   })
 
   it('returns a network error message when fetch throws', async () => {
@@ -125,24 +140,36 @@ describe('validateAnthropicKey', () => {
     jest.mocked(global.fetch).mockResolvedValue({ ok: true } as Response)
     const result = await validateAnthropicKey('sk-ant-validkey')
     expect(result.valid).toBe(true)
-    expect(result.message).toBe('Anthropic API key is valid.')
+    expect(result.message).toBe('Anthropic API key verified — completions working.')
   })
 
-  it('sends the key as x-api-key header with anthropic-version', async () => {
+  it('sends a minimal completion request with x-api-key and anthropic-version', async () => {
     jest.mocked(global.fetch).mockResolvedValue({ ok: true } as Response)
     await validateAnthropicKey('sk-ant-testkey')
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://api.anthropic.com/v1/models',
+      'https://api.anthropic.com/v1/messages',
       expect.objectContaining({
-        headers: {
+        method: 'POST',
+        headers: expect.objectContaining({
           'x-api-key': 'sk-ant-testkey',
           'anthropic-version': '2023-06-01',
-        },
+          'content-type': 'application/json',
+        }) as Record<string, string>,
+        body: expect.any(String) as string,
       }),
     )
+    const body = JSON.parse((jest.mocked(global.fetch).mock.calls[0][1] as RequestInit).body as string) as Record<
+      string,
+      unknown
+    >
+    expect(body).toEqual({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1,
+      messages: [{ role: 'user', content: 'hi' }],
+    })
   })
 
-  it('returns valid false with hints and a help URL on 401', async () => {
+  it('passes through the API error message with hints on 401', async () => {
     jest.mocked(global.fetch).mockResolvedValue({
       ok: false,
       status: 401,
@@ -150,19 +177,21 @@ describe('validateAnthropicKey', () => {
     } as unknown as Response)
     const result = await validateAnthropicKey('sk-ant-key')
     expect(result.valid).toBe(false)
+    expect(result.message).toContain('Anthropic API key error: Unauthorized')
     expect(result.message).toContain('Make sure')
     expect(result.message).toContain('console.anthropic.com')
   })
 
-  it('returns a rate-limit message on 429', async () => {
+  it('passes through the API error message with hints on 429', async () => {
     jest.mocked(global.fetch).mockResolvedValue({
       ok: false,
       status: 429,
-      json: jest.fn().mockResolvedValue({}),
+      json: jest.fn().mockResolvedValue({ error: { message: 'Rate limit exceeded' } }),
     } as unknown as Response)
     const result = await validateAnthropicKey('sk-ant-key')
     expect(result.valid).toBe(false)
-    expect(result.message).toContain('rate limited')
+    expect(result.message).toContain('Anthropic API key error: Rate limit exceeded')
+    expect(result.message).toContain('Make sure')
   })
 
   it('falls back to the HTTP status code when the response body has no error message', async () => {
@@ -173,8 +202,8 @@ describe('validateAnthropicKey', () => {
     } as unknown as Response)
     const result = await validateAnthropicKey('sk-ant-key')
     expect(result.valid).toBe(false)
-    expect(result.message).toContain('Invalid Anthropic API key')
-    expect(result.message).toContain('403')
+    expect(result.message).toContain('Anthropic API key error: HTTP 403')
+    expect(result.message).toContain('Make sure')
   })
 
   it('returns a network error message when fetch throws', async () => {
@@ -257,7 +286,9 @@ describe('validateAwsCredentials', () => {
     })
 
     it('returns a signature-mismatch message for InvalidSignatureException', async () => {
-      const mockSend = jest.fn().mockRejectedValue(new Error('InvalidSignatureException: The request signature is invalid'))
+      const mockSend = jest
+        .fn()
+        .mockRejectedValue(new Error('InvalidSignatureException: The request signature is invalid'))
       MockBedrockClient.mockImplementation(() => ({ send: mockSend }))
 
       const result = await validateAwsCredentials(validKeys)
@@ -315,9 +346,7 @@ describe('validateAwsCredentials', () => {
 
       await validateAwsCredentials(profileInput)
       expect(mockFromIni).toHaveBeenCalledWith({ profile: 'my-profile' })
-      expect(MockBedrockClient).toHaveBeenCalledWith(
-        expect.objectContaining({ region: 'eu-west-1' }),
-      )
+      expect(MockBedrockClient).toHaveBeenCalledWith(expect.objectContaining({ region: 'eu-west-1' }))
     })
 
     it('includes the profile name in the credential-not-found message', async () => {

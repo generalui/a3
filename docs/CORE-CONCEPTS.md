@@ -198,6 +198,7 @@ interface SessionStore<TState extends BaseState> {
 | `MemorySessionStore` | Development and testing (sessions lost on restart) |
 
 Custom stores are straightforward to implement for Redis, DynamoDB, PostgreSQL, or any other backend.
+See [Custom Stores](./CUSTOM_STORES.md) for a step-by-step implementation guide.
 
 ## Providers
 

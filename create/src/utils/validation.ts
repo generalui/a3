@@ -11,55 +11,60 @@ export function normalizeKey(key: string): string {
   return key.replace(/\s/g, '')
 }
 
-/**
- * Build enhanced error message with context-specific hints
- */
-function buildAuthErrorMessage(
-  status: number,
-  detail: string,
-  context: { name: string; helpUrl?: string },
-): string {
-  let message = `Invalid ${context.name} (${status}). ${detail}`
+const OPENAI_KEYS_URL = 'https://platform.openai.com/account/api-keys'
+const ANTHROPIC_KEYS_URL = 'https://console.anthropic.com/settings/keys'
+const AWS_KEYS_URL = 'https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html'
+const AWS_CLI_CONFIGURE_URL = 'https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html'
+const AWS_IAM_CREDENTIALS_URL = 'https://console.aws.amazon.com/iam/home#/security_credentials'
+const AWS_BEDROCK_DOCS_URL = 'https://docs.aws.amazon.com/bedrock/latest/userguide/'
 
-  if (status === 401) {
-    message += '\n\nMake sure:\n  • Your credentials are active and not revoked\n  • Your account has appropriate permissions\n  • The credentials haven\'t exceeded rate limits'
-    if (context.helpUrl) {
-      message += `\n\nGet help at: ${context.helpUrl}`
-    }
-  } else if (status === 429) {
-    message = `${context.name} rate limited. Please try again in a moment.`
+function buildErrorMessage({ detail, provider, helpUrl }: {
+  detail: string
+  provider: string
+  helpUrl?: string
+}): string {
+  let message = `${provider} API key error: ${detail}`
+    + '\n\nMake sure:\n  • Your credentials are active and not revoked'
+    + '\n  • Your account has appropriate permissions'
+    + '\n  • The credentials haven\'t exceeded rate limits'
+
+  if (helpUrl) {
+    message += `\n\nGet help at: ${helpUrl}`
   }
 
   return message
 }
 
 export async function validateOpenAIKey(apiKey: string): Promise<ValidationResult> {
-  // Format validation (quick, no API call)
   if (!apiKey.startsWith('sk-proj-')) {
     return {
       valid: false,
-      message: 'Invalid format: OpenAI API key must start with sk-proj-\n\nGet a new key at: https://platform.openai.com/account/api-keys',
+      message: `Invalid format: OpenAI API key must start with sk-proj-\n\nGet a new key at: ${OPENAI_KEYS_URL}`,
     }
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/models', {
-      headers: { Authorization: `Bearer ${apiKey}` },
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 1,
+        messages: [{ role: 'user', content: 'hi' }],
+      }),
       signal: AbortSignal.timeout(10_000),
     })
 
     if (response.ok) {
-      return { valid: true, message: 'OpenAI API key is valid.' }
+      return { valid: true, message: 'OpenAI API key verified — completions working.' }
     }
 
     const body = (await response.json().catch(() => null)) as { error?: { message?: string } } | null
     const detail = body?.error?.message ?? `HTTP ${response.status}`
-    const message = buildAuthErrorMessage(response.status, detail, {
-      name: 'OpenAI API key',
-      helpUrl: 'https://platform.openai.com/account/api-keys',
-    })
-
-    return { valid: false, message }
+    return { valid: false, message: buildErrorMessage({ detail, provider: 'OpenAI' }) }
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
     return { valid: false, message: `Network error: ${msg}` }
@@ -67,35 +72,36 @@ export async function validateOpenAIKey(apiKey: string): Promise<ValidationResul
 }
 
 export async function validateAnthropicKey(apiKey: string): Promise<ValidationResult> {
-  // Format validation (quick, no API call)
   if (!apiKey.startsWith('sk-ant-')) {
     return {
       valid: false,
-      message: 'Invalid format: Anthropic API key must start with sk-ant-\n\nGet a new key at: https://console.anthropic.com/settings/keys',
+      message: `Invalid format: Anthropic API key must start with sk-ant-\n\nGet a new key at: ${ANTHROPIC_KEYS_URL}`,
     }
   }
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/models', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
       headers: {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
       },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1,
+        messages: [{ role: 'user', content: 'hi' }],
+      }),
       signal: AbortSignal.timeout(10_000),
     })
 
     if (response.ok) {
-      return { valid: true, message: 'Anthropic API key is valid.' }
+      return { valid: true, message: 'Anthropic API key verified — completions working.' }
     }
 
     const body = (await response.json().catch(() => null)) as { error?: { message?: string } } | null
     const detail = body?.error?.message ?? `HTTP ${response.status}`
-    const message = buildAuthErrorMessage(response.status, detail, {
-      name: 'Anthropic API key',
-      helpUrl: 'https://console.anthropic.com/settings/keys',
-    })
-
-    return { valid: false, message }
+    return { valid: false, message: buildErrorMessage({ detail, provider: 'Anthropic', helpUrl: ANTHROPIC_KEYS_URL }) }
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
     return { valid: false, message: `Network error: ${msg}` }
@@ -112,13 +118,13 @@ export async function validateAwsCredentials(credentials: AwsCredentialInput): P
     if (!credentials.accessKeyId.match(/^AKIA[0-9A-Z]{16}$/)) {
       return {
         valid: false,
-        message: 'Invalid format: AWS Access Key ID must start with AKIA and be 20 characters total\n\nManage keys at: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html',
+        message: `Invalid format: AWS Access Key ID must start with AKIA and be 20 characters total\n\nManage keys at: ${AWS_KEYS_URL}`,
       }
     }
     if (credentials.secretAccessKey.length < 40) {
       return {
         valid: false,
-        message: 'Invalid format: AWS Secret Access Key appears too short (should be ~40 characters)\n\nManage keys at: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html',
+        message: `Invalid format: AWS Secret Access Key appears too short (should be ~40 characters)\n\nManage keys at: ${AWS_KEYS_URL}`,
       }
     }
   }
@@ -157,11 +163,13 @@ export async function validateAwsCredentials(credentials: AwsCredentialInput): P
       const profile = credentials.mode === 'profile' ? credentials.profile : 'unknown'
       message = `Could not find credentials for profile "${profile}" in ~/.aws/credentials`
         + '\n\nSet up a profile with: aws configure'
-        + '\n  Guide: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html'
+        + `\n  Guide: ${AWS_CLI_CONFIGURE_URL}`
     } else if (msg.includes('InvalidSignatureException') || msg.includes('InvalidSignature')) {
-      message = 'Invalid AWS credentials (signature mismatch)\n\nMake sure:\n  • Your Access Key ID and Secret Access Key are correct\n  • They haven\'t been revoked or rotated\n\nManage credentials at: https://console.aws.amazon.com/iam/home#/security_credentials'
+      message = 'Invalid AWS credentials (signature mismatch)\n\nMake sure:\n  • Your Access Key ID and Secret Access Key are correct\n  • They haven\'t been revoked or rotated'
+        + `\n\nManage credentials at: ${AWS_IAM_CREDENTIALS_URL}`
     } else if (msg.includes('UnauthorizedOperation') || msg.includes('NotAuthorizedForSourceException')) {
-      message = 'AWS credentials don\'t have permission to access Bedrock\n\nMake sure:\n  • Your IAM user/role has Bedrock access\n  • Your region has Bedrock enabled\n\nLearn more: https://docs.aws.amazon.com/bedrock/latest/userguide/'
+      message = 'AWS credentials don\'t have permission to access Bedrock\n\nMake sure:\n  • Your IAM user/role has Bedrock access\n  • Your region has Bedrock enabled'
+        + `\n\nLearn more: ${AWS_BEDROCK_DOCS_URL}`
     }
 
     return { valid: false, message }

@@ -2,10 +2,23 @@ import {
   A3ResilienceError,
   A3TimeoutError,
   DEFAULT_RESILIENCE_CONFIG,
+  getLogger,
   type ResilienceErrorEntry,
   type ResolvedResilienceConfig,
 } from '@genui-a3/a3'
 import { calculateBackoff, sleep } from '@providers-utils/backoff'
+
+function summarizeErrors(header: string, errors: ResilienceErrorEntry[]): string {
+  const logger = getLogger()
+  for (const entry of errors) {
+    logger
+      .withMetadata({ model: entry.model, attempt: entry.attempt })
+      .withError(entry.error)
+      .warn(`Attempt ${entry.attempt} for model "${entry.model}" failed: ${entry.error.message}`)
+  }
+  const lines = errors.map((e) => `  - ${e.model} (attempt ${e.attempt}): ${e.error.message}`)
+  return [header, ...lines].join('\n')
+}
 
 /**
  * Builds an AbortSignal that fires when either the per-request timeout or total timeout expires.
@@ -51,7 +64,10 @@ function checkTotalTimeout(
   errors: ResilienceErrorEntry[],
 ): void {
   if (totalAbort?.signal.aborted) {
-    throw new A3TimeoutError(`Total timeout of ${timeoutMs}ms exceeded`, errors)
+    throw new A3TimeoutError(
+      summarizeErrors(`Total timeout of ${timeoutMs}ms exceeded`, errors),
+      errors,
+    )
   }
 }
 
@@ -148,7 +164,10 @@ export async function executeWithFallback<T>(
 
     // All models exhausted
     throw new A3ResilienceError(
-      `All models failed after ${errors.length} total attempt(s): ${models.join(', ')}`,
+      summarizeErrors(
+        `All models failed after ${errors.length} total attempt(s): ${models.join(', ')}`,
+        errors,
+      ),
       errors,
     )
   } finally {
