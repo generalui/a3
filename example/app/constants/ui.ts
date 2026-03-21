@@ -7,9 +7,8 @@ export const NAV_HEADER = 'A3'
 export const NAV_HOME = 'Home'
 export const NAV_ONBOARDING = 'Onboarding'
 export const NAV_EXAMPLES = 'Examples'
-export const NAV_CHAT = 'Chat'
-export const NAV_STREAMING = 'Streaming'
-export const NAV_AGUI = 'AG-UI'
+export const NAV_HELLO_WORLD = 'Hello World'
+export const NAV_PLUMBING = 'Steadfast Plumbing'
 
 // --- Onboarding ---
 export const ONBOARDING_TAGLINE =
@@ -18,29 +17,23 @@ export const ONBOARDING_TAGLINE =
 // --- Examples Index ---
 export const EXAMPLES_HEADING = 'A3 Examples'
 export const EXAMPLES_SUBTITLE =
-  'Explore the different communication protocols and frontend implementations available in the A3 architecture.'
+  'Explore different multi-agent flows built with A3 — from a simple greeting to a full plumbing triage system.'
 export const EXAMPLES_CTA = 'Try it out'
 
-export const EXAMPLE_BLOCKING_TITLE = 'Blocking Chat'
-export const EXAMPLE_BLOCKING_DESCRIPTION =
-  "A synchronous (unary) chat implementation. The client waits for the agent to finish processing completely before rendering the response."
-export const EXAMPLE_STREAMING_TITLE = 'Streaming Chat'
-export const EXAMPLE_STREAMING_DESCRIPTION =
-  "A streaming response implementation using Server-Sent Events (SSE). The client renders the agent's response incrementally as it's being generated."
-export const EXAMPLE_AGUI_TITLE = 'AG-UI Protocol'
-export const EXAMPLE_AGUI_DESCRIPTION =
-  'Agentic UI implementation using the AG-UI protocol. The agent returns structured semantic events driving the client interface in real-time.'
+export const EXAMPLE_HELLO_WORLD_TITLE = 'Hello World'
+export const EXAMPLE_HELLO_WORLD_DESCRIPTION =
+  'A simple two-agent flow: a greeting agent learns your name, then hands off to an age agent. Demonstrates deterministic and LLM-driven transitions with blocking (synchronous) communication.'
+export const EXAMPLE_PLUMBING_TITLE = 'Steadfast Plumbing'
+export const EXAMPLE_PLUMBING_DESCRIPTION =
+  'A six-agent plumbing triage system — intake, triage, emergency assessment, troubleshooting, scheduling, and escalation. Demonstrates streaming (SSE) communication with complex agent routing.'
 
 // --- Example Page Titles & Descriptions ---
-export const PAGE_BLOCKING_TITLE = 'A3 Example — Blocking Chat'
-export const PAGE_BLOCKING_DESCRIPTION =
+export const PAGE_HELLO_WORLD_TITLE = 'A3 Example — Hello World'
+export const PAGE_HELLO_WORLD_DESCRIPTION =
   "A greeting agent asks for your name. Once it has it, control passes to an age agent that asks for your age. You can ask to change your name at any time and you'll be handed back to the greeting agent. Each response arrives in full once the agent is done thinking."
-export const PAGE_STREAMING_TITLE = 'A3 Example — Streaming'
-export const PAGE_STREAMING_DESCRIPTION =
-  "A greeting agent asks for your name. Once it has it, control passes to an age agent that asks for your age. You can ask to change your name at any time and you'll be handed back to the greeting agent."
-export const PAGE_AGUI_TITLE = 'A3 Example — AG-UI Protocol'
-export const PAGE_AGUI_DESCRIPTION =
-  "A greeting agent asks for your name. Once it has it, control passes to an age agent that asks for your age. You can ask to change your name at any time and you'll be handed back to the greeting agent. Communication uses the AG-UI protocol, streaming structured events for text, transitions, and run lifecycle."
+export const PAGE_PLUMBING_TITLE = 'A3 Example — Steadfast Plumbing'
+export const PAGE_PLUMBING_DESCRIPTION =
+  "Steadfast Plumbing Co.'s intake agent collects your name and issue. A triage agent classifies severity and routes to emergency assessment, troubleshooting, or scheduling. Responses stream in real-time via SSE."
 
 // --- Chat UI ---
 export const CHAT_PLACEHOLDER = 'Type a message...'

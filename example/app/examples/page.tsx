@@ -4,44 +4,33 @@ import Link from 'next/link'
 import { Typography, Card, CardActionArea, Container, Stack, Box } from '@mui/material'
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import StreamIcon from '@mui/icons-material/Stream'
-import ExtensionIcon from '@mui/icons-material/Extension'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import {
   EXAMPLES_HEADING,
   EXAMPLES_SUBTITLE,
   EXAMPLES_CTA,
-  EXAMPLE_BLOCKING_TITLE,
-  EXAMPLE_BLOCKING_DESCRIPTION,
-  EXAMPLE_STREAMING_TITLE,
-  EXAMPLE_STREAMING_DESCRIPTION,
-  EXAMPLE_AGUI_TITLE,
-  EXAMPLE_AGUI_DESCRIPTION,
+  EXAMPLE_HELLO_WORLD_TITLE,
+  EXAMPLE_HELLO_WORLD_DESCRIPTION,
+  EXAMPLE_PLUMBING_TITLE,
+  EXAMPLE_PLUMBING_DESCRIPTION,
 } from '@constants/ui'
 
 const EXAMPLES = [
   {
-    title: EXAMPLE_BLOCKING_TITLE,
-    description: EXAMPLE_BLOCKING_DESCRIPTION,
-    href: '/examples/chat',
+    title: EXAMPLE_HELLO_WORLD_TITLE,
+    description: EXAMPLE_HELLO_WORLD_DESCRIPTION,
+    href: '/examples/hello-world',
     icon: <ChatBubbleOutlineIcon fontSize="large" />,
     color: '#2563eb',
     bgColor: 'rgba(37, 99, 235, 0.1)',
   },
   {
-    title: EXAMPLE_STREAMING_TITLE,
-    description: EXAMPLE_STREAMING_DESCRIPTION,
-    href: '/examples/stream',
+    title: EXAMPLE_PLUMBING_TITLE,
+    description: EXAMPLE_PLUMBING_DESCRIPTION,
+    href: '/examples/steadfast-plumbing',
     icon: <StreamIcon fontSize="large" />,
     color: '#9c27b0',
     bgColor: 'rgba(156, 39, 176, 0.1)',
-  },
-  {
-    title: EXAMPLE_AGUI_TITLE,
-    description: EXAMPLE_AGUI_DESCRIPTION,
-    href: '/examples/agui',
-    icon: <ExtensionIcon fontSize="large" />,
-    color: '#2e7d32',
-    bgColor: 'rgba(46, 125, 50, 0.1)',
   },
 ]
 

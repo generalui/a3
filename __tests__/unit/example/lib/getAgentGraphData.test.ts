@@ -1,11 +1,12 @@
 import type { Agent } from 'types'
 
-const mockGetAll = jest.fn<() => Agent[]>()
-const mockGetTransitionTargetMap = jest.fn<() => Map<string, string[]>>()
+const mockGetAll = jest.fn<Agent[], []>()
+const mockGetInstance = jest.fn().mockReturnValue({ getAll: mockGetAll })
+const mockGetTransitionTargetMap = jest.fn<Map<string, string[]>, []>()
 
-jest.mock('@agents/registry', () => ({
-  agentRegistry: {
-    getAll: mockGetAll,
+jest.mock('@genui/a3', () => ({
+  AgentRegistry: {
+    getInstance: mockGetInstance,
   },
 }))
 
@@ -27,7 +28,7 @@ describe('getAgentGraphData', () => {
     ] as Agent[])
     mockGetTransitionTargetMap.mockReturnValue(new Map())
 
-    const result = getAgentGraphData()
+    const result = getAgentGraphData('helloWorld')
 
     expect(result[0].transition).toEqual({ type: 'dynamic', targets: ['b'] })
   })
@@ -40,7 +41,7 @@ describe('getAgentGraphData', () => {
     ] as Agent[])
     mockGetTransitionTargetMap.mockReturnValue(new Map([['a', ['b']]]))
 
-    const result = getAgentGraphData()
+    const result = getAgentGraphData('helloWorld')
 
     expect(result[0].transition).toEqual({ type: 'deterministic', targets: ['b'] })
   })
@@ -54,7 +55,7 @@ describe('getAgentGraphData', () => {
     ] as Agent[])
     mockGetTransitionTargetMap.mockReturnValue(new Map())
 
-    const result = getAgentGraphData()
+    const result = getAgentGraphData('helloWorld')
 
     expect(result[0].transition).toEqual({ type: 'deterministic', targets: ['b', 'c'] })
   })
@@ -63,7 +64,7 @@ describe('getAgentGraphData', () => {
     mockGetAll.mockReturnValue([{ id: 'a', description: 'Agent A' }] as Agent[])
     mockGetTransitionTargetMap.mockReturnValue(new Map())
 
-    const result = getAgentGraphData()
+    const result = getAgentGraphData('helloWorld')
 
     expect(result[0].transition).toEqual({ type: 'none', targets: [] })
   })
@@ -75,11 +76,20 @@ describe('getAgentGraphData', () => {
     ] as Agent[])
     mockGetTransitionTargetMap.mockReturnValue(new Map())
 
-    const result = getAgentGraphData()
+    const result = getAgentGraphData('helloWorld')
 
     expect(result).toEqual([
       { id: 'greeting', description: 'Greets users', transition: { type: 'none', targets: [] } },
       { id: 'farewell', description: 'Says goodbye', transition: { type: 'none', targets: [] } },
     ])
+  })
+
+  it('passes agentsSubDir to getTransitionTargetMap', () => {
+    mockGetAll.mockReturnValue([])
+    mockGetTransitionTargetMap.mockReturnValue(new Map())
+
+    getAgentGraphData('steadfastPlumbing')
+
+    expect(mockGetTransitionTargetMap).toHaveBeenCalledWith('steadfastPlumbing')
   })
 })

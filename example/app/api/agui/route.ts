@@ -2,12 +2,11 @@ import { NextRequest } from 'next/server'
 import { EventType, type RunAgentInput } from '@ag-ui/client'
 import { EventEncoder } from '@ag-ui/encoder'
 import { AGUIAgent } from '@genui/a3'
-import { getChatSessionInstance } from '@agents'
-import { initRegistry } from '@agents/registry'
+import { initRegistry, getChatSessionInstance } from '@agents/steadfastPlumbing'
 
 const a3Agent = new AGUIAgent({
   agentId: 'a3-demo',
-  createSession: (input: RunAgentInput) => getChatSessionInstance({ sessionId: input.threadId }),
+  createSession: (input: RunAgentInput) => getChatSessionInstance(input.threadId),
 })
 
 export async function POST(request: NextRequest) {

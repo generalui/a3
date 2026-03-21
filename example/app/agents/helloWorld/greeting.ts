@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { Agent } from '@genui/a3'
-import type { State } from '@agents/state'
+import type { HelloWorldState } from './state'
 
 /**
  * Sample greeting agent that demonstrates the AgentRegistry pattern.
@@ -9,7 +9,7 @@ const greetingPayload = z.object({
   userName: z.string().optional(),
 })
 
-export const greetingAgent: Agent<State> = {
+export const greetingAgent: Agent<HelloWorldState> = {
   id: 'greeting',
   description: 'Greets the user and learns their name.',
   prompt: `

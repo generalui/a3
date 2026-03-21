@@ -1,14 +1,22 @@
+/**
+ * Streaming (SSE) chat endpoint.
+ * Used by the Steadfast Plumbing example and the onboarding page.
+ */
 import { NextRequest } from 'next/server'
-import { getChatSessionInstance } from '@agents'
-import { SESSION_IDS } from '@constants/chat'
-import { AgentRegistry } from '@genui/a3'
-import type { State } from '@agents/state'
-import { onboardingAgent } from '@agents/onboarding'
-import { initRegistry } from '@agents/registry'
+import {
+  initRegistry as initPlumbing,
+  getChatSessionInstance as getPlumbingSession,
+  SESSION_ID as PLUMBING_ID,
+} from '@agents/steadfastPlumbing'
+import {
+  initRegistry as initOnboarding,
+  getChatSessionInstance as getOnboardingSession,
+  SESSION_ID as ONBOARDING_ID,
+} from '@agents/onboarding'
 
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as { message?: string; sessionId?: string }
-  const { message, sessionId = 'demo-stream-session' } = body
+  const { message, sessionId = PLUMBING_ID } = body
 
   if (!message) {
     return new Response(JSON.stringify({ error: 'Message is required' }), {
@@ -17,12 +25,13 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  let session = getChatSessionInstance({ sessionId })
-  initRegistry()
-  if (sessionId === SESSION_IDS.ONBOARDING) {
-    const registry = AgentRegistry.getInstance<State>()
-    registry.register(onboardingAgent)
-    session = getChatSessionInstance({ sessionId, initialAgentId: onboardingAgent.id })
+  let session
+  if (sessionId === ONBOARDING_ID) {
+    initOnboarding()
+    session = getOnboardingSession(sessionId)
+  } else {
+    initPlumbing()
+    session = getPlumbingSession(sessionId)
   }
 
   const encoder = new TextEncoder()
