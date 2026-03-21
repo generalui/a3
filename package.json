@@ -132,7 +132,9 @@
     "typescript": "5.9.3",
     "typescript-eslint": "8.56.1"
   },
-  "overrides": {},
+  "overrides": {
+    "glob": "13.0.0"
+  },
   "directories": {
     "doc": "docs",
     "example": "example"
