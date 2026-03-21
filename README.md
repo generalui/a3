@@ -1,7 +1,7 @@
 # @genui/a3
 
-[![npm version](https://img.shields.io/npm/v/@genui-a3/a3)](https://www.npmjs.com/package/@genui-a3/a3)
-[![license](https://img.shields.io/npm/l/@genui-a3/a3)](https://github.com/generalui/a3/blob/main/LICENSE)
+[![npm version](https://img.shields.io/npm/v/@genui/a3)](https://www.npmjs.com/package/@genui/a3)
+[![license](https://img.shields.io/npm/l/@genui/a3)](https://github.com/generalui/a3/blob/main/LICENSE)
 
 **Predictable, governable multi-agent orchestration for TypeScript.**
 

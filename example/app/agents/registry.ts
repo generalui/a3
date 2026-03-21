@@ -1,4 +1,4 @@
-import { AgentRegistry } from '@genui-a3/a3'
+import { AgentRegistry } from '@genui/a3'
 
 import type { State } from '@agents/state'
 import { greetingAgent } from '@agents/greeting'

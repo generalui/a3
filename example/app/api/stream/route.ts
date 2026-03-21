@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { getChatSessionInstance } from '@agents'
 import { SESSION_IDS } from '@constants/chat'
-import { AgentRegistry } from '@genui-a3/a3'
+import { AgentRegistry } from '@genui/a3'
 import type { State } from '@agents/state'
 import { onboardingAgent } from '@agents/onboarding'
 import { initRegistry } from '@agents/registry'

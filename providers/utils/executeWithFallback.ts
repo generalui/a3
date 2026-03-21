@@ -5,7 +5,7 @@ import {
   getLogger,
   type ResilienceErrorEntry,
   type ResolvedResilienceConfig,
-} from '@genui-a3/a3'
+} from '@genui/a3'
 import { calculateBackoff, sleep } from '@providers-utils/backoff'
 
 function summarizeErrors(header: string, errors: ResilienceErrorEntry[]): string {

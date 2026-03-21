@@ -1,6 +1,6 @@
 import { EventType } from '@ag-ui/client'
 import { ZodType } from 'zod'
-import type { AgentId, StreamEvent, BaseState } from '@genui-a3/a3'
+import type { AgentId, StreamEvent, BaseState } from '@genui/a3'
 import type { StreamTextResult, ToolSet } from 'ai'
 
 /**

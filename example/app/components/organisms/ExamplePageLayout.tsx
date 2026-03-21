@@ -9,7 +9,7 @@ import { StreamChat } from './StreamChat'
 import { StateViewer } from './StateViewer'
 import { restartSession } from '@lib/actions/restartSession'
 import type { AgentInfo } from '@lib/getAgentGraphData'
-import type { Message } from '@genui-a3/a3'
+import type { Message } from '@genui/a3'
 
 type ExampleVariant = 'blocking' | 'stream' | 'agui'
 

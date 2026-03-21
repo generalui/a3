@@ -1,4 +1,4 @@
-import { createOpenAIProvider } from '@genui-a3/a3-openai'
+import { createOpenAIProvider } from '@genui/a3-openai'
 
 let _instance: ReturnType<typeof createOpenAIProvider> | null = null
 

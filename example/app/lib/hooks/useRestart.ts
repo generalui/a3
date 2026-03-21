@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import type { Message } from '@genui-a3/a3'
+import type { Message } from '@genui/a3'
 
 export interface RestartResult {
   messages: Message[]

@@ -1,6 +1,6 @@
 import { readdir, readFile } from 'fs/promises'
 import { join, relative } from 'path'
-import type { FlowInput } from '@genui-a3/a3'
+import type { FlowInput } from '@genui/a3'
 import type { State } from '@agents/state'
 
 /**

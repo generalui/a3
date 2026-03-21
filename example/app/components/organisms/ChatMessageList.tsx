@@ -5,7 +5,7 @@ import styled from 'styled-components'
 import { Box } from '@mui/material'
 import type { Theme } from '@mui/material/styles'
 import { ChatMessage } from '@molecules'
-import type { Message } from '@genui-a3/a3'
+import type { Message } from '@genui/a3'
 
 const MessageListContainer = styled(Box)`
   flex: 1;

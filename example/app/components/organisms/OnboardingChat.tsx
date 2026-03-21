@@ -3,7 +3,7 @@
 import { useCallback } from 'react'
 import { StreamChat } from './StreamChat'
 import { restartSession } from '@lib/actions/restartSession'
-import type { Message } from '@genui-a3/a3'
+import type { Message } from '@genui/a3'
 
 interface OnboardingChatProps {
   sessionId: string

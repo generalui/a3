@@ -1,4 +1,4 @@
-import { BaseState } from '@genui-a3/a3'
+import { BaseState } from '@genui/a3'
 
 /**
  * Consumer defines their GLOBAL state extending BaseState.

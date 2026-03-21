@@ -1,5 +1,5 @@
 {
-  "name": "@genui-a3/a3-openai",
+  "name": "@genui/a3-openai",
   "version": "0.0.2",
   "description": "OpenAI provider for the A3 agentic framework",
   "type": "module",
@@ -35,7 +35,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@genui-a3/a3": ">=0.0.1"
+    "@genui/a3": ">=0.0.1"
   },
   "dependencies": {
     "@ag-ui/client": "0.0.47",

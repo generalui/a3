@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { EventType, type RunAgentInput } from '@ag-ui/client'
 import { EventEncoder } from '@ag-ui/encoder'
-import { AGUIAgent } from '@genui-a3/a3'
+import { AGUIAgent } from '@genui/a3'
 import { getChatSessionInstance } from '@agents'
 import { initRegistry } from '@agents/registry'
 
