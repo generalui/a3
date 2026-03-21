@@ -15,7 +15,7 @@ import {
   type StreamEvent,
   type ResilienceConfig,
   type ResolvedResilienceConfig,
-} from '@genui-a3/a3'
+} from '@genui/a3'
 import { mergeSequentialMessages } from '@providers-bedrock/messageMerger'
 import { processBedrockStream } from '@providers-bedrock/streamProcessor'
 import { executeWithFallback } from '@providers-utils/executeWithFallback'

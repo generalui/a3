@@ -1,5 +1,5 @@
 {
-  "name": "@genui-a3/a3-create",
+  "name": "@genui/a3-create",
   "version": "0.0.5",
   "description": "CLI scaffolding tool for A3 agentic apps",
   "keywords": [

@@ -10,7 +10,7 @@ import {
   type StreamEvent,
   type ResilienceConfig,
   type ResolvedResilienceConfig,
-} from '@genui-a3/a3'
+} from '@genui/a3'
 import { processAnthropicStream } from '@providers-anthropic/streamProcessor'
 import { executeWithFallback } from '@providers-utils/executeWithFallback'
 

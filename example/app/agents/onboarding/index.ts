@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { Agent } from '@genui-a3/a3'
+import { Agent } from '@genui/a3'
 import type { State } from '@agents/state'
 import { prompt } from './prompt'
 

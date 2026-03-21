@@ -1,4 +1,4 @@
-import { createAnthropicProvider } from '@genui-a3/a3-anthropic'
+import { createAnthropicProvider } from '@genui/a3-anthropic'
 
 let _instance: ReturnType<typeof createAnthropicProvider> | null = null
 

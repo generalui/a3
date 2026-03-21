@@ -1,8 +1,8 @@
 import styled, { keyframes } from 'styled-components'
 import { Typography } from '@mui/material'
 import { MarkdownRenderer, MessageBubble } from '@atoms'
-import { MessageSender } from '@genui-a3/a3'
-import type { Message } from '@genui-a3/a3'
+import { MessageSender } from '@genui/a3'
+import type { Message } from '@genui/a3'
 
 const MessageRow = styled.div<{ $isUser: boolean }>`
   display: flex;

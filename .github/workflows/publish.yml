@@ -69,9 +69,7 @@ jobs:
         with:
           node-version-file: .tool-versions
           cache: 'npm'
-          cache-dependency-path: |
-            package-lock.json
-            create/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install and build
         if: steps.check_tag.outputs.skip != 'true'
@@ -87,7 +85,7 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
 
-          echo "::group::Publish @genui-a3/a3"
+          echo "::group::Publish @genui/a3"
           npm publish --access public --ignore-scripts
           echo "::endgroup::"
 
@@ -96,13 +94,13 @@ jobs:
             echo "::group::Publish ${PACKAGE_NAME}"
             cd "$dir"
             npm version "$VERSION" --no-git-tag-version --allow-same-version
-            npm pkg set "peerDependencies.@genui-a3/a3=>=${VERSION}"
+            npm pkg set "peerDependencies.@genui/a3=>=${VERSION}"
             npm publish --access public --ignore-scripts
             cd -
             echo "::endgroup::"
           done
 
-          echo "::group::Publish @genui-a3/a3-create"
+          echo "::group::Publish @genui/a3-create"
           cd create
           npm version "$VERSION" --no-git-tag-version --allow-same-version
           npm publish --access public --ignore-scripts

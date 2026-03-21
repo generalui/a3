@@ -12,7 +12,7 @@ export default defineConfig({
   treeshake: true,
   target: 'node20',
   tsconfig: './tsconfig.json',
-  external: ['@genui-a3/a3'],
+  external: ['@genui/a3'],
   esbuildOptions(options) {
     options.alias = {
       '@providers/utils': path.resolve(process.cwd(), '..', 'utils'),

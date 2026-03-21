@@ -10,7 +10,7 @@
     "lib": ["esnext"],
     "types": ["node"],
     "paths": {
-      "@genui-a3/a3": ["../dist/index.d.ts"],
+      "@genui/a3": ["../dist/index.d.ts"],
       "@providers": ["./src"],
       "@providers/*": ["./src/*"],
       "@providers-anthropic": ["./anthropic"],

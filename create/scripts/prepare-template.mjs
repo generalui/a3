@@ -13,7 +13,7 @@ const templateDir = path.resolve(rootDir, 'template')
 
 const EXCLUDE = ['node_modules', '.next', 'tsconfig.tsbuildinfo', '.env', '.env.example', 'README.md', '.cursorrules']
 
-const GENUI_PACKAGES = ['@genui-a3/a3', '@genui-a3/a3-bedrock', '@genui-a3/a3-openai', '@genui-a3/a3-anthropic']
+const GENUI_PACKAGES = ['@genui/a3', '@genui/a3-bedrock', '@genui/a3-openai', '@genui/a3-anthropic']
 
 /**
  * Documents from arbitrary monorepo locations to copy into template/docs/.

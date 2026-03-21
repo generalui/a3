@@ -1,7 +1,7 @@
-import { ChatSession, MemorySessionStore, MessageSender } from '@genui-a3/a3'
+import { ChatSession, MemorySessionStore, MessageSender } from '@genui/a3'
 import { getProvider } from '@providers'
 import type { State } from '@agents/state'
-import type { Message } from '@genui-a3/a3'
+import type { Message } from '@genui/a3'
 import { SESSION_INITIAL_MESSAGES } from '@constants/chat'
 
 const globalForStore = globalThis as unknown as {
