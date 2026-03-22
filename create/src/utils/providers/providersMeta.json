@@ -1,6 +1,7 @@
 {
   "openai": {
     "label": "OpenAI",
+    "envVar": "OPENAI_API_KEY",
     "exportName": "getOpenAIProvider",
     "file": "openai.ts",
     "npmPackage": "@genui/a3-openai",
@@ -22,6 +23,7 @@
   },
   "anthropic": {
     "label": "Anthropic",
+    "envVar": "ANTHROPIC_API_KEY",
     "exportName": "getAnthropicProvider",
     "file": "anthropic.ts",
     "npmPackage": "@genui/a3-anthropic",

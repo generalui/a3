@@ -9,7 +9,7 @@ jest.mock('@aws-sdk/credential-provider-ini', () => ({
 
 import { BedrockClient } from '@aws-sdk/client-bedrock'
 import { fromIni } from '@aws-sdk/credential-provider-ini'
-import { normalizeKey, validateOpenAIKey, validateAnthropicKey, validateAwsCredentials } from '@create-utils/validation'
+import { maskKey, normalizeKey, validateOpenAIKey, validateAnthropicKey, validateAwsCredentials } from '@create-utils/validation'
 
 const MockBedrockClient = BedrockClient as jest.Mock
 const mockFromIni = fromIni as jest.Mock
@@ -28,6 +28,28 @@ describe('normalizeKey', () => {
 
   it('leaves an already-clean key unchanged', () => {
     expect(normalizeKey('sk-proj-abc123xyz')).toBe('sk-proj-abc123xyz')
+  })
+})
+
+// ── maskKey ──────────────────────────────────────────────────────────────────
+
+describe('maskKey', () => {
+  it('shows first 8 and last 8 characters for long keys', () => {
+    expect(maskKey('sk-proj-abcdefgh1234567890LAST8CHR')).toBe('sk-proj-****LAST8CHR')
+  })
+
+  it('uses proportional edge for keys shorter than edge * 2', () => {
+    // 12 chars, edge=8 → smallEdge = floor(12/4) = 3
+    expect(maskKey('sk-proj-key!')).toBe('sk-****ey!')
+  })
+
+  it('accepts a custom edge parameter', () => {
+    // 20 chars with edge=4 → first 4 + **** + last 4
+    expect(maskKey('AKIAIOSFODNN7EXAMPLE', 4)).toBe('AKIA****MPLE')
+  })
+
+  it('shows at least 1 character per side for very short keys', () => {
+    expect(maskKey('abc', 8)).toBe('a****c')
   })
 })
 
@@ -85,7 +107,7 @@ describe('validateOpenAIKey', () => {
     } as unknown as Response)
     const result = await validateOpenAIKey('sk-proj-key')
     expect(result.valid).toBe(false)
-    expect(result.message).toContain('OpenAI API key error: Invalid auth')
+    expect(result.message).toContain('OpenAI API key error (sk****ey): Invalid auth')
     expect(result.message).toContain('Make sure')
   })
 
@@ -97,7 +119,7 @@ describe('validateOpenAIKey', () => {
     } as unknown as Response)
     const result = await validateOpenAIKey('sk-proj-key')
     expect(result.valid).toBe(false)
-    expect(result.message).toContain('OpenAI API key error: Rate limit exceeded')
+    expect(result.message).toContain('OpenAI API key error (sk****ey): Rate limit exceeded')
     expect(result.message).toContain('Make sure')
   })
 
@@ -109,7 +131,7 @@ describe('validateOpenAIKey', () => {
     } as unknown as Response)
     const result = await validateOpenAIKey('sk-proj-key')
     expect(result.valid).toBe(false)
-    expect(result.message).toContain('OpenAI API key error: HTTP 403')
+    expect(result.message).toContain('OpenAI API key error (sk****ey): HTTP 403')
     expect(result.message).toContain('Make sure')
   })
 
@@ -119,6 +141,19 @@ describe('validateOpenAIKey', () => {
     expect(result.valid).toBe(false)
     expect(result.message).toContain('Network error')
     expect(result.message).toContain('Failed to fetch')
+  })
+
+  it('redacts provider-masked key patterns (asterisks) from the error detail', async () => {
+    jest.mocked(global.fetch).mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: jest.fn().mockResolvedValue({
+        error: { message: 'Incorrect API key provided: sk-proj-****alid' },
+      }),
+    } as unknown as Response)
+    const result = await validateOpenAIKey('sk-proj-key')
+    expect(result.message).not.toContain('sk-proj-****alid')
+    expect(result.message).toContain('sk****ey')
   })
 })
 
@@ -177,7 +212,7 @@ describe('validateAnthropicKey', () => {
     } as unknown as Response)
     const result = await validateAnthropicKey('sk-ant-key')
     expect(result.valid).toBe(false)
-    expect(result.message).toContain('Anthropic API key error: Unauthorized')
+    expect(result.message).toContain('Anthropic API key error (sk****ey): Unauthorized')
     expect(result.message).toContain('Make sure')
     expect(result.message).toContain('console.anthropic.com')
   })
@@ -190,7 +225,7 @@ describe('validateAnthropicKey', () => {
     } as unknown as Response)
     const result = await validateAnthropicKey('sk-ant-key')
     expect(result.valid).toBe(false)
-    expect(result.message).toContain('Anthropic API key error: Rate limit exceeded')
+    expect(result.message).toContain('Anthropic API key error (sk****ey): Rate limit exceeded')
     expect(result.message).toContain('Make sure')
   })
 
@@ -202,7 +237,7 @@ describe('validateAnthropicKey', () => {
     } as unknown as Response)
     const result = await validateAnthropicKey('sk-ant-key')
     expect(result.valid).toBe(false)
-    expect(result.message).toContain('Anthropic API key error: HTTP 403')
+    expect(result.message).toContain('Anthropic API key error (sk****ey): HTTP 403')
     expect(result.message).toContain('Make sure')
   })
 
