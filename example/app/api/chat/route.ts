@@ -1,16 +1,14 @@
 /**
  * Synchronous (blocking / unary) chat endpoint.
- * This is the non-streaming version of the /api/stream endpoint.
- * It waits for the full agent response before returning a complete JSON payload.
+ * Used by the Hello World example.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { getChatSessionInstance } from '@agents'
-import { initRegistry } from '@agents/registry'
+import { initRegistry, getChatSessionInstance, SESSION_ID as HELLO_WORLD_ID } from '@agents/helloWorld'
 
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as { message?: string; sessionId?: string }
-    const { message, sessionId = 'demo-session' } = body
+    const { message, sessionId = HELLO_WORLD_ID } = body
 
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 })
@@ -18,7 +16,7 @@ export async function POST(request: NextRequest) {
 
     initRegistry()
 
-    const session = getChatSessionInstance({ sessionId })
+    const session = getChatSessionInstance(sessionId)
     const result = await session.send({ message })
 
     return NextResponse.json({

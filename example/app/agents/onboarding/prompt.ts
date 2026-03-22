@@ -1,7 +1,6 @@
 import { readdir, readFile } from 'fs/promises'
 import { join, relative } from 'path'
-import type { FlowInput } from '@genui/a3'
-import type { State } from '@agents/state'
+import type { FlowInput, BaseState } from '@genui/a3'
 
 /**
  * Recursively find all .md files under a directory.
@@ -12,8 +11,16 @@ async function findMarkdownFiles(dir: string): Promise<string[]> {
 
   for (const entry of entries) {
     const fullPath = join(dir, entry.name)
-    if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
-      results.push(...(await findMarkdownFiles(fullPath)))
+    if (
+      (entry.isDirectory() || entry.isSymbolicLink()) &&
+      !entry.name.startsWith('.') &&
+      entry.name !== 'node_modules'
+    ) {
+      try {
+        results.push(...(await findMarkdownFiles(fullPath)))
+      } catch {
+        // Symlink may point to a file, not a directory — skip silently
+      }
     } else if (entry.isFile() && entry.name.endsWith('.md')) {
       results.push(fullPath)
     }
@@ -26,7 +33,7 @@ async function findMarkdownFiles(dir: string): Promise<string[]> {
  * Build the onboarding agent prompt by reading all markdown documentation
  * from the example project root.
  */
-export async function prompt(_params: FlowInput<State>): Promise<string> {
+export async function prompt(_params: FlowInput<BaseState>): Promise<string> {
   const projectRoot = process.cwd()
   const mdFiles = await findMarkdownFiles(projectRoot)
   const sections: string[] = []

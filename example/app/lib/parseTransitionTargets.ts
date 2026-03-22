@@ -4,29 +4,33 @@ import * as path from 'path'
 
 const SKIP_FILES = new Set(['state.ts', 'registry.ts', 'index.ts'])
 
-let cached: Map<string, string[]> | null = null
+const cached = new Map<string, Map<string, string[]>>()
 
 /**
  * Parse agent source files to extract transition targets using TypeScript's AST.
- * Results are cached for the server lifecycle.
+ * Results are cached per directory for the server lifecycle.
  *
  * For array transitions, extracts string elements directly.
  * For function transitions, walks the function body to collect string literals
  * from return statements and ternary expressions, then cross-references against
  * known agent IDs to filter out non-agent strings.
  *
+ * @param agentsSubDir - Subdirectory under app/agents to scan (e.g. 'helloWorld')
  * @returns Map from agent ID to transition target agent IDs
  */
-export function getTransitionTargetMap(): Map<string, string[]> {
-  if (cached) return cached
-  cached = new Map()
+export function getTransitionTargetMap(agentsSubDir: string): Map<string, string[]> {
+  const existing = cached.get(agentsSubDir)
+  if (existing) return existing
 
-  const agentsDir = path.join(process.cwd(), 'app/agents')
+  const result = new Map<string, string[]>()
+  cached.set(agentsSubDir, result)
+
+  const agentsDir = path.join(process.cwd(), 'app/agents', agentsSubDir)
   let entries: fs.Dirent[]
   try {
     entries = fs.readdirSync(agentsDir, { withFileTypes: true })
   } catch {
-    return cached
+    return result
   }
 
   const fileNames = entries
@@ -56,11 +60,11 @@ export function getTransitionTargetMap(): Map<string, string[]> {
     if (!transitionNode) continue
     const targets = extractTargets(transitionNode, allAgentIds)
     if (targets.length > 0) {
-      cached.set(agentId, targets)
+      result.set(agentId, targets)
     }
   }
 
-  return cached
+  return result
 }
 
 function extractAgentInfo(

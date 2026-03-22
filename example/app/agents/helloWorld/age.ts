@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { Agent } from '@genui/a3'
-import type { State } from '@agents/state'
+import type { HelloWorldState } from './state'
 
 /**
  * Sample age agent that gets the user's age.
@@ -9,7 +9,7 @@ const agePayload = z.object({
   userAge: z.string().optional(),
 })
 
-export const ageAgent: Agent<State> = {
+export const ageAgent: Agent<HelloWorldState> = {
   id: 'age',
   description: "Gets the user's age.",
   prompt: `

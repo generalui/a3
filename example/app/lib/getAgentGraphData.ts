@@ -1,4 +1,4 @@
-import { agentRegistry } from '@agents/registry'
+import { AgentRegistry } from '@genui/a3'
 import { getTransitionTargetMap } from './parseTransitionTargets'
 
 export type AgentInfo = {
@@ -13,11 +13,14 @@ export type AgentInfo = {
  *
  * For deterministic transitions (functions), uses AST parsing to discover the actual
  * target agent IDs from the source code rather than listing all other agents.
+ *
+ * @param agentsSubDir - Subdirectory under app/agents to scan (e.g. 'helloWorld')
  */
-export function getAgentGraphData(): AgentInfo[] {
-  const agents = agentRegistry.getAll()
+export function getAgentGraphData(agentsSubDir: string): AgentInfo[] {
+  const registry = AgentRegistry.getInstance()
+  const agents = registry.getAll()
   const allAgentIds = agents.map((a) => a.id)
-  const targetMap = getTransitionTargetMap()
+  const targetMap = getTransitionTargetMap(agentsSubDir)
 
   return agents.map((agent) => {
     let type: 'deterministic' | 'dynamic' | 'none'
