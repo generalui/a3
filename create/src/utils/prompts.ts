@@ -2,13 +2,25 @@ import * as p from '@clack/prompts'
 
 import { detectAwsProfileRegion, detectAwsProfiles } from '@create-utils/aws'
 import { PROVIDER_META, type ProviderConfig } from '@create-utils/providers'
-import { normalizeKey, validateAnthropicKey, validateAwsCredentials, validateOpenAIKey } from '@create-utils/validation'
+import { maskedInput } from '@create-utils/maskedInput'
+import { maskKey, normalizeKey, validateAnthropicKey, validateAwsCredentials, validateOpenAIKey } from '@create-utils/validation'
 
 function handleCancel<T>(value: T | symbol): asserts value is T {
   if (p.isCancel(value)) {
     p.cancel('Setup cancelled.')
     process.exit(1)
   }
+}
+
+interface ApiKeyConfig {
+  providerKey: string
+  configField: keyof ProviderConfig
+  validateFn: (key: string) => Promise<{ valid: boolean; message: string }>
+}
+
+const API_KEY_CONFIGS: Record<string, ApiKeyConfig> = {
+  openai: { providerKey: 'openai', configField: 'openaiApiKey', validateFn: validateOpenAIKey },
+  anthropic: { providerKey: 'anthropic', configField: 'anthropicApiKey', validateFn: validateAnthropicKey },
 }
 
 export async function promptProjectName(): Promise<string> {
@@ -40,8 +52,9 @@ async function promptAccessKeys(config: ProviderConfig): Promise<void> {
   handleCancel(awsAccessKeyId)
   config.awsAccessKeyId = normalizeKey(awsAccessKeyId)
 
-  const awsSecretAccessKey = await p.password({
+  const awsSecretAccessKey = await maskedInput({
     message: 'AWS_SECRET_ACCESS_KEY:',
+    edge: 4,
     validate(input) {
       if (!input) return 'Secret access key is required.'
     },
@@ -50,24 +63,23 @@ async function promptAccessKeys(config: ProviderConfig): Promise<void> {
   config.awsSecretAccessKey = normalizeKey(awsSecretAccessKey)
 }
 
-async function promptOpenAIConfig(config: ProviderConfig): Promise<void> {
-  p.log.step(PROVIDER_META.openai.label)
-
+async function promptManualKeyEntry(config: ProviderConfig, cfg: ApiKeyConfig): Promise<void> {
+  const meta = PROVIDER_META[cfg.providerKey]
   let validated = false
   while (!validated) {
-    const openaiApiKey = await p.password({
-      message: 'OpenAI API key:',
+    const apiKey = await maskedInput({
+      message: `${meta.label} API key:`,
       validate(input) {
-        if (!input) return 'API key is required (starts with sk-...). Get one at https://platform.openai.com/api-keys'
+        if (!input) return `API key is required. Get one at ${meta.urls.keys}`
       },
     })
-    handleCancel(openaiApiKey)
-    config.openaiApiKey = normalizeKey(openaiApiKey)
+    handleCancel(apiKey)
+    config[cfg.configField] = normalizeKey(apiKey) as never
 
     const spin = p.spinner()
-    spin.start('Validating OpenAI credentials...')
-    const result = await validateOpenAIKey(config.openaiApiKey)
-    spin.stop(result.valid ? 'OpenAI credentials verified' : 'OpenAI validation failed')
+    spin.start(`Validating ${meta.label} credentials...`)
+    const result = await cfg.validateFn(config[cfg.configField] as string)
+    spin.stop(result.valid ? `${meta.label} credentials verified` : `${meta.label} validation failed`)
 
     if (result.valid) {
       validated = true
@@ -78,33 +90,51 @@ async function promptOpenAIConfig(config: ProviderConfig): Promise<void> {
   }
 }
 
-async function promptAnthropicConfig(config: ProviderConfig): Promise<void> {
-  p.log.step(PROVIDER_META.anthropic.label)
+async function promptApiKeyConfig(config: ProviderConfig, cfg: ApiKeyConfig): Promise<void> {
+  const meta = PROVIDER_META[cfg.providerKey]
+  p.log.step(meta.label)
 
-  let validated = false
-  while (!validated) {
-    const anthropicApiKey = await p.password({
-      message: 'Anthropic API key:',
-      validate(input) {
-        if (!input)
-          return 'API key is required (starts with sk-ant-...). Get one at https://console.anthropic.com/settings/keys'
-      },
+  const envValue = meta.envVar ? process.env[meta.envVar] : undefined
+
+  if (envValue) {
+    const normalized = normalizeKey(envValue)
+    const masked = maskKey(normalized)
+    p.log.info(`Detected ${meta.envVar}: ${masked}`)
+
+    const action = await p.select({
+      message: 'Use detected key?',
+      options: [
+        { label: 'Use detected key', value: 'use' as const },
+        { label: 'Enter manually', value: 'manual' as const },
+      ],
     })
-    handleCancel(anthropicApiKey)
-    config.anthropicApiKey = normalizeKey(anthropicApiKey)
+    handleCancel(action)
 
-    const spin = p.spinner()
-    spin.start('Validating Anthropic credentials...')
-    const result = await validateAnthropicKey(config.anthropicApiKey)
-    spin.stop(result.valid ? 'Anthropic credentials verified' : 'Anthropic validation failed')
+    if (action === 'use') {
+      const spin = p.spinner()
+      spin.start(`Validating ${meta.label} credentials...`)
+      const result = await cfg.validateFn(normalized)
+      spin.stop(result.valid ? `${meta.label} credentials verified` : `${meta.label} validation failed`)
 
-    if (result.valid) {
-      validated = true
-    } else {
+      if (result.valid) {
+        config[cfg.configField] = normalized as never
+        return
+      }
+
       p.log.warn(result.message)
-      p.log.info('Please try again.')
+      p.log.info('Falling back to manual entry.')
     }
   }
+
+  await promptManualKeyEntry(config, cfg)
+}
+
+async function promptOpenAIConfig(config: ProviderConfig): Promise<void> {
+  await promptApiKeyConfig(config, API_KEY_CONFIGS.openai)
+}
+
+async function promptAnthropicConfig(config: ProviderConfig): Promise<void> {
+  await promptApiKeyConfig(config, API_KEY_CONFIGS.anthropic)
 }
 
 async function promptProfileSelection(profiles: string[]): Promise<string> {

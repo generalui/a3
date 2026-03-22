@@ -11,19 +11,41 @@ export function normalizeKey(key: string): string {
   return key.replace(/\s/g, '')
 }
 
+/**
+ * Mask a credential for display, showing only the first and last `edge` characters.
+ * @param key - The credential string to mask
+ * @param edge - Number of characters to reveal on each side (default 8)
+ * @returns The masked string
+ * @example maskKey('sk-proj-abcdefgh1234567890LAST8CHR') → 'sk-proj-****LAST8CHR'
+ * @example maskKey('AKIAIOSFODNN7EXAMPLE', 4) → 'AKIA****MPLE'
+ */
+export function maskKey(key: string, edge = 8): string {
+  if (key.length <= edge * 2) {
+    const smallEdge = Math.max(1, Math.floor(key.length / 4))
+    return key.slice(0, smallEdge) + '****' + key.slice(-smallEdge)
+  }
+  return key.slice(0, edge) + '****' + key.slice(-edge)
+}
+
 import providersMeta from './providers/providersMeta.json'
 
 function buildErrorMessage({
   detail,
   provider,
   helpUrl,
+  apiKey,
 }: {
   detail: string
   provider: string
   helpUrl?: string
+  apiKey?: string
 }): string {
+  const sanitized = apiKey
+    ? detail.replaceAll(apiKey, maskKey(apiKey)).replace(/\S*\*{4,}\S*/g, maskKey(apiKey))
+    : detail
+  const keyHint = apiKey ? ` (${maskKey(apiKey)})` : ''
   let message =
-    `${provider} API key error: ${detail}` +
+    `${provider} API key error${keyHint}: ${sanitized}` +
     '\n\nMake sure:\n  • Your credentials are active and not revoked' +
     '\n  • Your account has appropriate permissions' +
     "\n  • The credentials haven't exceeded rate limits"
@@ -64,7 +86,7 @@ export async function validateOpenAIKey(apiKey: string): Promise<ValidationResul
 
     const body = (await response.json().catch(() => null)) as { error?: { message?: string } } | null
     const detail = body?.error?.message ?? `HTTP ${response.status}`
-    return { valid: false, message: buildErrorMessage({ detail, provider: 'OpenAI' }) }
+    return { valid: false, message: buildErrorMessage({ detail, provider: 'OpenAI', apiKey }) }
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
     return { valid: false, message: `Network error: ${msg}` }
@@ -103,7 +125,7 @@ export async function validateAnthropicKey(apiKey: string): Promise<ValidationRe
     const detail = body?.error?.message ?? `HTTP ${response.status}`
     return {
       valid: false,
-      message: buildErrorMessage({ detail, provider: 'Anthropic', helpUrl: providersMeta.anthropic.urls.keys }),
+      message: buildErrorMessage({ detail, provider: 'Anthropic', helpUrl: providersMeta.anthropic.urls.keys, apiKey }),
     }
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)

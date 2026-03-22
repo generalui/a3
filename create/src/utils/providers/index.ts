@@ -12,8 +12,21 @@ export interface ProviderConfig {
   awsRegion?: string
 }
 
-export const PROVIDER_META: Record<string, { label: string; exportName: string; file: string; npmPackage: string }> =
-  providersMeta
+interface ProviderMeta {
+  label: string
+  exportName: string
+  file: string
+  npmPackage: string
+  envVar?: string
+  urls: {
+    keys: string
+    configure?: string
+    credentials?: string
+    docs?: string
+  }
+}
+
+export const PROVIDER_META: Record<string, ProviderMeta> = providersMeta
 
 /**
  * Returns the docs filename for a provider key.

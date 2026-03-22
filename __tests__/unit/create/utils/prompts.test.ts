@@ -14,10 +14,15 @@ jest.mock('@clack/prompts', () => ({
 }))
 
 jest.mock('@create-utils/validation', () => ({
+  maskKey: jest.fn((key: string) => `masked(${key})`),
   normalizeKey: jest.fn((key: string) => key),
   validateOpenAIKey: jest.fn(),
   validateAnthropicKey: jest.fn(),
   validateAwsCredentials: jest.fn(),
+}))
+
+jest.mock('@create-utils/maskedInput', () => ({
+  maskedInput: jest.fn(),
 }))
 
 jest.mock('@create-utils/aws', () => ({
@@ -27,6 +32,7 @@ jest.mock('@create-utils/aws', () => ({
 
 import * as p from '@clack/prompts'
 import { detectAwsProfileRegion, detectAwsProfiles } from '@create-utils/aws'
+import { maskedInput } from '@create-utils/maskedInput'
 import {
   normalizeKey,
   validateAnthropicKey,
@@ -36,7 +42,7 @@ import {
 import { promptProjectName, promptProviders } from '@create-utils/prompts'
 
 const mockText = p.text as jest.Mock
-const mockPassword = p.password as jest.Mock
+const mockMaskedInput = maskedInput as jest.Mock
 const mockSelect = p.select as jest.Mock
 const mockMultiselect = p.multiselect as jest.Mock
 const mockIsCancel = p.isCancel as unknown as jest.Mock
@@ -52,6 +58,9 @@ const CANCEL = Symbol('cancel')
 
 beforeEach(() => {
   jest.resetAllMocks()
+  // Ensure no env-detected keys interfere with tests
+  delete process.env.OPENAI_API_KEY
+  delete process.env.ANTHROPIC_API_KEY
   // normalizeKey is called on every key input — restore pass-through after reset
   mockNormalizeKey.mockImplementation((key: string) => key)
   mockIsCancel.mockReturnValue(false)
@@ -116,7 +125,7 @@ describe('promptProviders', () => {
 
     it('does not prompt for a primary provider when only one provider is selected', async () => {
       mockMultiselect.mockResolvedValue(['openai'])
-      mockPassword.mockResolvedValue('sk-proj-key')
+      mockMaskedInput.mockResolvedValue('sk-proj-key')
       mockValidateOpenAIKey.mockResolvedValue({ valid: true })
 
       const config = await promptProviders()
@@ -127,7 +136,7 @@ describe('promptProviders', () => {
 
     it('prompts for a primary provider and uses the selection when multiple providers are chosen', async () => {
       mockMultiselect.mockResolvedValue(['openai', 'anthropic'])
-      mockPassword
+      mockMaskedInput
         .mockResolvedValueOnce('sk-openai-key')
         .mockResolvedValueOnce('sk-ant-key')
       mockValidateOpenAIKey.mockResolvedValue({ valid: true })
@@ -144,7 +153,7 @@ describe('promptProviders', () => {
   describe('OpenAI provider', () => {
     it('sets openaiApiKey on the config', async () => {
       mockMultiselect.mockResolvedValue(['openai'])
-      mockPassword.mockResolvedValue('sk-proj-testkey123')
+      mockMaskedInput.mockResolvedValue('sk-proj-testkey123')
       mockValidateOpenAIKey.mockResolvedValue({ valid: true })
 
       const config = await promptProviders()
@@ -155,7 +164,7 @@ describe('promptProviders', () => {
 
     it('retries the key prompt when validation fails and stops once a valid key is entered', async () => {
       mockMultiselect.mockResolvedValue(['openai'])
-      mockPassword
+      mockMaskedInput
         .mockResolvedValueOnce('sk-bad-key')
         .mockResolvedValueOnce('sk-good-key')
       mockValidateOpenAIKey
@@ -164,7 +173,7 @@ describe('promptProviders', () => {
 
       const config = await promptProviders()
 
-      expect(mockPassword).toHaveBeenCalledTimes(2)
+      expect(mockMaskedInput).toHaveBeenCalledTimes(2)
       expect(p.log.warn).toHaveBeenCalledWith('Invalid API key')
       expect(config.openaiApiKey).toBe('sk-good-key')
     })
@@ -173,7 +182,7 @@ describe('promptProviders', () => {
   describe('Anthropic provider', () => {
     it('sets anthropicApiKey on the config', async () => {
       mockMultiselect.mockResolvedValue(['anthropic'])
-      mockPassword.mockResolvedValue('sk-ant-api-testkey')
+      mockMaskedInput.mockResolvedValue('sk-ant-api-testkey')
       mockValidateAnthropicKey.mockResolvedValue({ valid: true })
 
       const config = await promptProviders()
@@ -183,7 +192,7 @@ describe('promptProviders', () => {
 
     it('retries the key prompt when validation fails and stops once a valid key is entered', async () => {
       mockMultiselect.mockResolvedValue(['anthropic'])
-      mockPassword
+      mockMaskedInput
         .mockResolvedValueOnce('sk-ant-bad-key')
         .mockResolvedValueOnce('sk-ant-good-key')
       mockValidateAnthropicKey
@@ -192,7 +201,7 @@ describe('promptProviders', () => {
 
       const config = await promptProviders()
 
-      expect(mockPassword).toHaveBeenCalledTimes(2)
+      expect(mockMaskedInput).toHaveBeenCalledTimes(2)
       expect(p.log.warn).toHaveBeenCalledWith('Invalid Anthropic key')
       expect(config.anthropicApiKey).toBe('sk-ant-good-key')
     })
@@ -289,7 +298,7 @@ describe('promptProviders', () => {
         .mockResolvedValueOnce('us-east-1')   // region attempt 1
         .mockResolvedValueOnce('AKIA_RETRY')  // access key ID after switch
         .mockResolvedValueOnce('us-east-1')   // region attempt 2
-      mockPassword.mockResolvedValueOnce('retrysecret')
+      mockMaskedInput.mockResolvedValueOnce('retrysecret')
       mockValidateAwsCredentials
         .mockResolvedValueOnce({ valid: false, message: 'Profile not found' })
         .mockResolvedValueOnce({ valid: true })
@@ -308,7 +317,7 @@ describe('promptProviders', () => {
       mockText
         .mockResolvedValueOnce('AKIATESTKEY12345678') // access key ID
         .mockResolvedValueOnce('us-east-1') // region
-      mockPassword.mockResolvedValueOnce('supersecretaccesskey12345')
+      mockMaskedInput.mockResolvedValueOnce('supersecretaccesskey12345')
       mockValidateAwsCredentials.mockResolvedValue({ valid: true })
 
       const config = await promptProviders()
@@ -327,7 +336,7 @@ describe('promptProviders', () => {
         .mockResolvedValueOnce('us-east-1')    // region attempt 1
         .mockResolvedValueOnce('AKIA_GOOD')    // retry access key ID
         .mockResolvedValueOnce('us-east-1')    // region attempt 2
-      mockPassword
+      mockMaskedInput
         .mockResolvedValueOnce('initialsecret')
         .mockResolvedValueOnce('goodsecret')
       mockValidateAwsCredentials
@@ -337,7 +346,7 @@ describe('promptProviders', () => {
       const config = await promptProviders()
 
       expect(p.log.warn).toHaveBeenCalledWith('Signature mismatch')
-      expect(mockPassword).toHaveBeenCalledTimes(2)
+      expect(mockMaskedInput).toHaveBeenCalledTimes(2)
       expect(config.awsAccessKeyId).toBe('AKIA_GOOD')
       expect(config.awsSecretAccessKey).toBe('goodsecret')
     })
@@ -372,7 +381,7 @@ describe('promptProviders', () => {
       mockText
         .mockResolvedValueOnce('AKIA_FALLBACK') // access key ID
         .mockResolvedValueOnce('us-east-1')     // region
-      mockPassword.mockResolvedValueOnce('fallbacksecret')
+      mockMaskedInput.mockResolvedValueOnce('fallbacksecret')
       mockValidateAwsCredentials.mockResolvedValue({ valid: true })
 
       const config = await promptProviders()
